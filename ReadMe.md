@@ -1,6 +1,6 @@
-# Name of Viewer Here
+# GalaxyViewer
 
-[Viewer Name Here] is a viewer for Second Life and OpenSimulator. It is heavily inspired by Radegast, using the Avalonia UI framework and .NET Core. It should work on Windows, Linux, and Android. iOS and macOS may be supported in the future.
+GalaxyViewer is a viewer for Second Life and OpenSimulator. It is heavily inspired by Radegast, using the Avalonia UI framework and .NET Core. It should work on Windows, Linux, and Android. iOS and macOS may be supported in the future.
 
 Features unique to this viewer (compared to the stock viewer) will include:
 
