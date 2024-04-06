@@ -8,7 +8,7 @@ Features unique to this viewer (compared to the stock viewer) will include:
 - World View is optional, you can use a purely text-based interface if you prefer.
 - Automation support (e.g. for bots)
 
-## Planned Features
+## Feature Roadmap
 
 - [ ] User Authentication
 
@@ -96,15 +96,6 @@ If you have any questions or concerns, please contact [Galaxy Littlepaws](mailto
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
-## Acknowledgments
-
-- Radegast
-- OpenMetaverse
-- Avalonia
-- .NET Core
-- OpenSimulator
-- Second Life
 
 ## Disclaimer
 
