@@ -1,8 +1,44 @@
-﻿namespace GalaxyViewer.ViewModels;
+﻿using Avalonia.Controls;
+using GalaxyViewer.Views;
+using ReactiveUI;
+using System.Reactive;
 
-public class MainViewModel : ViewModelBase
+namespace GalaxyViewer.ViewModels
 {
-#pragma warning disable CA1822 // Mark members as static
-    public string Greeting => "Welcome to Avalonia!";
-#pragma warning restore CA1822 // Mark members as static
+    public class MainViewModel : ViewModelBase
+    {
+        private UserControl? _currentView;
+        private bool _isLoggedIn;
+
+        public UserControl? CurrentView
+        {
+            get => _currentView;
+            set => this.RaiseAndSetIfChanged(ref _currentView, value);
+        }
+
+        public bool IsLoggedIn
+        {
+            get => _isLoggedIn;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _isLoggedIn, value);
+                CurrentView = value ? (UserControl)new LoggedInView() : new LoginView();
+            }
+        }
+
+        public ReactiveCommand<Unit, Unit> LogoutCommand { get; }
+
+        public MainViewModel()
+        {
+            _currentView = new LoginView();
+            IsLoggedIn = false; // Set this to true when the user logs in
+
+            LogoutCommand = ReactiveCommand.Create(Logout);
+        }
+
+        private void Logout()
+        {
+            IsLoggedIn = false;
+        }
+    }
 }

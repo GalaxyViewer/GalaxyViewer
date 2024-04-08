@@ -1,0 +1,57 @@
+﻿<llsd>
+  <array>
+
+    <!-- Second Life -->
+    <map>
+      <key>gridnick</key>
+      <string>agni</string>
+      <key>gridname</key>
+      <string>Second Life (agni)</string>
+      <key>platform</key>
+      <string>SecondLife</string>
+      <key>loginuri</key>
+      <string>https://login.agni.lindenlab.com/cgi-bin/login.cgi</string>
+      <key>loginpage</key>
+      <string>http://secondlife.com/app/login/?channel=Second+Life+Release</string>
+      <key>helperuri</key>
+      <string>https://secondlife.com/helpers/</string>
+      <key>website</key>
+      <string>http://secondlife.com/</string>
+      <key>support</key>
+      <string>http://secondlife.com/support/</string>
+      <key>register</key>
+      <string>http://secondlife.com/registration/</string>
+      <key>password</key>
+      <string>http://secondlife.com/account/request.php</string>
+      <key>version</key>
+      <string>0</string>
+    </map>
+
+    <!-- Second Life Beta -->
+    <map>
+      <key>gridnick</key>
+      <string>aditi</string>
+      <key>gridname</key>
+      <string>Second Life Beta (aditi)</string>
+      <key>platform</key>
+      <string>SecondLife</string>
+      <key>loginuri</key>
+      <string>https://login.aditi.lindenlab.com/cgi-bin/login.cgi</string>
+      <key>loginpage</key>
+      <string>http://secondlife.com/app/login/?channel=Second+Life+Beta</string>
+      <key>helperuri</key>
+      <string>http://aditi-secondlife.webdev.lindenlab.com/helpers/</string>
+      <key>website</key>
+      <string>http://secondlife.com/</string>
+      <key>support</key>
+      <string>http://secondlife.com/support/</string>
+      <key>register</key>
+      <string>http://secondlife.com/registration/</string>
+      <key>password</key>
+      <string>http://secondlife.com/account/request.php</string>
+      <key>version</key>
+      <string>1</string>
+    </map>
+
+    </array>
+</llsd>

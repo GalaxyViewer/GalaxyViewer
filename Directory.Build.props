@@ -1,5 +1,8 @@
 <Project>
   <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Product>GalaxyViewer</Product>
+    <Authors>Galaxy Littlepaws</Authors>
     <Nullable>enable</Nullable>
     <AvaloniaVersion>11.0.10</AvaloniaVersion>
   </PropertyGroup>

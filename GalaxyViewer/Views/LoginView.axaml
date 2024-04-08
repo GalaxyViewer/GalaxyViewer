@@ -1,0 +1,9 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="GalaxyViewer.Views.LoginView">
+    <StackPanel Margin="20">
+        <TextBox Name="UsernameBox" Watermark="Username" />
+        <TextBox Name="PasswordBox" Watermark="Password" PasswordChar="*" />
+        <Button Content="Login" Margin="0,10,0,0" Click="LoginButton_Click" />
+    </StackPanel>
+</UserControl>
