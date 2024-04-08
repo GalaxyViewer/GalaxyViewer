@@ -2,6 +2,7 @@
 using GalaxyViewer.Views;
 using ReactiveUI;
 using System.Reactive;
+using System.Threading.Tasks;
 
 namespace GalaxyViewer.ViewModels
 {
@@ -27,6 +28,7 @@ namespace GalaxyViewer.ViewModels
         }
 
         public ReactiveCommand<Unit, Unit> LogoutCommand { get; }
+        public ReactiveCommand<Unit, Unit> LoginCommand { get; }
 
         public MainViewModel()
         {
@@ -34,11 +36,22 @@ namespace GalaxyViewer.ViewModels
             IsLoggedIn = false; // Set this to true when the user logs in
 
             LogoutCommand = ReactiveCommand.Create(Logout);
+            LoginCommand = ReactiveCommand.CreateFromTask(Login);
         }
 
         private void Logout()
         {
+            // Perform logout operation here
             IsLoggedIn = false;
+        }
+
+        private Task Login()
+        {
+            // Perform login operation here
+            // We will change this function to use async once we have the login logic
+            // If login is successful, set IsLoggedIn to true
+            IsLoggedIn = true;
+            // If it doesn't work, we will return an error message
         }
     }
 }

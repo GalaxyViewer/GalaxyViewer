@@ -1,5 +1,7 @@
+using System;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using GalaxyViewer.ViewModels;
 
 namespace GalaxyViewer.Views
 {
@@ -17,8 +19,8 @@ namespace GalaxyViewer.Views
 
         private void LoginButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            ((ViewModels.MainViewModel)DataContext!).IsLoggedIn = true;
+            var viewModel = (MainViewModel)DataContext!;
+            viewModel.LoginCommand.Execute().Subscribe();
         }
-
     }
 }
