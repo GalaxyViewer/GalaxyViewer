@@ -48,10 +48,11 @@ namespace GalaxyViewer.ViewModels
         private Task Login()
         {
             // Perform login operation here
-            // We will change this function to use async once we have the login logic
             // If login is successful, set IsLoggedIn to true
             IsLoggedIn = true;
             // If it doesn't work, we will return an error message
+
+            return Task.CompletedTask;
         }
     }
 }

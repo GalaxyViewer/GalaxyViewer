@@ -32,13 +32,18 @@
             </MenuItem>
             <MenuItem Header="World" IsEnabled="{Binding IsLoggedIn}">
                 <MenuItem Header="Create new Landmark Here"/>
+                <MenuItem Header="Landmarks"/>
+                <MenuItem Header="Teleport History"/>
+                <MenuItem Header="Favorites"/>
                 <MenuItem Header="Set Home to Here"/>
                 <MenuItem Header="Teleport Home"/>
+                <Separator/>
                 <MenuItem Header="About Land"/>
                 <MenuItem Header="About Region"/>
                 <MenuItem Header="World Map"/>
                 <MenuItem Header="Mini-Map"/>
                 <MenuItem Header="People Nearby"/>
+                <MenuItem Header="Objects Nearby"/>
             </MenuItem>
             <MenuItem Header="Community" IsEnabled="{Binding IsLoggedIn}">
                 <MenuItem Header="Friends"/>
