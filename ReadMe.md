@@ -83,7 +83,7 @@ Run `dotnet build` to build the project.
 
 ## Contributing
 
-Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
+Contributions are welcome! Please see the [Contributing](CONTRIBUTING.md) file for more information.
 
 Also, please note the [Code of Conduct](CODE_OF_CONDUCT.md) for this project.
 
@@ -91,11 +91,11 @@ Also, please note the [Code of Conduct](CODE_OF_CONDUCT.md) for this project.
 
 Please note that while the viewer is in the early development stage, it is not recommended for everyday use and no support will be given. This ReadMe will be updated with support information once the viewer is in a more stable state.
 
-If you have any questions or concerns, please contact [Galaxy Littlepaws](mailto:galaxylittlepaws@proton.me) and include "Viewer Name Here" in the subject line.
+If you have any questions or concerns, please contact [Galaxy Littlepaws](mailto:support@galaxyviewer.com) and include "Galaxy Viewer" in the subject line.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License - see the [License](LICENSE.md) file for details.
 
 ## Disclaimer
 
