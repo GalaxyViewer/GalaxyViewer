@@ -112,10 +112,11 @@ namespace GalaxyViewer.ViewModels
         }
         private void ShowPreferences()
         {
-            CurrentView = new PreferencesView
+            var preferencesWindow = new PreferencesWindow
             {
                 DataContext = new PreferencesViewModel()
             };
+            preferencesWindow.Show();
         }
 
         private void ExitApplication()
