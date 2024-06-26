@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Serilog;
 using GalaxyViewer.ViewModels;
 using GalaxyViewer.Views;
 
@@ -8,6 +9,16 @@ namespace GalaxyViewer;
 
 public partial class App : Application
 {
+    public App()
+    {
+        // Initialize Serilog here
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .WriteTo.File("logs/error.log", rollingInterval: RollingInterval.Day)
+            .CreateLogger();
+    }
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
