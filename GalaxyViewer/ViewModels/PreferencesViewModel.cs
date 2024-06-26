@@ -1,89 +1,72 @@
 using GalaxyViewer.Models;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Xml.Serialization;
 using ReactiveUI;
 using System.Reactive;
+using System.ComponentModel;
+using Serilog;
 
 namespace GalaxyViewer.ViewModels
 {
     public class PreferencesViewModel : ReactiveObject
     {
         public IEnumerable<string> ThemeOptions => Enum.GetNames(typeof(ThemeOptions));
-
         public IEnumerable<string> LoginLocationOptions => Enum.GetNames(typeof(LoginLocationOptions));
 
-        private Lazy<PreferencesModel> _lazyPreferences;
+        private PreferencesModel _preferences = new PreferencesModel();
         private readonly string _preferencesFilePath;
-        public ReactiveCommand<Unit, Unit> SaveCommand { get; }
+        public ReactiveCommand<Unit, Unit>? SaveCommand { get; private set; }
 
         public PreferencesViewModel()
         {
-            _preferencesFilePath = GetPreferencesFilePath();
-            _lazyPreferences = new Lazy<PreferencesModel>(LoadOrCreatePreferences);
+            _preferencesFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GalaxyViewer", "preferences.xml");
+            var directoryPath = Path.GetDirectoryName(_preferencesFilePath);
+            if (directoryPath != null)
+            {
+                _ = Directory.CreateDirectory(directoryPath);
+            }
+            else
+            {
+                Log.Error("Failed to create preferences directory.");
+            }
             SaveCommand = ReactiveCommand.CreateFromTask(SavePreferencesAsync);
         }
 
-        public static async Task<PreferencesViewModel> CreateAsync()
+        public async Task InitializeAsync()
         {
-            var viewModel = new PreferencesViewModel();
-            await viewModel.LoadPreferencesAsync();
-            return viewModel;
+            Preferences = await LoadPreferencesAsync() ?? new PreferencesModel();
         }
 
-        private PreferencesModel Preferences => _lazyPreferences.Value;
-
-        private static string GetPreferencesFilePath()
+        public PreferencesModel Preferences
         {
-            var appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var applicationFolder = Path.Combine(appDataFolder, "GalaxyViewer");
-            Directory.CreateDirectory(applicationFolder); // CreateDirectory is no-op if exists
-            return Path.Combine(applicationFolder, "preferences.xml");
-        }
-
-        private PreferencesModel LoadOrCreatePreferences()
-        {
-            if (File.Exists(_preferencesFilePath))
+            get => _preferences;
+            set
             {
-                using var stream = new FileStream(_preferencesFilePath, FileMode.Open);
-                var serializer = new XmlSerializer(typeof(PreferencesModel));
-                return serializer.Deserialize(stream) as PreferencesModel ?? new PreferencesModel();
+                this.RaiseAndSetIfChanged(ref _preferences, value);
             }
-            return new PreferencesModel
-            {
-                Theme = Enum.TryParse(typeof(ThemeOptions), "System", out object themeResult) ? themeResult.ToString() : Models.ThemeOptions.Light.ToString(),
-                LoginLocation = Enum.TryParse(typeof(LoginLocationOptions), "LastLocation", out object loginLocationResult) ? loginLocationResult.ToString() : Models.LoginLocationOptions.Home.ToString()
-            };
         }
 
-        private string _theme;
-        public string Theme
+        public ThemeOptions Theme
         {
             get => Preferences.Theme;
             set
             {
-                if (Preferences.Theme != value)
-                {
-                    Preferences.Theme = value;
-                    this.RaisePropertyChanged(nameof(Theme));
-                }
+                Preferences.Theme = value;
+                this.RaisePropertyChanged(nameof(Theme));
             }
         }
 
-        private string _loginLocation;
-        public string LoginLocation
+        public LoginLocationOptions LoginLocation
         {
             get => Preferences.LoginLocation;
             set
             {
-                if (Preferences.LoginLocation != value)
-                {
-                    Preferences.LoginLocation = value;
-                    this.RaisePropertyChanged(nameof(LoginLocation));
-                }
+                Preferences.LoginLocation = value;
+                this.RaisePropertyChanged(nameof(LoginLocation));
             }
         }
 
@@ -94,12 +77,46 @@ namespace GalaxyViewer.ViewModels
             set => this.RaiseAndSetIfChanged(ref _statusMessage, value);
         }
 
-        public async Task LoadPreferencesAsync()
+        public async Task<PreferencesModel> LoadPreferencesAsync()
         {
-            await Task.Run(() =>
+            try
             {
-                _lazyPreferences = new Lazy<PreferencesModel>(LoadOrCreatePreferences);
-            });
+                string defaultPreferencesPath = Path.Combine("Assets", "preferences.xml");
+                if (!File.Exists(_preferencesFilePath) && File.Exists(defaultPreferencesPath))
+                {
+                    File.Copy(defaultPreferencesPath, _preferencesFilePath);
+                }
+
+                using (var stream = new FileStream(_preferencesFilePath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read))
+                {
+                    var serializer = new XmlSerializer(typeof(PreferencesModel));
+                    var loadedPreferences = await Task.Run(() =>
+                    {
+                        var result = serializer.Deserialize(stream);
+                        if (result is PreferencesModel preferences)
+                        {
+                            return preferences;
+                        }
+                        else
+                        {
+                            throw new InvalidCastException("Deserialized object is not of type PreferencesModel.");
+                        }
+                    }) ?? new PreferencesModel();
+                    return loadedPreferences ?? new PreferencesModel();
+                }
+            }
+            catch (InvalidCastException ice)
+            {
+                StatusMessage = $"Invalid cast exception loading preferences: {ice.Message}";
+                Log.Error(ice, "Invalid cast while loading preferences.");
+                return new PreferencesModel();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error loading preferences: {ex.Message}";
+                Log.Error(ex, "Error loading preferences.");
+                return new PreferencesModel();
+            }
         }
 
         public async Task SavePreferencesAsync()
@@ -107,17 +124,26 @@ namespace GalaxyViewer.ViewModels
             try
             {
                 Preferences.LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                var directoryPath = Path.GetDirectoryName(_preferencesFilePath);
+                if (!Directory.Exists(directoryPath))
+                {
+                    Directory.CreateDirectory(directoryPath ?? throw new InvalidOperationException("Directory path is null."));
+                }
 
-                using var stream = new FileStream(_preferencesFilePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
+                using var stream = new FileStream(_preferencesFilePath, FileMode.Create, FileAccess.Write);
                 var serializer = new XmlSerializer(typeof(PreferencesModel));
-
                 await Task.Run(() => serializer.Serialize(stream, Preferences));
-
-                StatusMessage = "Preferences saved";
+                StatusMessage = "Preferences saved successfully.";
+            }
+            catch (IOException ioEx)
+            {
+                StatusMessage = $"Error accessing the preferences file: {ioEx.Message}";
+                Log.Error(ioEx, "Error accessing the preferences file.");
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Error saving preferences: {ex.Message}";
+                Log.Error(ex, "Error saving preferences.");
             }
         }
     }

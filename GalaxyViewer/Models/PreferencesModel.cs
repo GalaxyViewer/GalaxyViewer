@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 
 namespace GalaxyViewer.Models
 {
@@ -6,7 +7,7 @@ namespace GalaxyViewer.Models
     {
         Light,
         Dark,
-        System
+        Default
     }
 
     public enum LoginLocationOptions
@@ -18,44 +19,25 @@ namespace GalaxyViewer.Models
     [Serializable]
     public class PreferencesModel
     {
-        private string _theme = Enum.TryParse(typeof(ThemeOptions), "System", out _) ? "System" : "Light";
-        private string _loginLocation = Enum.TryParse(typeof(LoginLocationOptions), "LastLocation", out _) ? "LastLocation" : "Home";
-        public long LastSavedEpoch { get; set; } // Hidden from UI, but stored
+        private ThemeOptions _theme = ThemeOptions.Default;
+        private LoginLocationOptions _loginLocation = LoginLocationOptions.Home;
+        public long LastSavedEpoch { get; set; }
 
-        public string Theme
+        public ThemeOptions Theme
         {
             get => _theme;
-            set
-            {
-                if (IsValidTheme(value))
-                {
-                    _theme = value;
-                }
-                else
-                {
-                    throw new ArgumentException($"Invalid theme value: {value}");
-                }
-            }
+            set => _theme = value;
         }
 
-        public string LoginLocation
+        public LoginLocationOptions LoginLocation
         {
             get => _loginLocation;
-            set
-            {
-                if (IsValidLoginLocation(value))
-                {
-                    _loginLocation = value;
-                }
-                else
-                {
-                    throw new ArgumentException($"Invalid login location value: {value}");
-                }
-            }
+            set => _loginLocation = value;
         }
 
-        // Assuming ThemeOptions and LoginLocationOptions are enums or similar
-        private bool IsValidTheme(string theme) => Enum.TryParse(typeof(ThemeOptions), theme, out _);
-        private bool IsValidLoginLocation(string location) => Enum.TryParse(typeof(LoginLocationOptions), location, out _);
+        public static implicit operator PreferencesModel(Task<PreferencesModel> v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
