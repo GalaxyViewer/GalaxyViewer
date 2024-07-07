@@ -10,9 +10,6 @@ namespace GalaxyViewer.Views
         public PreferencesWindow()
         {
             InitializeComponent();
-#if DEBUG
-            this.AttachDevTools();
-#endif
             this.DataContext = new PreferencesViewModel();
         }
 

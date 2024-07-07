@@ -3,6 +3,7 @@
         xmlns:views="clr-namespace:GalaxyViewer.Views"
         x:Class="GalaxyViewer.Views.PreferencesWindow"
         Title="Preferences"
-        Width="450" Height="350">
+        Width="450" Height="350"
+        CanResize="True">
     <views:PreferencesView/>
 </Window>

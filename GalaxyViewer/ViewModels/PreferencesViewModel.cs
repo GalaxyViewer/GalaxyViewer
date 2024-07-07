@@ -2,6 +2,7 @@ using GalaxyViewer.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Serialization;
@@ -12,12 +13,22 @@ using Serilog;
 
 namespace GalaxyViewer.ViewModels
 {
-    public class PreferencesViewModel : ReactiveObject
+    public class PreferencesViewModel : INotifyPropertyChanged
     {
         public IEnumerable<string> ThemeOptions => Enum.GetNames(typeof(ThemeOptions));
         public IEnumerable<string> LoginLocationOptions => Enum.GetNames(typeof(LoginLocationOptions));
 
         private PreferencesModel _preferences = new PreferencesModel();
+
+        public PreferencesModel Preferences
+        {
+            get => _preferences;
+            set
+            {
+                _preferences = value;
+                OnPropertyChanged(nameof(Preferences));
+            }
+        }
         private readonly string _preferencesFilePath;
         public ReactiveCommand<Unit, Unit>? SaveCommand { get; private set; }
 
@@ -33,6 +44,7 @@ namespace GalaxyViewer.ViewModels
             {
                 Log.Error("Failed to create preferences directory.");
             }
+
             SaveCommand = ReactiveCommand.CreateFromTask(SavePreferencesAsync);
         }
 
@@ -41,32 +53,31 @@ namespace GalaxyViewer.ViewModels
             Preferences = await LoadPreferencesAsync() ?? new PreferencesModel();
         }
 
-        public PreferencesModel Preferences
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected virtual void OnPropertyChanged(string propertyName)
         {
-            get => _preferences;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private ThemeOptions _selectedTheme;
+        public ThemeOptions SelectedTheme
+        {
+            get => _selectedTheme;
             set
             {
-                this.RaiseAndSetIfChanged(ref _preferences, value);
+                _selectedTheme = value;
+                OnPropertyChanged(nameof(SelectedTheme));
             }
         }
 
-        public ThemeOptions Theme
+        private LoginLocationOptions _selectedLoginLocation;
+        public LoginLocationOptions SelectedLoginLocation
         {
-            get => Preferences.Theme;
+            get => _selectedLoginLocation;
             set
             {
-                Preferences.Theme = value;
-                this.RaisePropertyChanged(nameof(Theme));
-            }
-        }
-
-        public LoginLocationOptions LoginLocation
-        {
-            get => Preferences.LoginLocation;
-            set
-            {
-                Preferences.LoginLocation = value;
-                this.RaisePropertyChanged(nameof(LoginLocation));
+                _selectedLoginLocation = value;
+                OnPropertyChanged(nameof(SelectedLoginLocation));
             }
         }
 
@@ -74,7 +85,11 @@ namespace GalaxyViewer.ViewModels
         public string StatusMessage
         {
             get => _statusMessage;
-            set => this.RaiseAndSetIfChanged(ref _statusMessage, value);
+            set
+            {
+                _statusMessage = value;
+                OnPropertyChanged(nameof(StatusMessage));
+            }
         }
 
         public async Task<PreferencesModel> LoadPreferencesAsync()
@@ -92,30 +107,33 @@ namespace GalaxyViewer.ViewModels
                     var serializer = new XmlSerializer(typeof(PreferencesModel));
                     var loadedPreferences = await Task.Run(() =>
                     {
-                        var result = serializer.Deserialize(stream);
-                        if (result is PreferencesModel preferences)
+                        try
                         {
-                            return preferences;
+                            var result = serializer.Deserialize(stream);
+                            if (result is PreferencesModel preferences)
+                            {
+                                return preferences;
+                            }
+                            else
+                            {
+                                throw new InvalidCastException("Deserialized object is not of type PreferencesModel.");
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            throw new InvalidCastException("Deserialized object is not of type PreferencesModel.");
+                            Log.Error(ex, "Failed to deserialize preferences.");
+                            StatusMessage = "Failed to load preferences. Using default settings.";
+                            return new PreferencesModel(); // Return default preferences on error
                         }
-                    }) ?? new PreferencesModel();
-                    return loadedPreferences ?? new PreferencesModel();
+                    });
+                    return loadedPreferences;
                 }
-            }
-            catch (InvalidCastException ice)
-            {
-                StatusMessage = $"Invalid cast exception loading preferences: {ice.Message}";
-                Log.Error(ice, "Invalid cast while loading preferences.");
-                return new PreferencesModel();
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error loading preferences: {ex.Message}";
                 Log.Error(ex, "Error loading preferences.");
-                return new PreferencesModel();
+                StatusMessage = "Error loading preferences. Using default settings.";
+                return new PreferencesModel(); // Return default preferences on error
             }
         }
 

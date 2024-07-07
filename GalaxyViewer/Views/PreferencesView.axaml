@@ -8,8 +8,10 @@
              x:DataType="vm:PreferencesViewModel">
     <StackPanel Margin="20">
         <TextBlock Text="Preferences" />
-        <ComboBox ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding Theme}" />
-        <ComboBox ItemsSource="{Binding LoginLocationOptions}" SelectedItem="{Binding LoginLocation}" />
+        <TextBlock Text="Theme" />
+        <ComboBox ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}" />
+        <TextBlock Text="Login Location" />
+        <ComboBox ItemsSource="{Binding LoginLocationOptions}" SelectedItem="{Binding SelectedLoginLocation}" />
         <!-- Add more UI elements as needed -->
         <Button Content="Save Preferences" Command="{Binding SaveCommand}" HorizontalAlignment="Left" />
         <TextBlock Text="{Binding StatusMessage}" />

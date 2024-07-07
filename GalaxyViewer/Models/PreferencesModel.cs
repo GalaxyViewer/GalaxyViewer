@@ -34,10 +34,5 @@ namespace GalaxyViewer.Models
             get => _loginLocation;
             set => _loginLocation = value;
         }
-
-        public static implicit operator PreferencesModel(Task<PreferencesModel> v)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
