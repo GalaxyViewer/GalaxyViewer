@@ -110,13 +110,18 @@ namespace GalaxyViewer.ViewModels
                 Log.Error(ex, "An error occurred while logging in user: {Username}", Username);
             }
         }
+        
         private void ShowPreferences()
         {
+#if ANDROID
+            CurrentView = new PreferencesView();
+#else
             var preferencesWindow = new PreferencesWindow
             {
                 DataContext = new PreferencesViewModel()
             };
             preferencesWindow.Show();
+#endif
         }
 
         private void ExitApplication()

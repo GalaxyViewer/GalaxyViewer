@@ -17,9 +17,4 @@ public partial class MainWindow : Window
         }
 #endif
     }
-
-    private void InitializeComponent()
-    {
-        AvaloniaXamlLoader.Load(this);
-    }
 }
