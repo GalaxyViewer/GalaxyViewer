@@ -1,13 +1,13 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using Serilog;
 using GalaxyViewer.ViewModels;
 using GalaxyViewer.Views;
+using Serilog;
 
 namespace GalaxyViewer;
 
-public partial class App : Application
+public class App : Application
 {
     public App()
     {

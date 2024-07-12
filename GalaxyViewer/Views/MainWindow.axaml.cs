@@ -1,20 +1,25 @@
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
 namespace GalaxyViewer.Views;
 
-public partial class MainWindow : Window
+public partial class MainWindow : BaseWindow
 {
-    public MainWindow(bool attachDevTools = false)
+    public MainWindow()
     {
         InitializeComponent();
+        AttachDevToolsConditional();
+    }
 
+    private void InitializeComponent()
+    {
+        AvaloniaXamlLoader.Load(this);
+    }
+
+    private void AttachDevToolsConditional()
+    {
 #if DEBUG
-        if (attachDevTools)
-        {
-            this.AttachDevTools();
-        }
+        this.AttachDevTools();
 #endif
     }
 }

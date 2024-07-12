@@ -1,6 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using Avalonia.ReactiveUI;
 
 namespace GalaxyViewer.Views
 {
@@ -16,7 +16,7 @@ namespace GalaxyViewer.Views
             AvaloniaXamlLoader.Load(this);
         }
 
-        private void LoginButton_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
             // Your event handling code here, which attempts the Login method
         }

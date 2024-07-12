@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using GalaxyViewer.ViewModels;
@@ -10,7 +9,7 @@ namespace GalaxyViewer.Views
         public PreferencesWindow()
         {
             InitializeComponent();
-            this.DataContext = new PreferencesViewModel();
+            DataContext = new PreferencesViewModel();
         }
 
         private void InitializeComponent()

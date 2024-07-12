@@ -1,19 +1,17 @@
-using GalaxyViewer.Models;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Xml.Serialization;
-using ReactiveUI;
-using System.Reactive;
 using System.ComponentModel;
+using System.IO;
+using System.Reactive;
+using System.Threading.Tasks;
+using System.Xml.Serialization;
+using GalaxyViewer.Models;
+using ReactiveUI;
 using Serilog;
 
 namespace GalaxyViewer.ViewModels
 {
-    public class PreferencesViewModel : INotifyPropertyChanged
+    public sealed class PreferencesViewModel : INotifyPropertyChanged
     {
         public IEnumerable<string> ThemeOptions => Enum.GetNames(typeof(ThemeOptions));
         public IEnumerable<string> LoginLocationOptions => Enum.GetNames(typeof(LoginLocationOptions));
@@ -42,19 +40,22 @@ namespace GalaxyViewer.ViewModels
             }
             else
             {
-                Log.Error("Failed to create preferences directory.");
+                Log.Error("Failed to create preferences directory");
             }
 
             SaveCommand = ReactiveCommand.CreateFromTask(SavePreferencesAsync);
         }
 
+/*
         public async Task InitializeAsync()
         {
             Preferences = await LoadPreferencesAsync() ?? new PreferencesModel();
         }
+*/
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        protected virtual void OnPropertyChanged(string propertyName)
+
+        private void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -96,48 +97,44 @@ namespace GalaxyViewer.ViewModels
         {
             try
             {
-                string defaultPreferencesPath = Path.Combine("Assets", "preferences.xml");
+                var defaultPreferencesPath = Path.Combine("Assets", "preferences.xml");
                 if (!File.Exists(_preferencesFilePath) && File.Exists(defaultPreferencesPath))
                 {
                     File.Copy(defaultPreferencesPath, _preferencesFilePath);
                 }
 
-                using (var stream = new FileStream(_preferencesFilePath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read))
+                await using var stream = new FileStream(_preferencesFilePath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read);
+                var serializer = new XmlSerializer(typeof(PreferencesModel));
+                var loadedPreferences = await Task.Run(() =>
                 {
-                    var serializer = new XmlSerializer(typeof(PreferencesModel));
-                    var loadedPreferences = await Task.Run(() =>
+                    try
                     {
-                        try
+                        var result = serializer.Deserialize(stream);
+                        if (result is PreferencesModel preferences)
                         {
-                            var result = serializer.Deserialize(stream);
-                            if (result is PreferencesModel preferences)
-                            {
-                                return preferences;
-                            }
-                            else
-                            {
-                                throw new InvalidCastException("Deserialized object is not of type PreferencesModel.");
-                            }
+                            return preferences;
                         }
-                        catch (Exception ex)
-                        {
-                            Log.Error(ex, "Failed to deserialize preferences.");
-                            StatusMessage = "Failed to load preferences. Using default settings.";
-                            return new PreferencesModel(); // Return default preferences on error
-                        }
-                    });
-                    return loadedPreferences;
-                }
+
+                        throw new InvalidCastException("Deserialized object is not of type PreferencesModel.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "Failed to deserialize preferences");
+                        StatusMessage = "Failed to load preferences. Using default settings.";
+                        return new PreferencesModel(); // Return default preferences on error
+                    }
+                });
+                return loadedPreferences;
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error loading preferences.");
+                Log.Error(ex, "Error loading preferences");
                 StatusMessage = "Error loading preferences. Using default settings.";
                 return new PreferencesModel(); // Return default preferences on error
             }
         }
 
-        public async Task SavePreferencesAsync()
+        private async Task SavePreferencesAsync()
         {
             try
             {
@@ -148,7 +145,7 @@ namespace GalaxyViewer.ViewModels
                     Directory.CreateDirectory(directoryPath ?? throw new InvalidOperationException("Directory path is null."));
                 }
 
-                using var stream = new FileStream(_preferencesFilePath, FileMode.Create, FileAccess.Write);
+                await using var stream = new FileStream(_preferencesFilePath, FileMode.Create, FileAccess.Write);
                 var serializer = new XmlSerializer(typeof(PreferencesModel));
                 await Task.Run(() => serializer.Serialize(stream, Preferences));
                 StatusMessage = "Preferences saved successfully.";
@@ -156,12 +153,12 @@ namespace GalaxyViewer.ViewModels
             catch (IOException ioEx)
             {
                 StatusMessage = $"Error accessing the preferences file: {ioEx.Message}";
-                Log.Error(ioEx, "Error accessing the preferences file.");
+                Log.Error(ioEx, "Error accessing the preferences file");
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Error saving preferences: {ex.Message}";
-                Log.Error(ex, "Error saving preferences.");
+                Log.Error(ex, "Error saving preferences");
             }
         }
     }
