@@ -15,20 +15,17 @@ namespace GalaxyViewer.Views
 
         private async void LoadViewModelAsync()
         {
-            var viewModel = await CreateAsync();
+            var viewModel = new PreferencesViewModel();
+            await viewModel.InitializeAsync();
             DataContext = viewModel;
         }
 
         private static async Task<PreferencesViewModel> CreateAsync()
         {
             var viewModel = new PreferencesViewModel();
-            await viewModel.LoadPreferencesAsync();
+            await viewModel
+                .LoadPreferencesAsync();
             return viewModel;
-        }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
         }
     }
 }

@@ -82,7 +82,6 @@ namespace GalaxyViewer.ViewModels
 
             LogoutCommand = ReactiveCommand.Create(Logout);
             LoginCommand = ReactiveCommand.Create(DisplayLoginView);
-            ReactiveCommand.CreateFromTask(Login);
 
             ShowPreferencesCommand = ReactiveCommand.Create(ShowPreferences);
 
@@ -101,24 +100,20 @@ namespace GalaxyViewer.ViewModels
             CurrentView = new LoginView();
         }
 
-        private async Task Login()
+        public async Task Login(string username, string password)
         {
             try
             {
-                // Validate properties before using them
-                if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Password))
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 {
-                    // Handle invalid login parameters
-                    // For example, you might want to show an error message
-                    // or log the invalid login attempt to a file
                     await File.AppendAllTextAsync("error.log",
-                        "Invalid login parameters for user: " + Username);
-                    return; // Exit the method if validation fails
+                        "Invalid login parameters for user: " + username);
+                    return;
                 }
 
                 const string userAgent = "GalaxyViewer/0.1.0";
                 var libreMetaverseLoginParams =
-                    _client.Network.DefaultLoginParams(Username, Password, userAgent, LoginLocation,
+                    _client.Network.DefaultLoginParams(username, password, userAgent, LoginLocation,
                         Grid);
 
                 var loginSuccess =
@@ -130,16 +125,13 @@ namespace GalaxyViewer.ViewModels
                 }
                 else
                 {
-                    // Handle failed login
-                    Log.Error("Failed to login user: {Username}", Username);
-                    // Optionally, update the UI or notify the user of the failure
+                    Log.Error("Failed to login user: {Username}", username);
+
                 }
             }
             catch (Exception ex)
             {
-                // Handle any exceptions that occur during login
-                Log.Error(ex, "An error occurred while logging in user: {Username}", Username);
-                // Optionally, update the UI or notify the user of the exception
+                Log.Error(ex, "An error occurred while logging in user: {Username}", username);
             }
         }
 

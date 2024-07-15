@@ -1,9 +1,45 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="GalaxyViewer.Views.LoginView">
-    <StackPanel Margin="20">
-        <TextBox Name="UsernameBox" Watermark="Username" />
-        <TextBox Name="PasswordBox" Watermark="Password" PasswordChar="*" />
-        <Button Content="Login" Margin="0,10,0,0" Click="LoginButton_Click" />
-    </StackPanel>
+             x:Class="GalaxyViewer.Views.LoginView"
+             xmlns:converters="clr-namespace:GalaxyViewer.Converters"
+             xmlns:viewModels="clr-namespace:GalaxyViewer.ViewModels"
+             x:DataType="viewModels:LoginViewModel">
+    <UserControl.Resources>
+        <converters:LocalizedStringConverter x:Key="LocalizedStringConverter" />
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <!-- WebView or Image goes here -->
+        <Image Grid.Row="0" Source="/Assets/Images/banner.jpg" Stretch="Fill" />
+        <!-- Login Options -->
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="240" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="240" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0"
+                   Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
+                   VerticalAlignment="Center" />
+            <TextBox Grid.Column="1" Name="UsernameBox"
+                     Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
+                     Margin="5,0" />
+            <Label Grid.Column="2"
+                   Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
+                   VerticalAlignment="Center" Margin="5,0" />
+            <TextBox Grid.Column="3" Name="PasswordBox"
+                     Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
+                     PasswordChar="*" Margin="5,0" />
+            <Button Grid.Column="4"
+                    Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenLoginButton}"
+                    Margin="5,0" VerticalAlignment="Center" />
+        </Grid>
+        <!-- TODO: Add in the Grid selector -->
+        <!-- TODO: Add in the Location selector -->
+    </Grid>
 </UserControl>

@@ -13,7 +13,6 @@ public class App : Application
     {
         // Initialize Serilog here
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
             .WriteTo.Console()
             .WriteTo.File("logs/error.log", rollingInterval: RollingInterval.Day)
             .CreateLogger();
