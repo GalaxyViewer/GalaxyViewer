@@ -1,4 +1,4 @@
-using Avalonia;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using GalaxyViewer.ViewModels;
@@ -10,12 +10,22 @@ namespace GalaxyViewer.Views
         public PreferencesView()
         {
             InitializeComponent();
-            this.DataContext = new PreferencesViewModel();
+            LoadViewModelAsync();
         }
 
-        private void InitializeComponent()
+        private async void LoadViewModelAsync()
         {
-            AvaloniaXamlLoader.Load(this);
+            var viewModel = new PreferencesViewModel();
+            await viewModel.InitializeAsync();
+            DataContext = viewModel;
+        }
+
+        private static async Task<PreferencesViewModel> CreateAsync()
+        {
+            var viewModel = new PreferencesViewModel();
+            await viewModel
+                .LoadPreferencesAsync();
+            return viewModel;
         }
     }
 }

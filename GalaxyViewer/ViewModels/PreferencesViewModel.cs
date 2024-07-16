@@ -1,123 +1,224 @@
-using GalaxyViewer.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
+using System.Reactive;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using GalaxyViewer.Models;
+using GalaxyViewer.Services;
 using ReactiveUI;
-using System.Reactive;
+using Serilog;
 
 namespace GalaxyViewer.ViewModels
 {
-    public class PreferencesViewModel : ReactiveObject
+    public sealed class PreferencesViewModel : INotifyPropertyChanged
     {
-        public IEnumerable<string> ThemeOptions => Enum.GetNames(typeof(ThemeOptions));
+        private PreferencesModel _preferences = new();
+        private readonly PreferencesManager _preferencesManager = new();
 
-        public IEnumerable<string> LoginLocationOptions => Enum.GetNames(typeof(LoginLocationOptions));
+        private string _selectedLanguage = "en-US";
+        private string _selectedTheme = "Default";
+        private string _selectedFont = "Atkinson Hyperlegible";
+        private string _selectedLoginLocation = "Home";
 
-        private Lazy<PreferencesModel> _lazyPreferences;
+        public IEnumerable<string> LanguageOptions => _preferences.LanguageOptions;
+
+        public string SelectedLanguage
+        {
+            get => _selectedLanguage;
+            set
+            {
+                if (_selectedLanguage == value) return;
+                _selectedLanguage = value;
+                OnPropertyChanged(nameof(SelectedLanguage));
+                _preferences.Language = value;
+                ChangeCulture(value);
+            }
+        }
+
+        public IEnumerable<string> ThemeOptions => _preferences.ThemeOptions;
+
+        public string SelectedTheme
+        {
+            get => _selectedTheme;
+            set
+            {
+                if (_selectedTheme == value) return;
+                _selectedTheme = value;
+                OnPropertyChanged(nameof(SelectedTheme));
+                _preferences.Theme = value;
+            }
+        }
+
+        public IEnumerable<string> FontOptions => _preferences.FontOptions;
+
+        public string SelectedFont
+        {
+            get => _selectedFont;
+            set
+            {
+                if (_selectedFont == value) return;
+                _selectedFont = value;
+                OnPropertyChanged(nameof(SelectedFont));
+                _preferences.Font = value;
+            }
+        }
+
+        public IEnumerable<string> LoginLocationOptions => _preferences.LoginLocationOptions;
+
+        public string SelectedLoginLocation
+        {
+            get => _selectedLoginLocation;
+            set
+            {
+                if (_selectedLoginLocation == value) return;
+                _selectedLoginLocation = value;
+                OnPropertyChanged(nameof(SelectedLoginLocation));
+                _preferences.LoginLocation = value;
+            }
+        }
+
+        private static void ChangeCulture(string cultureName)
+        {
+            CultureInfo.CurrentCulture = new CultureInfo(cultureName);
+            CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
+        }
+
+        public PreferencesModel Preferences
+        {
+            get => _preferences;
+            set
+            {
+                _preferences = value;
+                OnPropertyChanged(nameof(Preferences));
+            }
+        }
+
         private readonly string _preferencesFilePath;
-        public ReactiveCommand<Unit, Unit> SaveCommand { get; }
+        public ReactiveCommand<Unit, Unit>? SaveCommand { get; private set; }
 
         public PreferencesViewModel()
         {
-            _preferencesFilePath = GetPreferencesFilePath();
-            _lazyPreferences = new Lazy<PreferencesModel>(LoadOrCreatePreferences);
+            _preferencesFilePath =
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "GalaxyViewer", "preferences.xml");
+            var directoryPath = Path.GetDirectoryName(_preferencesFilePath);
+            if (directoryPath != null)
+            {
+                _ = Directory.CreateDirectory(directoryPath);
+            }
+            else
+            {
+                Log.Error("Failed to create preferences directory");
+            }
+
             SaveCommand = ReactiveCommand.CreateFromTask(SavePreferencesAsync);
+
+            Task.Run(InitializeAsync).Wait();
         }
 
-        public static async Task<PreferencesViewModel> CreateAsync()
+        public async Task InitializeAsync()
         {
-            var viewModel = new PreferencesViewModel();
-            await viewModel.LoadPreferencesAsync();
-            return viewModel;
+            Preferences = await _preferencesManager.LoadPreferencesAsync();
+
+            // Update local fields from loaded preferences
+            _selectedLanguage = Preferences.Language;
+            _selectedTheme = Preferences.Theme;
+            _selectedFont = Preferences.Font;
+            _selectedLoginLocation = Preferences.LoginLocation;
+
+            // Notify the UI to update
+            OnPropertyChanged(nameof(SelectedLanguage));
+            OnPropertyChanged(nameof(SelectedTheme));
+            OnPropertyChanged(nameof(SelectedFont));
+            OnPropertyChanged(nameof(SelectedLoginLocation));
+
+            ChangeCulture(
+                _selectedLanguage);
         }
 
-        private PreferencesModel Preferences => _lazyPreferences.Value;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        private static string GetPreferencesFilePath()
+        private void OnPropertyChanged(string propertyName)
         {
-            var appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var applicationFolder = Path.Combine(appDataFolder, "GalaxyViewer");
-            Directory.CreateDirectory(applicationFolder); // CreateDirectory is no-op if exists
-            return Path.Combine(applicationFolder, "preferences.xml");
-        }
-
-        private PreferencesModel LoadOrCreatePreferences()
-        {
-            if (File.Exists(_preferencesFilePath))
-            {
-                using var stream = new FileStream(_preferencesFilePath, FileMode.Open);
-                var serializer = new XmlSerializer(typeof(PreferencesModel));
-                return serializer.Deserialize(stream) as PreferencesModel ?? new PreferencesModel();
-            }
-            return new PreferencesModel
-            {
-                Theme = Enum.TryParse(typeof(ThemeOptions), "System", out object themeResult) ? themeResult.ToString() : Models.ThemeOptions.Light.ToString(),
-                LoginLocation = Enum.TryParse(typeof(LoginLocationOptions), "LastLocation", out object loginLocationResult) ? loginLocationResult.ToString() : Models.LoginLocationOptions.Home.ToString()
-            };
-        }
-
-        private string _theme;
-        public string Theme
-        {
-            get => Preferences.Theme;
-            set
-            {
-                if (Preferences.Theme != value)
-                {
-                    Preferences.Theme = value;
-                    this.RaisePropertyChanged(nameof(Theme));
-                }
-            }
-        }
-
-        private string _loginLocation;
-        public string LoginLocation
-        {
-            get => Preferences.LoginLocation;
-            set
-            {
-                if (Preferences.LoginLocation != value)
-                {
-                    Preferences.LoginLocation = value;
-                    this.RaisePropertyChanged(nameof(LoginLocation));
-                }
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         private string _statusMessage = string.Empty;
+
         public string StatusMessage
         {
             get => _statusMessage;
-            set => this.RaiseAndSetIfChanged(ref _statusMessage, value);
-        }
-
-        public async Task LoadPreferencesAsync()
-        {
-            await Task.Run(() =>
+            set
             {
-                _lazyPreferences = new Lazy<PreferencesModel>(LoadOrCreatePreferences);
-            });
+                _statusMessage = value;
+                OnPropertyChanged(nameof(StatusMessage));
+            }
         }
 
-        public async Task SavePreferencesAsync()
+        public async Task<PreferencesModel> LoadPreferencesAsync()
+        {
+            try
+            {
+                // Step 1: Check and copy default preferences if necessary
+                var defaultPreferencesPath = Path.Combine("Assets", "preferences.xml");
+                if (!File.Exists(_preferencesFilePath) && File.Exists(defaultPreferencesPath))
+                {
+                    File.Copy(defaultPreferencesPath, _preferencesFilePath);
+                }
+
+                // Step 2: Open the preferences file
+                await using var stream = new FileStream(_preferencesFilePath, FileMode.OpenOrCreate,
+                    FileAccess.Read, FileShare.Read);
+                var serializer = new XmlSerializer(typeof(PreferencesModel));
+
+                // Step 3 & 4: Deserialize the XML content
+                var loadedPreferences = await Task.Run(() =>
+                {
+                    try
+                    {
+                        var result = serializer.Deserialize(stream);
+                        if (result is PreferencesModel preferences)
+                        {
+                            return preferences;
+                        }
+
+                        throw new InvalidCastException(
+                            "Deserialized object is not of type PreferencesModel.");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Step 5: Handle deserialization failure
+                        Log.Error(ex, "Failed to deserialize preferences");
+                        StatusMessage = "Failed to load preferences. Using default settings.";
+                        return new PreferencesModel(); // Return default preferences on error
+                    }
+                });
+                return loadedPreferences;
+            }
+            catch (Exception ex)
+            {
+                // Step 6: Handle any other exceptions
+                Log.Error(ex, "Error loading preferences");
+                StatusMessage = "Error loading preferences. Using default settings.";
+                return new PreferencesModel(); // Return default preferences on error
+            }
+        }
+
+        private async Task SavePreferencesAsync()
         {
             try
             {
                 Preferences.LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-                using var stream = new FileStream(_preferencesFilePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
-                var serializer = new XmlSerializer(typeof(PreferencesModel));
-
-                await Task.Run(() => serializer.Serialize(stream, Preferences));
-
-                StatusMessage = "Preferences saved";
+                await _preferencesManager.SavePreferencesAsync(Preferences);
+                StatusMessage = "Preferences saved successfully.";
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Error saving preferences: {ex.Message}";
+                Log.Error(ex, "Error saving preferences");
             }
         }
     }
