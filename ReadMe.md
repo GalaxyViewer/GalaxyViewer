@@ -95,7 +95,7 @@ If you have any questions or concerns, please contact [Galaxy Littlepaws](mailto
 
 ## License
 
-This project is licensed under the MIT License - see the [License](LICENSE.md) file for details.
+This project is licensed under the GNU Lesser General Public License - see the [License](LICENSE.md) file for details.
 
 ## Disclaimer
 
