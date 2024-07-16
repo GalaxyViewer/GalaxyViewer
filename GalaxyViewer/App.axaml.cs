@@ -3,12 +3,15 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using GalaxyViewer.ViewModels;
 using GalaxyViewer.Views;
+using GalaxyViewer.Services;
 using Serilog;
 
 namespace GalaxyViewer;
 
 public class App : Application
 {
+    private readonly PreferencesManager _preferencesManager = new PreferencesManager();
+
     public App()
     {
         // Initialize Serilog here
@@ -25,19 +28,22 @@ public class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        _preferencesManager.LoadPreferencesAsync();
+
+        switch (ApplicationLifetime)
         {
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = new MainViewModel()
-            };
-        }
-        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
-        {
-            singleViewPlatform.MainView = new MainView
-            {
-                DataContext = new MainViewModel()
-            };
+            case IClassicDesktopStyleApplicationLifetime desktop:
+                desktop.MainWindow = new MainWindow
+                {
+                    DataContext = new MainViewModel()
+                };
+                break;
+            case ISingleViewApplicationLifetime singleViewPlatform:
+                singleViewPlatform.MainView = new MainView
+                {
+                    DataContext = new MainViewModel()
+                };
+                break;
         }
 
         base.OnFrameworkInitializationCompleted();

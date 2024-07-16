@@ -1,9 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 
+<!--
+This is in English (United States) language, as the default. It is in case there is no other language file available.
+-->
+
 <root>
     <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
         <xsd:element name="root" msdata:IsDataSet="true">
-            
+
         </xsd:element>
     </xsd:schema>
     <resheader name="resmimetype">
@@ -18,4 +22,67 @@
     <resheader name="writer">
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
+    <!-- General Stuff -->
+    <data name="ViewerName" xml:space="preserve">
+        <value>GalaxyViewer</value>
+    </data>
+    <data name="Version" xml:space="preserve">
+        <value>0.1</value>
+    </data>
+    <data name="WelcomeMessage" xml:space="preserve">
+        <value>Welcome to GalaxyViewer 🌌</value>
+    </data>
+    <data name="Error" xml:space="preserve">
+        <value>Error</value>
+    </data>
+    <data name="Ok" xml:space="preserve">
+        <value>Ok</value>
+    </data>
+    <data name="Cancel" xml:space="preserve">
+        <value>Cancel</value>
+    </data>
+    <!-- Login Screen -->
+    <data name="LoginScreenTitle" xml:space="preserve">
+        <value>Login</value>
+    </data>
+    <data name="LoginScreenUsername" xml:space="preserve">
+        <value>Username</value>
+    </data>
+    <data name="LoginScreenPassword" xml:space="preserve">
+        <value>Password</value>
+    </data>
+    <data name="LoginLocation" xml:space="preserve">
+        <value>Login Location</value>
+    </data>
+    <data name="LoginScreenGrid" xml:space="preserve">
+        <value>Grid</value>
+    </data>
+    <data name="LoginScreenLoginButton" xml:space="preserve">
+        <value>Login</value>
+    </data>
+    <data name="LoginSuceess" xml:space="preserve">
+        <value>Login successful</value>
+    </data>
+    <data name="LoginScreenWrongCredentials" xml:space="preserve">
+        <value>Wrong username or password</value>
+    </data>
+    <!-- Preferences Screen -->
+    <data name="PreferencesTitle" xml:space="preserve">
+        <value>Preferences</value>
+    </data>
+    <data name="PreferencesLanguage" xml:space="preserve">
+        <value>Language</value>
+    </data>
+    <data name="PreferencesLoginLocation" xml:space="preserve">
+        <value>Login Location</value>
+    </data>
+    <data name="PreferencesTheme" xml:space="preserve">
+        <value>Theme</value>
+    </data>
+    <data name="PreferencesFont" xml:space="preserve">
+        <value>Font</value>
+    </data>
+    <data name="PreferencesSaveButton" xml:space="preserve">
+        <value>Save Preferences</value>
+    </data>
 </root>

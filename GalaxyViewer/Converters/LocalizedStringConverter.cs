@@ -9,8 +9,8 @@ public class LocalizedStringConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (parameter is string key) return LocalizationManager.GetString(key) ?? "Key not found";
-        return "Key not found";
+        if (parameter is string key) return new LocalizationManager().GetString(key);
+        return "Key not found for " + value;
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

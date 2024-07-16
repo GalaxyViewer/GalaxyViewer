@@ -7,6 +7,7 @@ using System.Reactive;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using GalaxyViewer.Models;
+using GalaxyViewer.Services;
 using ReactiveUI;
 using Serilog;
 
@@ -15,9 +16,11 @@ namespace GalaxyViewer.ViewModels
     public sealed class PreferencesViewModel : INotifyPropertyChanged
     {
         private PreferencesModel _preferences = new();
+        private readonly PreferencesManager _preferencesManager = new();
 
         private string _selectedLanguage = "en-US";
         private string _selectedTheme = "Default";
+        private string _selectedFont = "Atkinson Hyperlegible";
         private string _selectedLoginLocation = "Home";
 
         public IEnumerable<string> LanguageOptions => _preferences.LanguageOptions;
@@ -27,13 +30,11 @@ namespace GalaxyViewer.ViewModels
             get => _selectedLanguage;
             set
             {
-                if (_selectedLanguage != value)
-                {
-                    _selectedLanguage = value;
-                    OnPropertyChanged(nameof(SelectedLanguage));
-                    _preferences.Language = value;
-                    ChangeCulture(value);
-                }
+                if (_selectedLanguage == value) return;
+                _selectedLanguage = value;
+                OnPropertyChanged(nameof(SelectedLanguage));
+                _preferences.Language = value;
+                ChangeCulture(value);
             }
         }
 
@@ -44,12 +45,24 @@ namespace GalaxyViewer.ViewModels
             get => _selectedTheme;
             set
             {
-                if (_selectedTheme != value)
-                {
-                    _selectedTheme = value;
-                    OnPropertyChanged(nameof(SelectedTheme));
-                    _preferences.Theme = value;
-                }
+                if (_selectedTheme == value) return;
+                _selectedTheme = value;
+                OnPropertyChanged(nameof(SelectedTheme));
+                _preferences.Theme = value;
+            }
+        }
+
+        public IEnumerable<string> FontOptions => _preferences.FontOptions;
+
+        public string SelectedFont
+        {
+            get => _selectedFont;
+            set
+            {
+                if (_selectedFont == value) return;
+                _selectedFont = value;
+                OnPropertyChanged(nameof(SelectedFont));
+                _preferences.Font = value;
             }
         }
 
@@ -60,12 +73,10 @@ namespace GalaxyViewer.ViewModels
             get => _selectedLoginLocation;
             set
             {
-                if (_selectedLoginLocation != value)
-                {
-                    _selectedLoginLocation = value;
-                    OnPropertyChanged(nameof(SelectedLoginLocation));
-                    _preferences.LoginLocation = value;
-                }
+                if (_selectedLoginLocation == value) return;
+                _selectedLoginLocation = value;
+                OnPropertyChanged(nameof(SelectedLoginLocation));
+                _preferences.LoginLocation = value;
             }
         }
 
@@ -105,25 +116,27 @@ namespace GalaxyViewer.ViewModels
 
             SaveCommand = ReactiveCommand.CreateFromTask(SavePreferencesAsync);
 
-            // Call InitializeAsync to load preferences and set the application's culture
             Task.Run(InitializeAsync).Wait();
         }
 
         public async Task InitializeAsync()
         {
-            Preferences = await LoadPreferencesAsync();
+            Preferences = await _preferencesManager.LoadPreferencesAsync();
 
+            // Update local fields from loaded preferences
             _selectedLanguage = Preferences.Language;
             _selectedTheme = Preferences.Theme;
+            _selectedFont = Preferences.Font;
             _selectedLoginLocation = Preferences.LoginLocation;
 
             // Notify the UI to update
             OnPropertyChanged(nameof(SelectedLanguage));
             OnPropertyChanged(nameof(SelectedTheme));
+            OnPropertyChanged(nameof(SelectedFont));
             OnPropertyChanged(nameof(SelectedLoginLocation));
 
             ChangeCulture(
-                _selectedLanguage); // Ensure the culture is updated based on the selected language
+                _selectedLanguage);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -199,25 +212,8 @@ namespace GalaxyViewer.ViewModels
             try
             {
                 Preferences.LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-                var directoryPath = Path.GetDirectoryName(_preferencesFilePath);
-                if (!Directory.Exists(directoryPath))
-                {
-                    Directory.CreateDirectory(directoryPath ??
-                                              throw new InvalidOperationException(
-                                                  "Directory path is null."));
-                }
-
-                await using var stream = new FileStream(_preferencesFilePath, FileMode.Create,
-                    FileAccess.Write);
-                var serializer = new XmlSerializer(typeof(PreferencesModel));
-                await Task.Run(() => serializer.Serialize(stream, Preferences));
+                await _preferencesManager.SavePreferencesAsync(Preferences);
                 StatusMessage = "Preferences saved successfully.";
-            }
-            catch (IOException ioEx)
-            {
-                StatusMessage = $"Error accessing the preferences file: {ioEx.Message}";
-                Log.Error(ioEx, "Error accessing the preferences file");
             }
             catch (Exception ex)
             {

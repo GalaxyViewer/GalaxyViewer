@@ -10,6 +10,7 @@
     </Application.DataTemplates>
 
     <Application.Styles>
+        <StyleInclude Source="avares://GalaxyViewer/Styles.axaml"></StyleInclude>
         <StyleInclude Source="avares://AvaloniaInside.Shell/Default.axaml"></StyleInclude>
         <FluentTheme />
     </Application.Styles>
