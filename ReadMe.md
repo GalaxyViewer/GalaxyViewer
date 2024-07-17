@@ -72,12 +72,10 @@ To be added...
 
 Make sure you have the [.NET Core SDK](https://dotnet.microsoft.com/download) installed. We use .NET 8.0.
 
-Install The Avalonia Project too: `dotnet new install Avalonia.Templates` (if you haven't already).
-
-Also install the .NET things for android, wasm, etc. if you want to build for those platforms.
-`dotnet workload install android`, `dotnet workload install wasm-tools`, etc.
-
 Clone the repository and navigate to the project directory.
+
+Install the .NET things for android, wasm, etc. if you want to build for those platforms.
+`dotnet workload install android`, `dotnet workload install wasm-tools`, etc.
 
 Run `dotnet build` to build the project.
 
@@ -99,4 +97,4 @@ This project is licensed under the GNU Lesser General Public License - see the [
 
 ## Disclaimer
 
-This viewer is not affiliated with, endorsed by, or sponsored by Linden Research, Inc. or any of its affiliates. Second Life and Linden Lab are trademarks or registered trademarks of Linden Research, Inc. All rights reserved. No infringement is intended.
+This software is not provided or supported by Linden Lab, the makers of Second Life. Second Life and Linden Lab are trademarks or registered trademarks of Linden Research, Inc. All rights reserved. No infringement is intended.
