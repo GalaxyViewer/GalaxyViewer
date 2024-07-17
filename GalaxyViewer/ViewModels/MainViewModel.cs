@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -74,6 +72,7 @@ namespace GalaxyViewer.ViewModels
         public ReactiveCommand<Unit, Unit> LoginCommand { get; }
 
         public ICommand ShowPreferencesCommand { get; }
+        public ICommand ShowDebugViewCommand { get; }
 
         public ICommand ExitCommand { get; }
 
@@ -86,6 +85,7 @@ namespace GalaxyViewer.ViewModels
             LoginCommand = ReactiveCommand.Create(DisplayLoginView);
 
             ShowPreferencesCommand = ReactiveCommand.Create(ShowPreferences);
+            ShowDebugViewCommand = ReactiveCommand.Create(ShowDevView);
 
             ExitCommand = ReactiveCommand.Create(ExitApplication);
         }
@@ -148,6 +148,11 @@ namespace GalaxyViewer.ViewModels
             };
             preferencesWindow.Show();
 #endif
+        }
+
+        private void ShowDevView()
+        {
+            CurrentView = new DebugView();
         }
 
         private void ExitApplication()

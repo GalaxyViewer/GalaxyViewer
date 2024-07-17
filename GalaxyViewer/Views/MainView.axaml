@@ -50,6 +50,9 @@
                 <MenuItem Header="Marketplace" />
                 <MenuItem Header="Search" />
             </MenuItem>
+            <MenuItem Header="Dev">
+                <MenuItem Header="Debug View" Command="{Binding ShowDebugViewCommand}" />
+            </MenuItem>
             <!-- Add more menu items as needed -->
         </Menu>
 
