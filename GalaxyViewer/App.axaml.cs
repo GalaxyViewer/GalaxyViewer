@@ -1,6 +1,9 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Styling;
+using GalaxyViewer.Models;
 using GalaxyViewer.ViewModels;
 using GalaxyViewer.Views;
 using GalaxyViewer.Services;
@@ -10,8 +13,6 @@ namespace GalaxyViewer;
 
 public class App : Application
 {
-    private readonly PreferencesManager _preferencesManager = new PreferencesManager();
-
     public App()
     {
         // Initialize Serilog here
@@ -21,15 +22,18 @@ public class App : Application
             .CreateLogger();
     }
 
+    public static PreferencesManager? PreferencesManager { get; private set; }
+
     public override void Initialize()
     {
+        PreferencesManager = new PreferencesManager();
+        PreferencesManager.PreferencesChanged += OnPreferencesChanged;
         AvaloniaXamlLoader.Load(this);
+        base.Initialize();
     }
 
-    public override void OnFrameworkInitializationCompleted()
+    public override async void OnFrameworkInitializationCompleted()
     {
-        _preferencesManager.LoadPreferencesAsync();
-
         switch (ApplicationLifetime)
         {
             case IClassicDesktopStyleApplicationLifetime desktop:
@@ -46,6 +50,42 @@ public class App : Application
                 break;
         }
 
+        Debug.Assert(PreferencesManager != null, nameof(PreferencesManager) + " != null");
+        var preferences = await PreferencesManager.LoadPreferencesAsync();
+        ApplyPreferences(preferences);
+
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private async void OnPreferencesChanged(object? sender, PreferencesModel preferences)
+    {
+        if (PreferencesManager?.IsLoadingPreferences == true) return;
+        ApplyPreferences(preferences);
+        RefreshThemeForAllWindows();
+    }
+
+    private void ApplyPreferences(PreferencesModel preferences)
+    {
+        RequestedThemeVariant = preferences.Theme switch
+        {
+            "Light" => ThemeVariant.Light,
+            "Dark" => ThemeVariant.Dark,
+            _ => ThemeVariant.Default
+        };
+
+        // TODO: Apply other preferences
+    }
+
+    private void RefreshThemeForAllWindows()
+    {
+        if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktopLifetime)
+            return;
+        foreach (var window in desktopLifetime.Windows)
+        {
+            if (window is not BaseWindow baseWindow) continue;
+            var resultTheme = PreferencesManager?.LoadPreferencesAsync().Result.Theme;
+            if (resultTheme != null)
+                baseWindow.ApplyTheme(resultTheme);
+        }
     }
 }

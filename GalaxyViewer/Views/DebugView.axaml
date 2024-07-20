@@ -7,41 +7,41 @@
         <!-- Radio Buttons -->
         <TextBlock Text="Radio Buttons:" FontWeight="Bold" Margin="0,0,0,10" />
         <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-            <RadioButton Content="Option 1" GroupName="Options" Margin="0,0,10,0"/>
-            <RadioButton Content="Option 2" GroupName="Options" Margin="0,0,10,0"/>
+            <RadioButton Content="Option 1" GroupName="Options" Margin="0,0,10,0" />
+            <RadioButton Content="Option 2" GroupName="Options" Margin="0,0,10,0" />
             <RadioButton Content="Option 3" GroupName="Options" />
         </StackPanel>
 
         <!-- Check Boxes -->
         <TextBlock Text="Check Boxes:" FontWeight="Bold" Margin="0,0,0,10" />
         <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-            <CheckBox Content="Check 1" Margin="0,0,10,0"/>
-            <CheckBox Content="Check 2" Margin="0,0,10,0"/>
+            <CheckBox Content="Check 1" Margin="0,0,10,0" />
+            <CheckBox Content="Check 2" Margin="0,0,10,0" />
             <CheckBox Content="Check 3" />
         </StackPanel>
 
         <!-- ComboBox -->
         <TextBlock Text="ComboBox:" FontWeight="Bold" Margin="0,0,0,10" />
         <ComboBox Margin="0,0,0,20">
-            <ComboBoxItem Content="Item 1"/>
-            <ComboBoxItem Content="Item 2"/>
-            <ComboBoxItem Content="Item 3"/>
+            <ComboBoxItem Content="Item 1" />
+            <ComboBoxItem Content="Item 2" />
+            <ComboBoxItem Content="Item 3" />
         </ComboBox>
 
         <!-- TextBox -->
         <TextBlock Text="TextBox:" FontWeight="Bold" Margin="0,0,0,10" />
-        <TextBox Watermark="Enter text here..." Margin="0,0,0,20"/>
+        <TextBox Watermark="Enter text here..." Margin="0,0,0,20" />
 
         <!-- Button -->
         <TextBlock Text="Button:" FontWeight="Bold" Margin="0,0,0,10" />
-        <Button Content="Click Me" Margin="0,0,0,20"/>
+        <Button Content="Click Me" Margin="0,0,0,20" />
 
         <!-- ListBox -->
         <TextBlock Text="ListBox:" FontWeight="Bold" Margin="0,0,0,10" />
         <ListBox Margin="0,0,0,20">
-            <ListBoxItem Content="List Item 1"/>
-            <ListBoxItem Content="List Item 2"/>
-            <ListBoxItem Content="List Item 3"/>
+            <ListBoxItem Content="List Item 1" />
+            <ListBoxItem Content="List Item 2" />
+            <ListBoxItem Content="List Item 3" />
         </ListBox>
     </StackPanel>
 </UserControl>

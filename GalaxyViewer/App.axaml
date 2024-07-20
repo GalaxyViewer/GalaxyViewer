@@ -1,10 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:GalaxyViewer"
-             x:Class="GalaxyViewer.App"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
-
+             x:Class="GalaxyViewer.App">
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
@@ -14,4 +11,8 @@
         <StyleInclude Source="avares://AvaloniaInside.Shell/Default.axaml"></StyleInclude>
         <FluentTheme />
     </Application.Styles>
+    <Application.Resources>
+        <FontFamily x:Key="EmojiFontFamily">avares://GalaxyViewer/Assets/Fonts/#Noto Color Emoji</FontFamily>
+        <FontFamily x:Key="DefaultFontFamily">avares://GalaxyViewer/Assets/Fonts/#Atkinson Hyperlegible</FontFamily>
+    </Application.Resources>
 </Application>

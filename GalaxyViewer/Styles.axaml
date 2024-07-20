@@ -1,6 +1,11 @@
 ﻿<Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:GalaxyViewer.Controls">
+    <Style Selector="local|EmojiTextBlock">
+        <Setter Property="EmojiFontFamily" Value="avares://GalaxyViewer/Assets/Fonts/#Noto Color Emoji" />
+        <Setter Property="DefaultFontFamily" Value="avares://GalaxyViewer/Assets/Fonts/#Atkinson Hyperlegible" />
+    </Style>
     <Style Selector="TextBlock">
-        <Setter Property="FontFamily" Value="avares://GalaxyViewer/Assets/Fonts/#Noto Emoji, avar://GalaxyViewer/Assets/Fonts/#Atkinson Hyperlegible" />
+        <Setter Property="FontFamily" Value="avares://GalaxyViewer/Assets/Fonts/#Atkinson Hyperlegible" />
     </Style>
 </Styles>

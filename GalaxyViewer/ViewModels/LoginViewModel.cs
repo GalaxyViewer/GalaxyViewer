@@ -36,7 +36,7 @@ public abstract partial class LoginViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _password, value);
     }
 
-    private async void TryLoginAsync()
+    private static async void TryLoginAsync()
     {
         /*var loginParams = new LoginParams(
             _client,

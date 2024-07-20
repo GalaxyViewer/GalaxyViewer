@@ -27,6 +27,5 @@
         <ComboBox ItemsSource="{Binding FontOptions}" SelectedItem="{Binding SelectedFont}" />
         <Button Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesSaveButton}"
                 Command="{Binding SaveCommand}" HorizontalAlignment="Left" />
-        <TextBlock Text="{Binding StatusMessage}" />
     </StackPanel>
 </UserControl>
