@@ -2,6 +2,8 @@ name: Copy files to destination repo
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'ReadMe.md'
       - 'CODE_OF_CONDUCT.md'
