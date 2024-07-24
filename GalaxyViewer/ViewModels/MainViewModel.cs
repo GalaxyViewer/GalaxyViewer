@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reactive;
 using System.Threading.Tasks;
@@ -6,6 +7,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using GalaxyViewer.Services;
 using GalaxyViewer.Views;
 using OpenMetaverse;
 using ReactiveUI;
@@ -15,7 +17,6 @@ namespace GalaxyViewer.ViewModels
 {
     public class MainViewModel : ViewModelBase
     {
-        private UserControl? _currentView;
         private bool _isLoggedIn;
 
         private readonly GridClient _client = new();
@@ -52,42 +53,37 @@ namespace GalaxyViewer.ViewModels
             set => this.RaiseAndSetIfChanged(ref _grid, value);
         }
 
-        public UserControl? CurrentView
-        {
-            get => _currentView;
-            set => this.RaiseAndSetIfChanged(ref _currentView, value);
-        }
-
         public bool IsLoggedIn
         {
             get => _isLoggedIn;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _isLoggedIn, value);
-                CurrentView = value ? new LoggedInView() : new LoginView();
-            }
+            set => this.RaiseAndSetIfChanged(ref _isLoggedIn, value);
         }
 
         public ReactiveCommand<Unit, Unit> LogoutCommand { get; }
         public ReactiveCommand<Unit, Unit> LoginCommand { get; }
 
         public ICommand ShowPreferencesCommand { get; }
-        public ICommand ShowDebugViewCommand { get; }
+        public ICommand ShowDevViewCommand { get; }
 
         public ICommand ExitCommand { get; }
 
-        public MainViewModel()
+        public MainViewModel(NavigationService navigationService)
         {
-            _currentView = new LoginView();
             IsLoggedIn = false; // By default you aren't logged in
 
             LogoutCommand = ReactiveCommand.Create(Logout);
-            LoginCommand = ReactiveCommand.Create(DisplayLoginView);
+            LoginCommand = ReactiveCommand.Create(() => navigationService.Navigate("login"));
 
             ShowPreferencesCommand = ReactiveCommand.Create(ShowPreferences);
-            ShowDebugViewCommand = ReactiveCommand.Create(ShowDevView);
+            ShowDevViewCommand = ReactiveCommand.Create(() => navigationService.Navigate("debug"));
 
             ExitCommand = ReactiveCommand.Create(ExitApplication);
+
+            // Navigate to login view on startup
+            if (!IsLoggedIn)
+            {
+                navigationService.Navigate("login");
+            }
         }
 
         private void Logout()
@@ -97,14 +93,9 @@ namespace GalaxyViewer.ViewModels
             IsLoggedIn = false;
         }
 
-        private void DisplayLoginView()
-        {
-            CurrentView = new LoginView();
-        }
-
         public async Task Login(string username, string password)
         {
-            try
+            /*try
             {
                 if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 {
@@ -128,19 +119,18 @@ namespace GalaxyViewer.ViewModels
                 else
                 {
                     Log.Error("Failed to login user: {Username}", username);
-
                 }
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "An error occurred while logging in user: {Username}", username);
-            }
+            }*/
         }
 
-        private void ShowPreferences()
+        private static void ShowPreferences()
         {
 #if ANDROID
-            CurrentView = new PreferencesView();
+            _navigationService.Navigate("preferences");
 #else
             var preferencesWindow = new PreferencesWindow
             {
@@ -150,23 +140,13 @@ namespace GalaxyViewer.ViewModels
 #endif
         }
 
-        private void ShowDevView()
-        {
-            CurrentView = new DebugView();
-        }
-
         private void ExitApplication()
         {
-            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime
-                desktopLifetime)
-            {
-                desktopLifetime.Shutdown();
-            }
-        }
-
-        public void Dispose()
-        {
-            _client.Network.Logout();
+            if (Application.Current?.ApplicationLifetime is not
+                IClassicDesktopStyleApplicationLifetime
+                desktopLifetime) return;
+            Logout();
+            desktopLifetime.Shutdown();
         }
     }
 }

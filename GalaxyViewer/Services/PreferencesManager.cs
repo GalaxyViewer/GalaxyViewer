@@ -15,6 +15,9 @@ namespace GalaxyViewer.Services
 
         private bool _isLoadingPreferences;
 
+        private PreferencesModel _currentPreferences;
+        public PreferencesModel CurrentPreferences => _currentPreferences;
+
         public PreferencesManager()
         {
             EnsurePreferencesDirectory();
@@ -33,29 +36,18 @@ namespace GalaxyViewer.Services
         {
             try
             {
-                _isLoadingPreferences = true;
-
-                if (!File.Exists(_preferencesFilePath))
-                {
-                    var defaultPreferences = new PreferencesModel();
-                    _isLoadingPreferences = false;
-                    return defaultPreferences;
-                }
-
-                await using var stream =
-                    new FileStream(_preferencesFilePath, FileMode.Open, FileAccess.Read);
+                await using var stream = new FileStream(_preferencesFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 var serializer = new XmlSerializer(typeof(PreferencesModel));
-                var preferences = (PreferencesModel)serializer.Deserialize(stream)!;
-
+                _currentPreferences = (PreferencesModel)serializer.Deserialize(stream)!;
                 _isLoadingPreferences = false;
-                return preferences;
+                return _currentPreferences;
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to load preferences");
-                var defaultPreferences = new PreferencesModel();
+                _currentPreferences = new PreferencesModel();
                 _isLoadingPreferences = false;
-                return defaultPreferences;
+                return _currentPreferences;
             }
         }
 
@@ -67,11 +59,10 @@ namespace GalaxyViewer.Services
         {
             try
             {
-                await using var stream = new FileStream(_preferencesFilePath, FileMode.Create,
-                    FileAccess.Write);
+                await using var stream = new FileStream(_preferencesFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
                 var serializer = new XmlSerializer(typeof(PreferencesModel));
                 serializer.Serialize(stream, preferences);
-
+                _currentPreferences = preferences;
                 if (!_isLoadingPreferences)
                 {
                     PreferencesChanged?.Invoke(this, preferences);

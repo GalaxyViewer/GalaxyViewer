@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
@@ -34,18 +36,26 @@ public class App : Application
 
     public override async void OnFrameworkInitializationCompleted()
     {
+        var contentControl = new ContentControl();
+        var navigationService = new NavigationService(contentControl);
+
+        // Register routes
+        navigationService.RegisterRoute("login", typeof(LoginView));
+        navigationService.RegisterRoute("debug", typeof(DebugView));
+        navigationService.RegisterRoute("preferences", typeof(PreferencesView));
+
         switch (ApplicationLifetime)
         {
             case IClassicDesktopStyleApplicationLifetime desktop:
                 desktop.MainWindow = new MainWindow
                 {
-                    DataContext = new MainViewModel()
+                    DataContext = new MainViewModel(navigationService)
                 };
                 break;
             case ISingleViewApplicationLifetime singleViewPlatform:
                 singleViewPlatform.MainView = new MainView
                 {
-                    DataContext = new MainViewModel()
+                    DataContext = new MainViewModel(navigationService)
                 };
                 break;
         }

@@ -3,16 +3,18 @@
              xmlns:local="using:GalaxyViewer"
              x:Class="GalaxyViewer.App">
     <Application.DataTemplates>
-        <local:ViewLocator/>
+        <local:ViewLocator />
     </Application.DataTemplates>
 
     <Application.Styles>
-        <StyleInclude Source="avares://GalaxyViewer/Styles.axaml"></StyleInclude>
-        <StyleInclude Source="avares://AvaloniaInside.Shell/Default.axaml"></StyleInclude>
-        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Themes.Fluent/FluentTheme.xaml" />
+        <StyleInclude Source="avares://GalaxyViewer/Styles.axaml" />
     </Application.Styles>
     <Application.Resources>
-        <FontFamily x:Key="EmojiFontFamily">avares://GalaxyViewer/Assets/Fonts/#Noto Color Emoji</FontFamily>
-        <FontFamily x:Key="DefaultFontFamily">avares://GalaxyViewer/Assets/Fonts/#Atkinson Hyperlegible</FontFamily>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://GalaxyViewer/Styles/Resources.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -51,11 +51,11 @@
                 <MenuItem Header="Search" />
             </MenuItem>
             <MenuItem Header="Dev">
-                <MenuItem Header="Debug View" Command="{Binding ShowDebugViewCommand}" />
+                <MenuItem Header="Debug View" Command="{Binding ShowDevViewCommand}" />
             </MenuItem>
             <!-- Add more menu items as needed -->
         </Menu>
 
-        <ContentControl Content="{Binding CurrentView}" />
+        <ContentControl x:Name="ContentControl" />
     </DockPanel>
 </UserControl>

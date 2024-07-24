@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
@@ -18,6 +19,8 @@ namespace GalaxyViewer.Views
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);
+            // debug soi we can see the view
+            Debug.WriteLine("LoginView initialized");
         }
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)

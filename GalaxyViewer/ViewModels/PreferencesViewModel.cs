@@ -9,31 +9,30 @@ namespace GalaxyViewer.ViewModels
 {
     public class PreferencesViewModel : ViewModelBase
     {
-        private readonly PreferencesManager _preferencesManager;
+        private readonly PreferencesManager? _preferencesManager;
         private PreferencesModel _preferences;
         private bool _isLoadingPreferences;
 
         public PreferencesViewModel()
         {
             if (App.PreferencesManager != null) _preferencesManager = App.PreferencesManager;
-            _preferences = new PreferencesModel();
+            _preferences = App.PreferencesManager?.CurrentPreferences ?? new PreferencesModel();
             ThemeOptions = new ObservableCollection<string>(_preferences.ThemeOptions);
-            LoginLocationOptions =
-                new ObservableCollection<string>(_preferences.LoginLocationOptions);
+            LoginLocationOptions = new ObservableCollection<string>(_preferences.LoginLocationOptions);
             LanguageOptions = new ObservableCollection<string>(_preferences.LanguageOptions);
             FontOptions = new ObservableCollection<string>(_preferences.FontOptions);
-            _selectedTheme = string.Empty;
-            _selectedLoginLocation = string.Empty;
-            _selectedLanguage = string.Empty;
-            _selectedFont = string.Empty;
-            LoadPreferences();
+            _selectedTheme = _preferences.Theme;
+            _selectedLoginLocation = _preferences.LoginLocation;
+            _selectedLanguage = _preferences.Language;
+            _selectedFont = _preferences.Font;
             SaveCommand = new RelayCommand(async () => await SavePreferencesAsync());
         }
 
         private async void LoadPreferences()
         {
             _isLoadingPreferences = true;
-            _preferences = await _preferencesManager.LoadPreferencesAsync();
+            if (_preferencesManager != null)
+                _preferences = await _preferencesManager.LoadPreferencesAsync();
 
             // Set selected options from preferences.xml
             if (_selectedTheme != _preferences.Theme)
@@ -121,7 +120,8 @@ namespace GalaxyViewer.ViewModels
             _preferences.Language = SelectedLanguage;
             _preferences.Font = SelectedFont;
 
-            await _preferencesManager.SavePreferencesAsync(_preferences);
+            if (_preferencesManager != null)
+                await _preferencesManager.SavePreferencesAsync(_preferences);
         }
 
         public ICommand SaveCommand { get; }
