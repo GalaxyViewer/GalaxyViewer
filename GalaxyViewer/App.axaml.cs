@@ -10,6 +10,7 @@ using GalaxyViewer.ViewModels;
 using GalaxyViewer.Views;
 using GalaxyViewer.Services;
 using Serilog;
+using HotAvalonia;
 
 namespace GalaxyViewer;
 
@@ -28,8 +29,9 @@ public class App : Application
 
     public override void Initialize()
     {
-        PreferencesManager = new PreferencesManager();
+        PreferencesManager = new PreferencesManager(new PreferencesModel());
         PreferencesManager.PreferencesChanged += OnPreferencesChanged;
+        this.EnableHotReload();
         AvaloniaXamlLoader.Load(this);
         base.Initialize();
     }
@@ -67,7 +69,7 @@ public class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private async void OnPreferencesChanged(object? sender, PreferencesModel preferences)
+    private void OnPreferencesChanged(object? sender, PreferencesModel preferences)
     {
         if (PreferencesManager?.IsLoadingPreferences == true) return;
         ApplyPreferences(preferences);

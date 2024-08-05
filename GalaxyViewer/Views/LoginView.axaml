@@ -12,9 +12,16 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <!-- WebView or Image goes here -->
-        <Image Grid.Row="0" Source="/Assets/Images/banner.jpg" Stretch="Fill" />
-        <!-- Login Options -->
+        <Grid>
+            <Image Source="/Assets/Images/banner.jpg" Stretch="Fill" />
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Image Source="/Assets/galaxy.ico" Width="150" Height="150" />
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24" FontWeight="Bold">
+                    <Run
+                        Text="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=WelcomeMessage}" />
+                </TextBlock>
+            </StackPanel>
+        </Grid>
         <Grid Grid.Row="1" Margin="20">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -22,24 +29,31 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="240" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
             </Grid.ColumnDefinitions>
             <Label Grid.Column="0"
                    Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
                    VerticalAlignment="Center" />
             <TextBox Grid.Column="1" Name="UsernameBox"
                      Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
+                     Text="{Binding Username}"
                      Margin="5,0" />
             <Label Grid.Column="2"
                    Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
                    VerticalAlignment="Center" Margin="5,0" />
             <TextBox Grid.Column="3" Name="PasswordBox"
                      Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
-                     PasswordChar="*" Margin="5,0" />
-            <Button Grid.Column="4"
+                     PasswordChar="*"
+                     Text="{Binding Password}"
+                     Margin="5,0" />
+            <ComboBox Grid.Column="4" Name="LoginLocation"
+                      ItemsSource="{Binding LoginLocations}"
+                      SelectedItem="{Binding SelectedLoginLocation}"
+                      Margin="5,0" />
+            <Button Grid.Column="5" Name="ButtonLogin"
                     Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenLoginButton}"
+                    Command="{Binding TryLoginCommand}"
                     Margin="5,0" VerticalAlignment="Center" />
         </Grid>
-        <!-- TODO: Add in the Grid selector -->
-        <!-- TODO: Add in the Location selector -->
     </Grid>
 </UserControl>

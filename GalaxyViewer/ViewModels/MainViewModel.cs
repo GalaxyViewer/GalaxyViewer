@@ -1,22 +1,19 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Reactive;
-using System.Threading.Tasks;
+﻿using System.Reactive;
+using System.Runtime.InteropServices;
 using System.Windows.Input;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using GalaxyViewer.Services;
 using GalaxyViewer.Views;
 using OpenMetaverse;
 using ReactiveUI;
-using Serilog;
 
 namespace GalaxyViewer.ViewModels
 {
     public class MainViewModel : ViewModelBase
     {
+        public bool IsMobile { get; }
+
         private bool _isLoggedIn;
 
         private readonly GridClient _client = new();
@@ -62,6 +59,7 @@ namespace GalaxyViewer.ViewModels
         public ReactiveCommand<Unit, Unit> LogoutCommand { get; }
         public ReactiveCommand<Unit, Unit> LoginCommand { get; }
 
+        public ICommand ShowChatCommand { get; }
         public ICommand ShowPreferencesCommand { get; }
         public ICommand ShowDevViewCommand { get; }
 
@@ -69,10 +67,15 @@ namespace GalaxyViewer.ViewModels
 
         public MainViewModel(NavigationService navigationService)
         {
+            IsMobile = RuntimeInformation.IsOSPlatform(OSPlatform.Create("ANDROID"));
+
             IsLoggedIn = false; // By default you aren't logged in
 
             LogoutCommand = ReactiveCommand.Create(Logout);
             LoginCommand = ReactiveCommand.Create(() => navigationService.Navigate("login"));
+
+            ShowChatCommand = ReactiveCommand.Create(() =>
+                navigationService.Navigate("chat"));
 
             ShowPreferencesCommand = ReactiveCommand.Create(ShowPreferences);
             ShowDevViewCommand = ReactiveCommand.Create(() => navigationService.Navigate("debug"));
@@ -91,40 +94,6 @@ namespace GalaxyViewer.ViewModels
             // Perform logout operation here
             _client.Network.Logout();
             IsLoggedIn = false;
-        }
-
-        public async Task Login(string username, string password)
-        {
-            /*try
-            {
-                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-                {
-                    await File.AppendAllTextAsync("error.log",
-                        "Invalid login parameters for user: " + username);
-                    return;
-                }
-
-                const string userAgent = "GalaxyViewer/0.1.0";
-                var libreMetaverseLoginParams =
-                    _client.Network.DefaultLoginParams(username, password, userAgent, LoginLocation,
-                        Grid);
-
-                var loginSuccess =
-                    await Task.Run(() => _client.Network.Login(libreMetaverseLoginParams));
-
-                if (loginSuccess)
-                {
-                    IsLoggedIn = true;
-                }
-                else
-                {
-                    Log.Error("Failed to login user: {Username}", username);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "An error occurred while logging in user: {Username}", username);
-            }*/
         }
 
         private static void ShowPreferences()

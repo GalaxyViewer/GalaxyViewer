@@ -11,6 +11,7 @@ namespace GalaxyViewer.Views
         {
             InitializeComponent();
             var contentControl = this.FindControl<ContentControl>("ContentControl");
+            if (contentControl == null) return;
             var navigationService = new NavigationService(contentControl);
 
             // Register routes

@@ -1,28 +1,35 @@
-﻿using System.Threading.Tasks;
-using System.Text.RegularExpressions;
+﻿using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using ReactiveUI;
-using System.ComponentModel;
+using System.Reactive;
+using System.Windows.Input;
 using GalaxyViewer.Assets.Localization;
+using GalaxyViewer.Services;
 using Serilog;
+using MsBox.Avalonia;
 using OpenMetaverse;
 
 namespace GalaxyViewer.ViewModels;
 
-public abstract partial class LoginViewModel : ReactiveObject
+public class LoginViewModel : ReactiveObject
 {
+    private readonly PreferencesViewModel _preferencesViewModel;
     private string _username;
     private string _password;
-    private readonly GridClient _client = new GridClient();
-    private readonly LocalizationManager _localizationManager;
+    private readonly GridClient _client = new();
 
-    protected LoginViewModel(string username, string password,
-        LocalizationManager localizationManager)
+    public LoginViewModel(LocalizationManager localizationManager,
+        PreferencesViewModel preferencesViewModel, string username, string password)
     {
+        _preferencesViewModel = preferencesViewModel;
         _username = username;
         _password = password;
-        _localizationManager = localizationManager;
-        ReactiveCommand.Create(TryLoginAsync);
+        LoginLocations = _preferencesViewModel.LoginLocationOptions;
+        SelectedLoginLocation = _preferencesViewModel.SelectedLoginLocation;
+        TryLoginCommand = ReactiveCommand.CreateFromTask(TryLoginAsync);
     }
+
+    public ObservableCollection<string> LoginLocations { get; }
 
     public string Username
     {
@@ -36,32 +43,41 @@ public abstract partial class LoginViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _password, value);
     }
 
-    private static async void TryLoginAsync()
+    public string SelectedLoginLocation
     {
-        /*var loginParams = new LoginParams(
-            _client,
-            MyRegex().Split(Username.Trim())[0], // firstName
-            MyRegex().Split(Username.Trim()).Length > 1
-                ? MyRegex().Split(Username.Trim())[1]
-                : "Resident", // lastName
-            Password,
-            ViewerName,
-            ViewerVersion,
-            DetermineGridUrl())
+        get => _preferencesViewModel.SelectedLoginLocation;
+        set
         {
-            LoginLocation = DetermineStartLocation(),
-            AgreeToTos = true // Assuming you have a way to get this value
-        };
+            _preferencesViewModel.SelectedLoginLocation = value;
+            this.RaisePropertyChanged(nameof(SelectedLoginLocation));
+        }
+    }
+
+    public ICommand TryLoginCommand { get; }
+
+    private async Task TryLoginAsync()
+    {
+        var loginParams = _client.Network.DefaultLoginParams(
+            Username.Split(' ')[0], // firstName
+            Username.Contains(' ') ? Username.Split(' ')[1] : "Resident", // lastName
+            Password,
+            "GalaxyViewer", // ViewerName
+            "0.1" // ViewerVersion
+        );
+
+        loginParams.Start =
+            _preferencesViewModel
+                .SelectedLoginLocation; // Set the start location to the selected login location
 
         var loginSuccess = await Task.Run(() => _client.Network.Login(loginParams));
 
         if (loginSuccess)
         {
-            Log.Information(LoginSuccess);
+            Log.Information("Login successful");
         }
         else
         {
-            Log.Logger.Error(LoginFailed);
-        }*/
+            Log.Error("Login failed: {Error}", _client.Network.LoginMessage);
+        }
     }
 }
