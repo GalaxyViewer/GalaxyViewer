@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.Styling;
 using GalaxyViewer.Models;
 
@@ -12,6 +13,7 @@ namespace GalaxyViewer.Views
             CanResize = true;
             App.PreferencesManager!.PreferencesChanged += OnPreferencesChanged;
             ApplyTheme(App.PreferencesManager.LoadPreferencesAsync().Result.Theme);
+            FontFamily = new FontFamily("Atkinson Hyperlegible"); // TODO: Make this use the preferences for font
         }
 
         private void OnPreferencesChanged(object? sender, PreferencesModel preferences)
