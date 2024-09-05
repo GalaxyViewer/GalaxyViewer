@@ -12,13 +12,15 @@ namespace GalaxyViewer.Views
             Icon = new WindowIcon("Assets/galaxy.ico");
             CanResize = true;
             App.PreferencesManager!.PreferencesChanged += OnPreferencesChanged;
-            ApplyTheme(App.PreferencesManager.LoadPreferencesAsync().Result.Theme);
-            FontFamily = new FontFamily("Atkinson Hyperlegible"); // TODO: Make this use the preferences for font
+            var preferences = App.PreferencesManager.LoadPreferencesAsync().Result;
+            ApplyTheme(preferences.Theme);
+            FontFamily = new FontFamily(preferences.Font);
         }
 
         private void OnPreferencesChanged(object? sender, PreferencesModel preferences)
         {
             ApplyTheme(preferences.Theme);
+            FontFamily = new FontFamily(preferences.Font); // Update the font family
         }
 
         public void ApplyTheme(string theme)
