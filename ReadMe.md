@@ -12,7 +12,7 @@ Features unique to this viewer (compared to the stock viewer) will include:
 
 - [ ] User Authentication
 
-  - [ ] Login
+  - [x] Login
   - [ ] MFA Support
 
 - [ ] Communication

@@ -7,25 +7,17 @@ namespace GalaxyViewer.Models
     [Serializable]
     public class PreferencesModel
     {
-        public PreferencesModel()
-        {
-            ThemeOptions = new List<string> { "Light", "Dark", "Default" };
-            LoginLocationOptions = new List<string> { "Home", "Last Location" };
-            FontOptions = new List<string> { "Inter", "Atkinson Hyperlegible" };
-            LanguageOptions = new List<string> { "en-US" };
-        }
+        [XmlIgnore]
+        public List<string> ThemeOptions { get; set; } = ["Light", "Dark", "Default"];
 
         [XmlIgnore]
-        public List<string> ThemeOptions { get; set; }
+        public List<string> LoginLocationOptions { get; set; } = ["Home", "Last Location"];
 
         [XmlIgnore]
-        public List<string> LoginLocationOptions { get; set; }
+        public List<string> FontOptions { get; set; } = ["Inter", "Atkinson Hyperlegible"];
 
         [XmlIgnore]
-        public List<string> FontOptions { get; set; }
-
-        [XmlIgnore]
-        public List<string> LanguageOptions { get; set; }
+        public List<string> LanguageOptions { get; set; } = ["en-US"];
 
         // Default values
         private string _theme = "Default";
