@@ -12,7 +12,6 @@ namespace GalaxyViewer.Views
             InitializeComponent();
             var preferencesViewModel = new PreferencesViewModel();
             DataContext = new LoginViewModel(
-                new LocalizationManager(),
                 preferencesViewModel,
                 string.Empty,
                 string.Empty

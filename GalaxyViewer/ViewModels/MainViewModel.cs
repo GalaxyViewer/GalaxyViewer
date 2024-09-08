@@ -72,20 +72,20 @@ namespace GalaxyViewer.ViewModels
             IsLoggedIn = false; // By default you aren't logged in
 
             LogoutCommand = ReactiveCommand.Create(Logout);
-            LoginCommand = ReactiveCommand.Create(() => navigationService.Navigate("login"));
+            LoginCommand = ReactiveCommand.Create(() => navigationService.NavigateTo("login"));
 
             ShowChatCommand = ReactiveCommand.Create(() =>
-                navigationService.Navigate("chat"));
+                navigationService.NavigateTo("chat"));
 
             ShowPreferencesCommand = ReactiveCommand.Create(ShowPreferences);
-            ShowDevViewCommand = ReactiveCommand.Create(() => navigationService.Navigate("debug"));
+            ShowDevViewCommand = ReactiveCommand.Create(() => navigationService.NavigateTo("debug"));
 
             ExitCommand = ReactiveCommand.Create(ExitApplication);
 
-            // Navigate to login view on startup
+            // NavigateTo to login view on startup
             if (!IsLoggedIn)
             {
-                navigationService.Navigate("login");
+                navigationService.NavigateTo("login");
             }
         }
 
@@ -99,7 +99,7 @@ namespace GalaxyViewer.ViewModels
         private static void ShowPreferences()
         {
 #if ANDROID
-            _navigationService.Navigate("preferences");
+            _navigationService.NavigateTo("preferences");
 #else
             var preferencesWindow = new PreferencesWindow
             {

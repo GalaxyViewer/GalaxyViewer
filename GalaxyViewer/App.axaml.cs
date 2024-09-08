@@ -10,7 +10,6 @@ using GalaxyViewer.ViewModels;
 using GalaxyViewer.Views;
 using GalaxyViewer.Services;
 using Serilog;
-using HotAvalonia;
 
 namespace GalaxyViewer;
 
@@ -31,7 +30,6 @@ public class App : Application
     {
         PreferencesManager = new PreferencesManager(new PreferencesModel());
         PreferencesManager.PreferencesChanged += OnPreferencesChanged;
-        this.EnableHotReload();
         AvaloniaXamlLoader.Load(this);
         base.Initialize();
     }
@@ -43,6 +41,7 @@ public class App : Application
 
         // Register routes
         navigationService.RegisterRoute("login", typeof(LoginView));
+        navigationService.RegisterRoute("main", typeof(LoggedInView));
         navigationService.RegisterRoute("debug", typeof(DebugView));
         navigationService.RegisterRoute("preferences", typeof(PreferencesView));
 

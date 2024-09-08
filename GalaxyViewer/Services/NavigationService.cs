@@ -19,7 +19,7 @@ namespace GalaxyViewer.Services
             _routes[uri] = viewType;
         }
 
-        public void Navigate(string uri)
+        public void NavigateTo(string uri)
         {
             if (_routes.TryGetValue(uri, out var viewType))
             {
