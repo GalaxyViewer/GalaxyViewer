@@ -3,31 +3,11 @@
         <TargetFramework>net8.0</TargetFramework>
         <LangVersion>latest</LangVersion>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-        <AssemblyVersion>0.1.1</AssemblyVersion>
-        <NeutralLanguage>en-US</NeutralLanguage>
     </PropertyGroup>
 
     <PropertyGroup>
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-        <DefineConstants>$(DefineConstants);ENABLE_XAML_HOT_RELOAD</DefineConstants>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Avalonia" Version="11.1.3" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.3" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.3" />
-        <PackageReference Include="Avalonia.ReactiveUI" Version="11.1.3" />
-        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.3" />
-        <PackageReference Include="LibreMetaverse" Version="2.1.2.688" />
-        <PackageReference Include="MessageBox.Avalonia" Version="3.1.6" />
-        <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
-        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
-        <PackageReference Include="Serilog.Sinks.File" Version="6.0.0"/>
-        <PackageReference Include="Splat" Version="15.1.1" />
-    </ItemGroup>
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
@@ -38,12 +18,33 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <AvaloniaResource Include="Styles\**"/>
-        <AvaloniaResource Include="Styles\Atkinson Hyperlegible.axaml"/>
-        <AvaloniaResource Include="Styles\Inter.axaml"/>
+        <AvaloniaResource Include="Styles\Atkinson Hyperlegible.axaml" />
+        <AvaloniaResource Include="Styles\Inter.axaml" />
     </ItemGroup>
 
     <ItemGroup>
         <Watch Include="**\*.axaml"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="11.1.3" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.3" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.3" />
+        <PackageReference Include="Avalonia.ReactiveUI" Version="11.1.3" />
+        <!-- Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration. -->
+        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.3" />
+        <!-- More things will go here -->
+        <PackageReference Include="AvaloniaInside.Shell" Version="1.2.0" />
+        <PackageReference Include="Irihi.Ursa" Version="1.3.0" />
+        <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="1.3.0" />
+        <PackageReference Include="LibreMetaverse" Version="2.1.2.688" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Semi.Avalonia" Version="11.1.0.4" />
+        <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+        <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>
