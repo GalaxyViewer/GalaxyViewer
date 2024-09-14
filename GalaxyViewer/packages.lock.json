@@ -66,6 +66,26 @@
           "XamlNameReferenceGenerator": "1.3.4"
         }
       },
+      "Irihi.Ursa": {
+        "type": "Direct",
+        "requested": "[1.3.0, )",
+        "resolved": "1.3.0",
+        "contentHash": "Rt1Y2ktihh8U43cS2H74nG1LI9zwqEuWa04QPw3M79NGc3U7EKOGjgSgszksOTZ3SBSSgWwpOGuVhK6RJ9sN+g==",
+        "dependencies": {
+          "Avalonia": "11.1.1",
+          "Irihi.Avalonia.Shared": "0.1.9"
+        }
+      },
+      "Irihi.Ursa.Themes.Semi": {
+        "type": "Direct",
+        "requested": "[1.3.0, )",
+        "resolved": "1.3.0",
+        "contentHash": "voma7NoP0kGBWUPIHaHSNXqLepdiCASR7tDPKY+xyEzcBuM0hpBbsDDt3bNVDZyftanRdJZ4/BCNOYEMnlNV4g==",
+        "dependencies": {
+          "Avalonia": "11.1.1",
+          "Irihi.Ursa": "1.3.0"
+        }
+      },
       "LibreMetaverse": {
         "type": "Direct",
         "requested": "[2.1.2.688, )",
@@ -86,6 +106,15 @@
           "XmlRpcCore": "3.1.3",
           "log4net": "2.0.17",
           "zlib.net-mutliplatform": "1.0.7"
+        }
+      },
+      "Semi.Avalonia": {
+        "type": "Direct",
+        "requested": "[11.1.0.4, )",
+        "resolved": "11.1.0.4",
+        "contentHash": "soJvhZG2h4TU/6L4E7ireUxEFf2lOtADWDg+CZcOklKD9TTVh76ggQz+VYx8pEjoHLx1B0Gk1svxdp/Xrjf04w==",
+        "dependencies": {
+          "Avalonia": "11.1.0"
         }
       },
       "Serilog.AspNetCore": {
@@ -173,6 +202,14 @@
         "contentHash": "xFwVha7o3qUtVYxco5p+7Urcztc/m1gmaEUxOG0i7LNe+vfCfyb0ECAsT2FLm3zOPHb0g8s9qVu5LfPKfRNVng==",
         "dependencies": {
           "System.Reactive": "5.0.0"
+        }
+      },
+      "Irihi.Avalonia.Shared": {
+        "type": "Transitive",
+        "resolved": "0.1.9",
+        "contentHash": "RBGGTM360aeAAE+VoS5ekZOKX81SsjgezwvK39/kDslpvugg45qnIumd1XadIp3xa31WLVjifFI85Z+9cMEv2g==",
+        "dependencies": {
+          "Avalonia": "11.0.0"
         }
       },
       "LibreMetaverse.StructuredData": {
