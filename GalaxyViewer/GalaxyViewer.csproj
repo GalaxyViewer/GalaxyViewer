@@ -11,7 +11,7 @@
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
-        <None Update="Assets\galaxy.ico">
+        <None Update="Assets\GalaxyViewerLogo.ico">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <Content Include="Assets\Fonts\*.ttf">

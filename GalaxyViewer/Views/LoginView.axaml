@@ -7,30 +7,18 @@
     <UserControl.Resources>
         <converters:LocalizedStringConverter x:Key="LocalizedStringConverter" />
     </UserControl.Resources>
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <Grid RowDefinitions="*,Auto">
         <Grid>
-            <Image Source="/Assets/Images/banner.jpg" Stretch="Fill" />
+            <Image Source="/Assets/Images/banner.jpg" Stretch="UniformToFill" />
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Image Source="/Assets/galaxy.ico" Width="150" Height="150" />
+                <Image Source="/Assets/GalaxyViewerLogo.ico" Width="150" Height="150" />
                 <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24" FontWeight="Bold">
                     <Run
                         Text="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=WelcomeMessage}" />
                 </TextBlock>
             </StackPanel>
         </Grid>
-        <Grid Grid.Row="1" Margin="20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="240" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="240" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition />
-            </Grid.ColumnDefinitions>
+        <Grid Grid.Row="1" Margin="20" ColumnDefinitions="Auto,240,Auto,240,Auto,*">
             <Label Grid.Column="0"
                    Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
                    VerticalAlignment="Center" />
@@ -53,7 +41,7 @@
             <Button Grid.Column="5" Name="ButtonLogin"
                     Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenLoginButton}"
                     Command="{Binding TryLoginCommand}"
-                    Margin="5,0" VerticalAlignment="Center" />
+                    Margin="5,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
         </Grid>
     </Grid>
 </UserControl>

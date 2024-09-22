@@ -16,9 +16,6 @@
         <Label Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesTheme}"
                VerticalAlignment="Center" />
         <ComboBox ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}" />
-        <Label Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesLoginLocation}"
-               VerticalAlignment="Center" />
-        <ComboBox ItemsSource="{Binding LoginLocationOptions}" SelectedItem="{Binding SelectedLoginLocation}" />
         <Label Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesLanguage}"
                VerticalAlignment="Center" />
         <ComboBox ItemsSource="{Binding LanguageOptions}" SelectedItem="{Binding SelectedLanguage}" />
@@ -26,6 +23,6 @@
                VerticalAlignment="Center" />
         <ComboBox ItemsSource="{Binding FontOptions}" SelectedItem="{Binding SelectedFont}" />
         <Button Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesSaveButton}"
-                Command="{Binding SaveCommand}" HorizontalAlignment="Left" />
+                Command="{Binding SaveCommand}" HorizontalAlignment="Left" Margin="0,10" />
     </StackPanel>
 </UserControl>

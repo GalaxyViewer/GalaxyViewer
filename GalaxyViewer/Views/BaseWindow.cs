@@ -9,7 +9,7 @@ namespace GalaxyViewer.Views
     {
         protected BaseWindow()
         {
-            Icon = new WindowIcon("Assets/galaxy.ico");
+            Icon = new WindowIcon("Assets/GalaxyViewerLogo.ico");
             CanResize = true;
             App.PreferencesManager!.PreferencesChanged += OnPreferencesChanged;
             var preferences = App.PreferencesManager.LoadPreferencesAsync().Result;
@@ -20,7 +20,7 @@ namespace GalaxyViewer.Views
         private void OnPreferencesChanged(object? sender, PreferencesModel preferences)
         {
             ApplyTheme(preferences.Theme);
-            FontFamily = new FontFamily(preferences.Font); // Update the font family
+            FontFamily = new FontFamily(preferences.Font);
         }
 
         public void ApplyTheme(string theme)

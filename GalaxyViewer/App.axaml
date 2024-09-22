@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:GalaxyViewer"
              xmlns:semi="https://irihi.tech/semi"
-             xmlns:u-semi="https://irihi.tech/ursa/themes/semi"
+             xmlns:u-Semi="https://irihi.tech/ursa/themes/semi"
              x:Class="GalaxyViewer.App">
     <Application.DataTemplates>
         <local:ViewLocator />
@@ -10,7 +10,7 @@
 
     <Application.Styles>
         <semi:SemiTheme Locale="en-US" />
-        <u-semi:SemiTheme Locale="en-US"/>
+        <u-Semi:SemiTheme Locale="en-US"/>
         <StyleInclude Source="avares://GalaxyViewer/Styles.axaml" />
     </Application.Styles>
     <Application.Resources>

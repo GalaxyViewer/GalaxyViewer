@@ -5,16 +5,9 @@ using System.Linq;
 using System.Reactive;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Avalonia.Controls.Notifications;
 using ReactiveUI;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
-using MsBox.Avalonia;
-using MsBox.Avalonia.Enums;
-using GalaxyViewer.Assets.Localization;
-using GalaxyViewer.Services;
-using GalaxyViewer.Views;
-using MsBox.Avalonia.Dto;
+using Ursa.Controls;
 using Serilog;
 using OpenMetaverse;
 
@@ -26,6 +19,8 @@ public class LoginViewModel : ReactiveObject
     private string _username;
     private string _password;
     private readonly GridClient _client = new();
+
+    public WindowToastManager? ToastManager { get; set; }
 
     public LoginViewModel(PreferencesViewModel preferencesViewModel, string username,
         string password)
@@ -72,15 +67,16 @@ public class LoginViewModel : ReactiveObject
 
     public ReactiveCommand<Unit, Unit> TryLoginCommand { get; }
 
-    private static async Task ShowLoginErrorAsync(string errorMessage)
+    private async Task ShowLoginErrorAsync(string errorMessage)
     {
-        var messageBoxStandardWindow = MessageBoxManager.GetMessageBoxStandard(
-            "Login Error",
-            errorMessage,
-            ButtonEnum.Ok,
-            Icon.Error
+        ToastManager?.Show(
+            new Toast(
+                errorMessage),
+            showIcon: true,
+            showClose: true,
+            type: NotificationType.Error
         );
-        await messageBoxStandardWindow.ShowWindowAsync();
+        await Task.CompletedTask;
     }
 
     private async Task TryLoginAsync()
@@ -114,10 +110,12 @@ public class LoginViewModel : ReactiveObject
             "0.1.0" // ViewerVersion
         );
 
-        loginParams.URI = "https://login.agni.lindenlab.com/cgi-bin/login.cgi"; // Set the login URI to SL main grid for now TODO: Update to use the selected grid in login menu
+        loginParams.URI =
+            "https://login.agni.lindenlab.com/cgi-bin/login.cgi"; // Set the login URI to SL main grid for now TODO: Update to use the selected grid in login menu
         loginParams.MfaEnabled = true; // Inform the server that we support MFA
-        loginParams.Platform = ourPlatform; // Set the platform
-        loginParams.PlatformVersion = Environment.OSVersion.VersionString; // Set the platform version
+        loginParams.Platform = ourPlatform; // Set the platform - our operating system
+        loginParams.PlatformVersion =
+            Environment.OSVersion.VersionString; // Set the platform version
 
         loginParams.Start =
             _preferencesViewModel
