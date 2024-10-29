@@ -1,5 +1,7 @@
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -25,13 +27,25 @@ public class App : Application
     }
 
     public static PreferencesManager? PreferencesManager { get; private set; }
+    public static IServiceProvider? ServiceProvider { get; private set; }
 
     public override void Initialize()
     {
         PreferencesManager = new PreferencesManager(new PreferencesModel());
         PreferencesManager.PreferencesChanged += OnPreferencesChanged;
+
+        var serviceCollection = new ServiceCollection();
+        ConfigureServices(serviceCollection);
+        ServiceProvider = serviceCollection.BuildServiceProvider();
+
         AvaloniaXamlLoader.Load(this);
         base.Initialize();
+    }
+
+    private void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton<LiteDbService>();
+        // Register other services here
     }
 
     public override async void OnFrameworkInitializationCompleted()
