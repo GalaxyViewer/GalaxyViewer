@@ -3,34 +3,33 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using GalaxyViewer.Models;
 
-namespace GalaxyViewer.Views
+namespace GalaxyViewer.Views;
+
+public class BaseWindow : Window
 {
-    public class BaseWindow : Window
+    protected BaseWindow()
     {
-        protected BaseWindow()
-        {
-            Icon = new WindowIcon("Assets/GalaxyViewerLogo.ico");
-            CanResize = true;
-            App.PreferencesManager!.PreferencesChanged += OnPreferencesChanged;
-            var preferences = App.PreferencesManager.LoadPreferencesAsync().Result;
-            ApplyTheme(preferences.Theme);
-            FontFamily = new FontFamily(preferences.Font);
-        }
+        Icon = new WindowIcon("Assets/GalaxyViewerLogo.ico");
+        CanResize = true;
+        App.PreferencesManager!.PreferencesChanged += OnPreferencesChanged;
+        var preferences = App.PreferencesManager.LoadPreferencesAsync().Result;
+        ApplyTheme(preferences.Theme);
+        FontFamily = new FontFamily(preferences.Font);
+    }
 
-        private void OnPreferencesChanged(object? sender, PreferencesModel preferences)
-        {
-            ApplyTheme(preferences.Theme);
-            FontFamily = new FontFamily(preferences.Font);
-        }
+    private void OnPreferencesChanged(object? sender, PreferencesModel preferences)
+    {
+        ApplyTheme(preferences.Theme);
+        FontFamily = new FontFamily(preferences.Font);
+    }
 
-        public void ApplyTheme(string theme)
+    public void ApplyTheme(string theme)
+    {
+        RequestedThemeVariant = theme switch
         {
-            RequestedThemeVariant = theme switch
-            {
-                "Light" => ThemeVariant.Light,
-                "Dark" => ThemeVariant.Dark,
-                _ => ThemeVariant.Default
-            };
-        }
+            "Light" => ThemeVariant.Light,
+            "Dark" => ThemeVariant.Dark,
+            _ => ThemeVariant.Default
+        };
     }
 }
