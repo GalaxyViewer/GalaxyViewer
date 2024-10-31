@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using GalaxyViewer.Assets.Localization;
 using GalaxyViewer.ViewModels;
 
 namespace GalaxyViewer.Views;
@@ -10,12 +9,7 @@ public partial class LoginView : UserControl
     public LoginView()
     {
         InitializeComponent();
-        var preferencesViewModel = new PreferencesViewModel();
-        DataContext = new LoginViewModel(
-            preferencesViewModel,
-            string.Empty,
-            string.Empty
-        );
+        DataContext = new LoginViewModel();
     }
 
     private void InitializeComponent()

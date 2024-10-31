@@ -1,75 +1,54 @@
 ﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
+using System.Diagnostics;
+using LiteDB;
 using GalaxyViewer.Models;
-using Serilog;
+using System.Threading.Tasks;
 
 namespace GalaxyViewer.Services
 {
-    public class PreferencesManager
+    public sealed class PreferencesManager
     {
-        private readonly string _preferencesFilePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GalaxyViewer",
-            "preferences.xml");
+        private readonly ILiteCollection<PreferencesModel> _preferencesCollection;
 
-        public PreferencesModel CurrentPreferences { get; private set; }
+        public event EventHandler<PreferencesModel>? PreferencesChanged;
 
-        public PreferencesManager(PreferencesModel currentPreferences)
+        public PreferencesManager(LiteDbService? liteDbService)
         {
-            CurrentPreferences = currentPreferences;
-            EnsurePreferencesDirectory();
-        }
-
-        private void EnsurePreferencesDirectory()
-        {
-            var directoryPath = Path.GetDirectoryName(_preferencesFilePath);
-            if (!string.IsNullOrEmpty(directoryPath))
-            {
-                Directory.CreateDirectory(directoryPath);
-            }
+            Debug.Assert(liteDbService != null, nameof(liteDbService) + " != null");
+            var database = liteDbService.Database();
+            Debug.Assert(database != null, nameof(database) + " != null");
+            _preferencesCollection = database.GetCollection<PreferencesModel>("preferences");
         }
 
         public async Task<PreferencesModel> LoadPreferencesAsync()
         {
-            try
+            return await Task.Run(() =>
             {
-                await using var stream = new FileStream(_preferencesFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                var serializer = new XmlSerializer(typeof(PreferencesModel));
-                CurrentPreferences = (PreferencesModel)serializer.Deserialize(stream)!;
-                IsLoadingPreferences = false;
-                return CurrentPreferences;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to load preferences");
-                CurrentPreferences = new PreferencesModel();
-                IsLoadingPreferences = false;
-                return CurrentPreferences;
-            }
+                var preferences = _preferencesCollection.FindOne(Query.All());
+                return preferences ?? new PreferencesModel
+                {
+                    Id = ObjectId.NewObjectId(),
+                    Theme = "Default",
+                    LoginLocation = "Home",
+                    Font = "Atkinson Hyperlegible",
+                    Language = "en-US",
+                    LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                };
+            });
         }
-
-        public bool IsLoadingPreferences { get; private set; }
-
-        public event EventHandler<PreferencesModel>? PreferencesChanged;
 
         public async Task SavePreferencesAsync(PreferencesModel preferences)
         {
-            try
+            await Task.Run(() =>
             {
-                await using var stream = new FileStream(_preferencesFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-                var serializer = new XmlSerializer(typeof(PreferencesModel));
-                serializer.Serialize(stream, preferences);
-                CurrentPreferences = preferences;
-                if (!IsLoadingPreferences)
-                {
-                    PreferencesChanged?.Invoke(this, preferences);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to save preferences");
-            }
+                _preferencesCollection.Upsert(preferences);
+                OnPreferencesChanged(preferences);
+            });
+        }
+
+        private void OnPreferencesChanged(PreferencesModel preferences)
+        {
+            PreferencesChanged?.Invoke(this, preferences);
         }
     }
 }
