@@ -44,7 +44,7 @@
                 <MenuItem Header="Objects Nearby" />
             </MenuItem>
             <MenuItem Header="Communicate" IsEnabled="{Binding IsLoggedIn}">
-                <MenuItem Header="Chat" Command="{Binding ShowChatCommand}" />
+                <MenuItem Header="Chat" />
                 <MenuItem Header="Friends List" />
                 <MenuItem Header="Nearby People" />
                 <MenuItem Header="Voice" />
@@ -60,11 +60,11 @@
                 <MenuItem Header="Search" />
             </MenuItem>
             <MenuItem Header="Dev">
-                <MenuItem Header="Debug View" Command="{Binding ShowDevViewCommand}" />
+                <MenuItem Header="Debug View" />
             </MenuItem>
             <!-- Add more menu items as needed -->
         </Menu>
 
-        <ContentControl x:Name="ContentControl" />
+        <ContentControl Content="{Binding CurrentView}"/>
     </DockPanel>
 </UserControl>

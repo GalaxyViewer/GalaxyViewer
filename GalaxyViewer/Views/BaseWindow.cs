@@ -1,4 +1,6 @@
-﻿using Avalonia.Controls;
+﻿using System.Diagnostics;
+using System.Threading.Tasks;
+using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Styling;
 using GalaxyViewer.Models;
@@ -11,25 +13,43 @@ public class BaseWindow : Window
     {
         Icon = new WindowIcon("Assets/GalaxyViewerLogo.ico");
         CanResize = true;
-        App.PreferencesManager!.PreferencesChanged += OnPreferencesChanged;
-        var preferences = App.PreferencesManager.LoadPreferencesAsync().Result;
-        ApplyTheme(preferences.Theme);
-        FontFamily = new FontFamily(preferences.Font);
+        if (App.PreferencesManager != null)
+            App.PreferencesManager.PreferencesChanged += OnPreferencesChanged;
+
+        // Load preferences asynchronously without blocking the UI thread
+        _ = LoadPreferencesAsync();
+    }
+
+    private async Task LoadPreferencesAsync()
+    {
+        if (App.PreferencesManager == null) return;
+        var preferences = await App.PreferencesManager.LoadPreferencesAsync();
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            ApplyTheme(preferences.Theme);
+            FontFamily = new FontFamily(preferences.Font);
+        });
     }
 
     private void OnPreferencesChanged(object? sender, PreferencesModel preferences)
     {
-        ApplyTheme(preferences.Theme);
-        FontFamily = new FontFamily(preferences.Font);
+        Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            ApplyTheme(preferences.Theme);
+            FontFamily = new FontFamily(preferences.Font);
+        });
     }
 
-    public void ApplyTheme(string theme)
+    internal void ApplyTheme(string theme)
     {
-        RequestedThemeVariant = theme switch
+        Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
         {
-            "Light" => ThemeVariant.Light,
-            "Dark" => ThemeVariant.Dark,
-            _ => ThemeVariant.Default
-        };
+            RequestedThemeVariant = theme switch
+            {
+                "Light" => ThemeVariant.Light,
+                "Dark" => ThemeVariant.Dark,
+                _ => ThemeVariant.Default
+            };
+        });
     }
 }
