@@ -1,6 +1,6 @@
 # GalaxyViewer
 
-GalaxyViewer is a viewer for Second Life and OpenSimulator. It is heavily inspired by Radegast, using the Avalonia UI framework and .NET Core. It should work on Windows, Linux, and Android. iOS and macOS may be supported in the future.
+GalaxyViewer is a viewer for Second Life and OpenSimulator. It is heavily inspired by Radegast and Lumiya, using the Avalonia UI framework and .NET Core. It should work on Windows, Linux, and Android. iOS and macOS may be supported in the future.
 
 Features unique to this viewer (compared to the stock viewer) will include:
 
@@ -51,18 +51,18 @@ Features unique to this viewer (compared to the stock viewer) will include:
 
 - [ ] User Interface
 
-  - [ ] Light and Dark Modes
+  - [x] Light and Dark Modes
   - [ ] Customizable UI
   - [ ] Customizable Keybinds
   - [ ] Customizable Notifications
 
 - [ ] Grid Manager
-- [ ] Preferences
+- [x] Preferences
 - [ ] Plugin System
 - [ ] RLV Support
 - [ ] Automation Support
 - [ ] Accessibility
-- [ ] Discord Rich Presence
+- [ ] Discord Rich Presence (Desktop only)
 
 ## Installation
 
@@ -70,7 +70,7 @@ To be added...
 
 ## Building
 
-Make sure you have the [.NET Core SDK](https://dotnet.microsoft.com/download) installed. We use .NET 8.0.
+Make sure you have the [.NET Core SDK](https://dotnet.microsoft.com/download) installed. We currently use .NET 8.0.
 
 Clone the repository and navigate to the project directory.
 
