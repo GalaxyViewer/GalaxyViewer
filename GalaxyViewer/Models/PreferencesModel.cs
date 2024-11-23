@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using LiteDB;
 
 namespace GalaxyViewer.Models
@@ -9,6 +10,7 @@ namespace GalaxyViewer.Models
         public string LoginLocation { get; set; }
         public string Font { get; set; }
         public string Language { get; set; }
+        public string SelectedGridNick { get; set; }
         public long LastSavedEpoch { get; set; }
     }
 }

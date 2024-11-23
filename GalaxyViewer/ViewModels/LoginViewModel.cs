@@ -7,6 +7,8 @@ using System.Reactive;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia.Controls.Notifications;
+using GalaxyViewer.Models;
+using GalaxyViewer.Services;
 using ReactiveUI;
 using Ursa.Controls;
 using Serilog;
@@ -17,11 +19,13 @@ namespace GalaxyViewer.ViewModels
     public class LoginViewModel : ReactiveObject, IRoutableViewModel
     {
         public string UrlPathSegment => "login";
+
         public IScreen HostScreen
         {
             get
             {
-                Debug.Assert(_routableViewModelImplementation?.HostScreen != null, "_routableViewModelImplementation?.HostScreen != null");
+                Debug.Assert(_routableViewModelImplementation?.HostScreen != null,
+                    "_routableViewModelImplementation?.HostScreen != null");
                 return _routableViewModelImplementation.HostScreen;
             }
         }
@@ -31,17 +35,23 @@ namespace GalaxyViewer.ViewModels
         private string _password;
         private readonly GridClient _client = new();
         private IRoutableViewModel? _routableViewModelImplementation;
+        private readonly GridService _gridService;
+        private ObservableCollection<GridModel?> _grids;
+        private GridModel _selectedGrid;
 
         public WindowToastManager? ToastManager { get; set; }
 
         public LoginViewModel()
         {
-            _preferencesViewModel = new PreferencesViewModel(); // Initialize as needed
+            _preferencesViewModel = new PreferencesViewModel();
             _username = string.Empty;
             _password = string.Empty;
             LoginLocations = _preferencesViewModel.LoginLocationOptions;
             SelectedLoginLocation = _preferencesViewModel.SelectedLoginLocation;
             TryLoginCommand = ReactiveCommand.CreateFromTask(TryLoginAsync);
+            _gridService = new GridService();
+
+            LoadGrids();
 
             // Subscribe to the ThrownExceptions property to handle errors
             TryLoginCommand.ThrownExceptions.Subscribe(ex =>
@@ -74,6 +84,30 @@ namespace GalaxyViewer.ViewModels
                 _preferencesViewModel.SelectedLoginLocation = value;
                 this.RaisePropertyChanged();
             }
+        }
+
+        public ObservableCollection<GridModel?> Grids
+        {
+            get => _grids;
+            set => this.RaiseAndSetIfChanged(ref _grids, value);
+        }
+
+        public GridModel? SelectedGrid
+        {
+            get => _grids.FirstOrDefault(g => g.GridNick == _preferencesViewModel.SelectedGridNick);
+            set
+            {
+                if (value == null) return;
+                _preferencesViewModel.SelectedGridNick = value.GridNick;
+                this.RaiseAndSetIfChanged(ref _selectedGrid, value);
+            }
+        }
+
+        private void LoadGrids()
+        {
+            var grids = _gridService.GetAllGrids();
+            Grids = new ObservableCollection<GridModel?>(grids);
+            SelectedGrid = Grids.FirstOrDefault(g => g != null && g.GridNick == _preferencesViewModel.SelectedGridNick);
         }
 
         public ReactiveCommand<Unit, Unit> TryLoginCommand { get; }
@@ -120,13 +154,11 @@ namespace GalaxyViewer.ViewModels
                 "0.1.0" // ViewerVersion
             );
 
-            loginParams.URI =
-                "https://login.agni.lindenlab.com/cgi-bin/login.cgi"; // Set the login URI to SL main grid for now TODO: Update to use the selected grid in login menu
+            loginParams.URI = SelectedGrid.LoginUri; // Set the login URI to the selected grid's URI
             loginParams.MfaEnabled = true; // Inform the server that we support MFA
             loginParams.Platform = ourPlatform; // Set the platform - our operating system
             loginParams.PlatformVersion =
                 Environment.OSVersion.VersionString; // Set the platform version
-
             loginParams.Start =
                 _preferencesViewModel
                     .SelectedLoginLocation; // Set the start location to the selected login location

@@ -1,39 +1,26 @@
-using System;
+using LiteDB;
 using System.Collections.Generic;
-using System.IO;
-using System.Xml.Linq;
+using System.Linq;
 using GalaxyViewer.Models;
 
-namespace GalaxyViewer.Services;
-
-public class GridService
+namespace GalaxyViewer.Services
 {
-    public List<Grid> ParseGridsFromXml()
+    public class GridService
     {
-        var xmlFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "grids.xml");
-        var xDoc = XDocument.Load(xmlFilePath);
-        var grids = new List<Grid>();
+        private const string _databasePath = "Filename=Grids.db; Connection=shared";
 
-        if (xDoc.Root == null) return grids;
-        foreach (var gridElement in xDoc.Root.Elements("grid"))
+        public void AddGrid(GridModel grid)
         {
-            var grid = new Grid(
-                gridElement.Element("gridnick")?.Value ?? string.Empty,
-                gridElement.Element("gridname")?.Value ?? string.Empty,
-                gridElement.Element("platform")?.Value ?? string.Empty,
-                gridElement.Element("loginuri")?.Value ?? string.Empty,
-                gridElement.Element("loginpage")?.Value ?? string.Empty,
-                gridElement.Element("helperuri")?.Value ?? string.Empty,
-                gridElement.Element("website")?.Value ?? string.Empty,
-                gridElement.Element("support")?.Value ?? string.Empty,
-                gridElement.Element("register")?.Value ?? string.Empty,
-                gridElement.Element("password")?.Value ?? string.Empty,
-                gridElement.Element("version")?.Value ?? string.Empty
-            );
-
-            grids.Add(grid);
+            using var db = new LiteDatabase(_databasePath);
+            var grids = db.GetCollection<GridModel>("grids");
+            grids.Insert(grid);
         }
 
-        return grids;
+        public List<GridModel> GetAllGrids()
+        {
+            using var db = new LiteDatabase(_databasePath);
+            var grids = db.GetCollection<GridModel>("grids");
+            return grids.FindAll().ToList();
+        }
     }
 }

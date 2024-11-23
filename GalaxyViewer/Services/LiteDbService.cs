@@ -15,10 +15,18 @@ namespace GalaxyViewer.Services
         {
             try
             {
-                var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GalaxyViewer", "data.db");
-                Directory.CreateDirectory(Path.GetDirectoryName(dbPath) ?? throw new InvalidOperationException()); // Ensure the directory exists
+                var dbPath =
+                    Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "GalaxyViewer", "data.db");
+                Directory.CreateDirectory(Path.GetDirectoryName(dbPath) ??
+                                          throw new
+                                              InvalidOperationException()); // Ensure the directory exists
                 _database = new LiteDatabase(dbPath);
                 Log.Information("LiteDbService initialized with database path: {DbPath}", dbPath);
+
+                // Call SeedDatabase to ensure the grids table is generated
+                SeedDatabase();
             }
             catch (Exception ex)
             {
@@ -38,40 +46,82 @@ namespace GalaxyViewer.Services
             return _database;
         }
 
-        public void SeedDatabase()
+        private void SeedDatabase()
+        {
+            SeedPreferences();
+            SeedGrids();
+        }
+
+        private void SeedPreferences()
         {
             try
             {
-                var preferencesCollection = _database.GetCollection<PreferencesModel>("preferences");
-                var count = preferencesCollection.Count();
-                Log.Information("Number of records in preferences collection: {Count}", count);
-
-                if (count == 0)
+                var preferencesCollection =
+                    _database.GetCollection<PreferencesModel>("preferences");
+                if (preferencesCollection.Count() != 0) return;
+                var defaultPreferences = new PreferencesModel
                 {
-                    var defaultPreferences = new PreferencesModel
-                    {
-                        Theme = "Default",
-                        LoginLocation = "Home",
-                        Font = "Atkinson Hyperlegible",
-                        Language = "en-US",
-                        LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-                    };
-                    preferencesCollection.Insert(defaultPreferences);
-                    Log.Information("Database seeded with default preferences");
-                }
-
-                count = preferencesCollection.Count();
-                Log.Information("Number of records in preferences collection: {Count}", count);
-
-                var allPreferences = preferencesCollection.FindAll();
-                foreach (var preference in allPreferences)
-                {
-                    Log.Information("Preference: {@Preference}", preference);
-                }
+                    Theme = "Default",
+                    LoginLocation = "Home",
+                    Font = "Atkinson Hyperlegible",
+                    Language = "en-US",
+                    SelectedGridNick = "agni",
+                    LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                };
+                preferencesCollection.Insert(defaultPreferences);
+                Log.Information("Database seeded with default preferences");
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to seed database");
+                Log.Error(ex, "Failed to seed preferences");
+            }
+        }
+
+        private void SeedGrids()
+        {
+            try
+            {
+                var gridsCollection = _database.GetCollection<GridModel>("grids");
+                if (gridsCollection.Count() != 0) return;
+                var grids = new[]
+                {
+                    new GridModel
+                    {
+                        GridNick = "agni",
+                        GridName = "Second Life (agni)",
+                        Platform = "SecondLife",
+                        LoginUri = "https://login.agni.lindenlab.com/cgi-bin/login.cgi",
+                        LoginPage =
+                            "http://secondlife.com/app/login/?channel=Second+Life+Release",
+                        HelperUri = "https://secondlife.com/helpers/",
+                        Website = "http://secondlife.com/",
+                        Support = "http://secondlife.com/support/",
+                        Register = "http://secondlife.com/registration/",
+                        Password = "http://secondlife.com/account/request.php",
+                        Version = "0"
+                    },
+                    new GridModel
+                    {
+                        GridNick = "aditi",
+                        GridName = "Second Life Beta (aditi)",
+                        Platform = "SecondLife",
+                        LoginUri = "https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
+                        LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Beta",
+                        HelperUri = "http://aditi-secondlife.webdev.lindenlab.com/helpers/",
+                        Website = "http://secondlife.com/",
+                        Support = "http://secondlife.com/support/",
+                        Register = "http://secondlife.com/registration/",
+                        Password = "http://secondlife.com/account/request.php",
+                        Version = "1"
+                    }
+                };
+
+                gridsCollection.InsertBulk(grids);
+                Log.Information("Database seeded with default grids");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to seed grids");
             }
         }
 

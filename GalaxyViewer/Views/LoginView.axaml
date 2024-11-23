@@ -18,7 +18,7 @@
                 </TextBlock>
             </StackPanel>
         </Grid>
-        <Grid Grid.Row="1" Margin="20" ColumnDefinitions="Auto,240,Auto,240,Auto,*">
+        <Grid Grid.Row="1" Margin="20" ColumnDefinitions="Auto,240,Auto,240,Auto,Auto,*">
             <Label Grid.Column="0"
                    Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
                    VerticalAlignment="Center" />
@@ -38,7 +38,14 @@
                       ItemsSource="{Binding LoginLocations}"
                       SelectedItem="{Binding SelectedLoginLocation}"
                       Margin="5,0" />
-            <Button Grid.Column="5" Name="ButtonLogin"
+            <!--
+            <ComboBox Grid.Column="5" Name="GridSelection"
+                      ItemsSource="{Binding Grids}"
+                      SelectedItem="{Binding SelectedGrid}"
+                      Margin="5,0" />
+            -->
+            <!-- TODO: Fix the visibility of the GridSelection ComboBox options -->
+            <Button Grid.Column="6" Name="ButtonLogin"
                     Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenLoginButton}"
                     Command="{Binding TryLoginCommand}"
                     Margin="5,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
