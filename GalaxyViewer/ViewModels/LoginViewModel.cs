@@ -39,6 +39,9 @@ namespace GalaxyViewer.ViewModels
         private ObservableCollection<GridModel?> _grids;
         private GridModel _selectedGrid;
 
+        private const string DefaultGridUri =
+            "https://login.agni.lindenlab.com/cgi-bin/login.cgi";
+
         public WindowToastManager? ToastManager { get; set; }
 
         public LoginViewModel()
@@ -50,6 +53,7 @@ namespace GalaxyViewer.ViewModels
             SelectedLoginLocation = _preferencesViewModel.SelectedLoginLocation;
             TryLoginCommand = ReactiveCommand.CreateFromTask(TryLoginAsync);
             _gridService = new GridService();
+            _grids = new ObservableCollection<GridModel?>();
 
             LoadGrids();
 
@@ -60,6 +64,9 @@ namespace GalaxyViewer.ViewModels
                 // Handle the error (e.g., show a dialog to the user)
                 _ = ShowLoginErrorAsync("An error occurred during login. Please try again.");
             });
+
+            // Subscribe to the Network.LoginProgress event
+            _client.Network.LoginProgress += OnLoginProgress;
         }
 
         public ObservableCollection<string> LoginLocations { get; }
@@ -86,15 +93,27 @@ namespace GalaxyViewer.ViewModels
             }
         }
 
-        public ObservableCollection<GridModel?> Grids
-        {
-            get => _grids;
-            set => this.RaiseAndSetIfChanged(ref _grids, value);
-        }
+        public string LoginStatusMessage { get; set; }
+
+        public ObservableCollection<GridModel> Grids { get; set; }
 
         public GridModel? SelectedGrid
         {
-            get => _grids.FirstOrDefault(g => g.GridNick == _preferencesViewModel.SelectedGridNick);
+            get
+            {
+                var selectedGrid = _grids.FirstOrDefault(g =>
+                    g.GridNick == _preferencesViewModel.SelectedGridNick);
+                if (selectedGrid == null)
+                {
+                    selectedGrid = new GridModel
+                    {
+                        GridNick = "Second Life",
+                        LoginUri = DefaultGridUri
+                    };
+                }
+
+                return selectedGrid;
+            }
             set
             {
                 if (value == null) return;
@@ -106,8 +125,9 @@ namespace GalaxyViewer.ViewModels
         private void LoadGrids()
         {
             var grids = _gridService.GetAllGrids();
-            Grids = new ObservableCollection<GridModel?>(grids);
-            SelectedGrid = Grids.FirstOrDefault(g => g != null && g.GridNick == _preferencesViewModel.SelectedGridNick);
+            _grids = new ObservableCollection<GridModel?>(grids);
+            SelectedGrid = _grids.FirstOrDefault(g =>
+                g.GridNick == _preferencesViewModel.SelectedGridNick);
         }
 
         public ReactiveCommand<Unit, Unit> TryLoginCommand { get; }
@@ -146,7 +166,7 @@ namespace GalaxyViewer.ViewModels
                 platformMap.FirstOrDefault(kv => RuntimeInformation.IsOSPlatform(kv.Key)).Value ??
                 "Unk";
 
-            var loginParams = _client.Network.DefaultLoginParams(
+            var loginParams = _client?.Network?.DefaultLoginParams(
                 Username.Split(' ')[0], // firstName
                 Username.Contains(' ') ? Username.Split(' ')[1] : "Resident", // lastName
                 Password,
@@ -154,39 +174,50 @@ namespace GalaxyViewer.ViewModels
                 "0.1.0" // ViewerVersion
             );
 
-            loginParams.URI = SelectedGrid.LoginUri; // Set the login URI to the selected grid's URI
+            if (loginParams == null)
+            {
+                Log.Error("Failed to create login parameters");
+                await ShowLoginErrorAsync("Failed to create login parameters");
+                return;
+            }
+
+            loginParams.URI =
+                SelectedGrid?.LoginUri; // Set the login URI to the selected grid's URI
             loginParams.MfaEnabled = true; // Inform the server that we support MFA
             loginParams.Platform = ourPlatform; // Set the platform - our operating system
             loginParams.PlatformVersion =
                 Environment.OSVersion.VersionString; // Set the platform version
             loginParams.Start =
                 _preferencesViewModel
-                    .SelectedLoginLocation; // Set the start location to the selected login location
+                    ?.SelectedLoginLocation; // Set the start location to the selected login location
             loginParams.MfaHash = string.Empty; // Clear the MFA hash
 
-            var loginSuccess = await Task.Run(() => _client.Network.Login(loginParams));
+            var loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
 
             if (loginSuccess)
             {
                 Log.Information("Login successful");
+                await ProcessCapabilitiesAsync();
             }
-            else if (_client.Network.LoginMessage.Contains("MFA required"))
+            else if (_client?.Network?.LoginMessage.Contains("MFA required") == true)
             {
                 Log.Warning("MFA required");
                 var mfaCode = await ShowMfaInputDialogAsync();
                 if (!string.IsNullOrEmpty(mfaCode))
                 {
                     loginParams.MfaHash = Utils.MD5(mfaCode);
-                    loginSuccess = await Task.Run(() => _client.Network.Login(loginParams));
+                    loginSuccess =
+                        await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
                     if (loginSuccess)
                     {
                         Log.Information("Login successful with MFA");
+                        await ProcessCapabilitiesAsync();
                     }
                     else
                     {
-                        Log.Error("Login failed with MFA: {Error}", _client.Network.LoginMessage);
+                        Log.Error("Login failed with MFA: {Error}", _client?.Network?.LoginMessage);
                         await ShowLoginErrorAsync(
-                            $"Login failed with MFA: {_client.Network.LoginMessage}");
+                            $"Login failed with MFA: {_client?.Network?.LoginMessage}");
                     }
                 }
                 else
@@ -197,8 +228,49 @@ namespace GalaxyViewer.ViewModels
             }
             else
             {
-                Log.Error("Login failed: {Error}", _client.Network.LoginMessage);
-                await ShowLoginErrorAsync($"Login failed: {_client.Network.LoginMessage}");
+                Log.Error("Login failed: {Error}", _client?.Network?.LoginMessage);
+                await ShowLoginErrorAsync($"Login failed: {_client?.Network?.LoginMessage}");
+            }
+        }
+
+        private async Task ProcessCapabilitiesAsync()
+        {
+            var capabilities = _client.Network.CurrentSim.Caps;
+            if (capabilities != null)
+            {
+                // TODO: Process the capabilities as needed
+            }
+
+            await Task.CompletedTask;
+        }
+
+        private void OnLoginProgress(object? sender, LoginProgressEventArgs e)
+        {
+            Log.Information("Login progress: {Status}", e.Status);
+            switch (e.Status)
+            {
+                case LoginStatus.ConnectingToLogin:
+                    LoginStatusMessage = "Connecting to login server...";
+                    break;
+                case LoginStatus.ConnectingToSim:
+                    LoginStatusMessage = "Connecting to region...";
+                    break;
+                case LoginStatus.Redirecting:
+                    LoginStatusMessage = "Redirecting...";
+                    break;
+                case LoginStatus.ReadingResponse:
+                    LoginStatusMessage = "Reading response...";
+                    break;
+                case LoginStatus.Success:
+                    LoginStatusMessage = $"Logged in as {_client.Self.Name}";
+                    break;
+                case LoginStatus.Failed:
+                    LoginStatusMessage = $"Login failed: {e.Message}";
+                    break;
+                case LoginStatus.None:
+                default:
+                    LoginStatusMessage = $"Unknown login status: {e.Status}";
+                    break;
             }
         }
 
