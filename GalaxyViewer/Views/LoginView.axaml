@@ -38,17 +38,16 @@
                       ItemsSource="{Binding LoginLocations}"
                       SelectedItem="{Binding SelectedLoginLocation}"
                       Margin="5,0" />
-            <!--
             <ComboBox Grid.Column="5" Name="GridSelection"
                       ItemsSource="{Binding Grids}"
                       SelectedItem="{Binding SelectedGrid}"
                       Margin="5,0" />
-            -->
             <!-- TODO: Fix the visibility of the GridSelection ComboBox options -->
             <Button Grid.Column="6" Name="ButtonLogin"
                     Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenLoginButton}"
                     Command="{Binding TryLoginCommand}"
                     Margin="5,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
         </Grid>
+        <TextBlock Grid.Row="0" Text="{Binding LoginStatusMessage}" />
     </Grid>
 </UserControl>

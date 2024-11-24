@@ -62,6 +62,13 @@ Features unique to this viewer (compared to the stock viewer) will include:
 - [ ] RLV Support
 - [ ] Automation Support
 - [ ] Accessibility
+  - [ ] Screen Reader Support
+  - [ ] High Contrast Mode
+  - [ ] Keyboard Navigation
+  - [ ] Voice Commands
+  - [ ] Text-to-Speech
+  - [ ] Speech-to-Text
+- [x] Localization
 - [ ] Discord Rich Presence (Desktop only)
 
 ## Installation
@@ -89,7 +96,7 @@ Also, please note the [Code of Conduct](CODE_OF_CONDUCT.md) for this project.
 
 Please note that while the viewer is in the early development stage, it is not recommended for everyday use and no support will be given. This ReadMe will be updated with support information once the viewer is in a more stable state.
 
-If you have any questions or concerns, please contact [Galaxy Littlepaws](mailto:support@galaxyviewer.com) and include "Galaxy Viewer" in the subject line.
+If you have any questions or concerns, please feel free to use our [Discussion](https://github.com/GalaxyViewer/GalaxyViewer/discussions) forum.
 
 ## License
 
