@@ -77,6 +77,16 @@
           "Irihi.Avalonia.Shared.Contracts": "0.2.1"
         }
       },
+      "Irihi.Ursa.ReactiveUIExtension": {
+        "type": "Direct",
+        "requested": "[1.0.1, )",
+        "resolved": "1.0.1",
+        "contentHash": "ooXvGRVxXMWtkcTy3XWO6B2R4mEzzG044yETua8UUScwGXw51DL3rg3Z7ghysl/XHaDBIGUVdQ738J0pjdD78Q==",
+        "dependencies": {
+          "Avalonia.ReactiveUI": "11.1.1",
+          "Irihi.Ursa": "1.4.0"
+        }
+      },
       "Irihi.Ursa.Themes.Semi": {
         "type": "Direct",
         "requested": "[1.6.0.2, )",

@@ -1,12 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="GalaxyViewer.Views.LoginView"
-             xmlns:converters="clr-namespace:GalaxyViewer.Converters"
              xmlns:viewModels="clr-namespace:GalaxyViewer.ViewModels"
              x:DataType="viewModels:LoginViewModel">
-    <UserControl.Resources>
-        <converters:LocalizedStringConverter x:Key="LocalizedStringConverter" />
-    </UserControl.Resources>
     <Grid RowDefinitions="*,Auto">
         <Grid>
             <Image Source="/Assets/Images/banner.jpg" Stretch="UniformToFill" />
