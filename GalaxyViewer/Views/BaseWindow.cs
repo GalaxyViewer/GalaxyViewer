@@ -1,16 +1,21 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Styling;
 using GalaxyViewer.Models;
+using Ursa.ReactiveUIExtension;
 
 namespace GalaxyViewer.Views;
 
-public class BaseWindow : Window
+public class BaseWindow : ReactiveUrsaWindow<PreferencesModel>, IStyleable
 {
+    Type IStyleable.StyleKey => typeof(Window);
+
     protected BaseWindow()
     {
+        Title = "GalaxyViewer";
         Icon = new WindowIcon("Assets/GalaxyViewerLogo.ico");
         CanResize = true;
         if (App.PreferencesManager != null)
