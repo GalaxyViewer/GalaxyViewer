@@ -2,23 +2,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:converters="clr-namespace:GalaxyViewer.Converters"
              xmlns:vm="clr-namespace:GalaxyViewer.ViewModels"
              mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="400"
              x:Class="GalaxyViewer.Views.PreferencesView"
              x:DataType="vm:PreferencesViewModel">
-    <UserControl.Resources>
-        <converters:LocalizedStringConverter x:Key="LocalizedStringConverter" />
-    </UserControl.Resources>
-    <StackPanel Margin="20">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
         <Label Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesTitle}"
                VerticalAlignment="Center" />
         <Label Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesTheme}"
                VerticalAlignment="Center" />
         <ComboBox ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}" />
-        <Label Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesLoginLocation}"
-               VerticalAlignment="Center" />
-        <ComboBox ItemsSource="{Binding LoginLocationOptions}" SelectedItem="{Binding SelectedLoginLocation}" />
         <Label Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesLanguage}"
                VerticalAlignment="Center" />
         <ComboBox ItemsSource="{Binding LanguageOptions}" SelectedItem="{Binding SelectedLanguage}" />
@@ -26,7 +19,6 @@
                VerticalAlignment="Center" />
         <ComboBox ItemsSource="{Binding FontOptions}" SelectedItem="{Binding SelectedFont}" />
         <Button Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesSaveButton}"
-                Command="{Binding SaveCommand}" HorizontalAlignment="Left" />
-        <TextBlock Text="{Binding StatusMessage}" />
+                Command="{Binding SaveCommand}" HorizontalAlignment="Left" Margin="0,10" />
     </StackPanel>
 </UserControl>

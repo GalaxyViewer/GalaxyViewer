@@ -1,0 +1,14 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:GalaxyViewer.Controls">
+    <Design.PreviewWith>
+        <Border Padding="20">
+            <!-- Add Controls for Previewer Here -->
+            <local:EmojiTextBlock Text="🌌 Galaxy Viewer" FontSize="24" />
+        </Border>
+    </Design.PreviewWith>
+    <Style Selector="local|EmojiTextBlock">
+        <Setter Property="EmojiFontFamily" Value="avares://GalaxyViewer/Assets/Fonts/#Noto Color Emoji" />
+        <Setter Property="DefaultFontFamily" Value="avares://GalaxyViewer/Assets/Fonts/#Atkinson Hyperlegible" />
+    </Style>
+</Styles>

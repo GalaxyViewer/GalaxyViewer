@@ -12,7 +12,7 @@ Features unique to this viewer (compared to the stock viewer) will include:
 
 - [ ] User Authentication
 
-  - [ ] Login
+  - [x] Login
   - [ ] MFA Support
 
 - [ ] Communication
@@ -51,17 +51,24 @@ Features unique to this viewer (compared to the stock viewer) will include:
 
 - [ ] User Interface
 
-  - [ ] Light and Dark Modes
+  - [x] Light and Dark Modes
   - [ ] Customizable UI
   - [ ] Customizable Keybinds
   - [ ] Customizable Notifications
 
 - [ ] Grid Manager
-- [ ] Preferences
+- [x] Preferences
 - [ ] Plugin System
 - [ ] RLV Support
 - [ ] Automation Support
 - [ ] Accessibility
+  - [ ] Screen Reader Support
+  - [ ] High Contrast Mode
+  - [ ] Keyboard Navigation
+  - [ ] Voice Commands
+  - [ ] Text-to-Speech
+  - [ ] Speech-to-Text
+- [x] Localization
 - [ ] Discord Rich Presence (Desktop only)
 
 ## Installation

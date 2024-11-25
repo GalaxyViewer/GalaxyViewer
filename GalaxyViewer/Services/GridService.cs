@@ -1,40 +1,43 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Xml.Linq;
+using System.Linq;
+using LiteDB;
 using GalaxyViewer.Models;
 
 namespace GalaxyViewer.Services
 {
     public class GridService
     {
-        public List<Grid> ParseGridsFromXml()
+        private readonly string _databasePath;
+
+        public GridService()
         {
-            var xmlFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "grids.xml");
-            var xDoc = XDocument.Load(xmlFilePath);
-            var grids = new List<Grid>();
+            var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GalaxyViewer");
+            Directory.CreateDirectory(appDataPath); // Ensure the directory exists
+            _databasePath = Path.Combine(appDataPath, "data.db");
+        }
 
-            if (xDoc.Root == null) return grids;
-            foreach (var gridElement in xDoc.Root.Elements("grid"))
+        public List<GridModel> GetAllGrids()
+        {
+            try
             {
-                var grid = new Grid(
-                    gridElement.Element("gridnick")?.Value ?? string.Empty,
-                    gridElement.Element("gridname")?.Value ?? string.Empty,
-                    gridElement.Element("platform")?.Value ?? string.Empty,
-                    gridElement.Element("loginuri")?.Value ?? string.Empty,
-                    gridElement.Element("loginpage")?.Value ?? string.Empty,
-                    gridElement.Element("helperuri")?.Value ?? string.Empty,
-                    gridElement.Element("website")?.Value ?? string.Empty,
-                    gridElement.Element("support")?.Value ?? string.Empty,
-                    gridElement.Element("register")?.Value ?? string.Empty,
-                    gridElement.Element("password")?.Value ?? string.Empty,
-                    gridElement.Element("version")?.Value ?? string.Empty
-                );
-
-                grids.Add(grid);
+                using var db = new LiteDatabase(_databasePath);
+                var collection = db.GetCollection<GridModel>("grids");
+                return collection.FindAll().ToList();
             }
-
-            return grids;
+            catch (IOException ex) when (ex.Message.Contains("Read-only file system"))
+            {
+                // Handle read-only file system scenario
+                Console.Error.WriteLine("Error: The file system is read-only. Please check the file system permissions.");
+                return [];
+            }
+            catch (Exception ex)
+            {
+                // Handle other exceptions
+                Console.Error.WriteLine($"An error occurred: {ex.Message}");
+                throw;
+            }
         }
     }
 }

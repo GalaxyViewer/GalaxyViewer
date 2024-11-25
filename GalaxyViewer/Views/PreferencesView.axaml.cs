@@ -1,31 +1,20 @@
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using GalaxyViewer.Services;
 using GalaxyViewer.ViewModels;
 
-namespace GalaxyViewer.Views
+namespace GalaxyViewer.Views;
+
+public partial class PreferencesView : UserControl
 {
-    public partial class PreferencesView : UserControl
+    public PreferencesView()
     {
-        public PreferencesView()
-        {
-            InitializeComponent();
-            LoadViewModelAsync();
-        }
+        InitializeComponent();
+        DataContext = new PreferencesViewModel();
+    }
 
-        private async void LoadViewModelAsync()
-        {
-            var viewModel = new PreferencesViewModel();
-            await viewModel.InitializeAsync();
-            DataContext = viewModel;
-        }
-
-        private static async Task<PreferencesViewModel> CreateAsync()
-        {
-            var viewModel = new PreferencesViewModel();
-            await viewModel
-                .LoadPreferencesAsync();
-            return viewModel;
-        }
+    private void InitializeComponent()
+    {
+        AvaloniaXamlLoader.Load(this);
     }
 }

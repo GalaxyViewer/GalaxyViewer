@@ -1,225 +1,139 @@
-using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Globalization;
-using System.IO;
-using System.Reactive;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
+using System.Windows.Input;
+using GalaxyViewer.Commands;
 using GalaxyViewer.Models;
 using GalaxyViewer.Services;
-using ReactiveUI;
-using Serilog;
 
 namespace GalaxyViewer.ViewModels
 {
-    public sealed class PreferencesViewModel : INotifyPropertyChanged
+    public class PreferencesViewModel : ViewModelBase
     {
-        private PreferencesModel _preferences = new();
-        private readonly PreferencesManager _preferencesManager = new();
+        private readonly PreferencesManager? _preferencesManager;
+        private PreferencesModel _preferences;
+        private bool _isLoadingPreferences;
 
-        private string _selectedLanguage = "en-US";
-        private string _selectedTheme = "Default";
-        private string _selectedFont = "Atkinson Hyperlegible";
-        private string _selectedLoginLocation = "Home";
-
-        public IEnumerable<string> LanguageOptions => _preferences.LanguageOptions;
-
-        public string SelectedLanguage
+        public PreferencesViewModel()
         {
-            get => _selectedLanguage;
-            set
-            {
-                if (_selectedLanguage == value) return;
-                _selectedLanguage = value;
-                OnPropertyChanged(nameof(SelectedLanguage));
-                _preferences.Language = value;
-                ChangeCulture(value);
-            }
+            if (App.PreferencesManager != null) _preferencesManager = App.PreferencesManager;
+            _preferences = App.PreferencesManager?.CurrentPreferences ?? new PreferencesModel();
+            var preferencesOptions = _preferencesManager?.GetCurrentPreferencesOptions();
+            ThemeOptions = new ObservableCollection<string>(preferencesOptions?["ThemeOptions"] ??
+                                                            []);
+            LoginLocationOptions = new ObservableCollection<string>(
+                preferencesOptions?["LoginLocationOptions"] ??
+                []);
+            LanguageOptions = new ObservableCollection<string>(
+                preferencesOptions?["LanguageOptions"] ??
+                []);
+            FontOptions =
+                new ObservableCollection<string>(preferencesOptions?["FontOptions"] ?? []);
+            _selectedTheme = _preferences.Theme;
+            _selectedLoginLocation = _preferences.LoginLocation;
+            _selectedLanguage = _preferences.Language;
+            _selectedFont = _preferences.Font;
+            _selectedGridNick = _preferences.SelectedGridNick;
+            SaveCommand = new RelayCommand(async () => await SavePreferencesAsync());
+            LoadPreferences();
         }
 
-        public IEnumerable<string> ThemeOptions => _preferences.ThemeOptions;
+        private async void LoadPreferences()
+        {
+            _isLoadingPreferences = true;
+            if (_preferencesManager != null)
+                _preferences = await _preferencesManager.LoadPreferencesAsync();
+
+            SelectedTheme = _preferences.Theme;
+            SelectedLoginLocation = _preferences.LoginLocation;
+            SelectedLanguage = _preferences.Language;
+            SelectedFont = _preferences.Font;
+            SelectedGridNick = _preferences.SelectedGridNick;
+            var gridOptions = _preferencesManager?.GetGridOptions();
+            GridOptions = new ObservableCollection<string>(gridOptions ?? []);
+
+            _isLoadingPreferences = false;
+        }
+
+        public ObservableCollection<string> ThemeOptions { get; private set; }
+        public ObservableCollection<string> LoginLocationOptions { get; private set; }
+        public ObservableCollection<string> LanguageOptions { get; private set; }
+        public ObservableCollection<string> FontOptions { get; private set; }
+        public ObservableCollection<string> GridOptions { get; private set; }
+
+        private string _selectedLoginLocation;
+        private string _selectedLanguage;
+        private string _selectedFont;
+        private string _selectedTheme;
+        private string _selectedGridNick;
 
         public string SelectedTheme
         {
             get => _selectedTheme;
             set
             {
-                if (_selectedTheme == value) return;
+                if (_selectedTheme == value || _isLoadingPreferences) return;
                 _selectedTheme = value;
                 OnPropertyChanged(nameof(SelectedTheme));
-                _preferences.Theme = value;
             }
         }
-
-        public IEnumerable<string> FontOptions => _preferences.FontOptions;
-
-        public string SelectedFont
-        {
-            get => _selectedFont;
-            set
-            {
-                if (_selectedFont == value) return;
-                _selectedFont = value;
-                OnPropertyChanged(nameof(SelectedFont));
-                _preferences.Font = value;
-            }
-        }
-
-        public IEnumerable<string> LoginLocationOptions => _preferences.LoginLocationOptions;
 
         public string SelectedLoginLocation
         {
             get => _selectedLoginLocation;
             set
             {
-                if (_selectedLoginLocation == value) return;
+                if (_selectedLoginLocation == value || _isLoadingPreferences) return;
                 _selectedLoginLocation = value;
                 OnPropertyChanged(nameof(SelectedLoginLocation));
-                _preferences.LoginLocation = value;
             }
         }
 
-        private static void ChangeCulture(string cultureName)
+        public string SelectedLanguage
         {
-            CultureInfo.CurrentCulture = new CultureInfo(cultureName);
-            CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
-        }
-
-        public PreferencesModel Preferences
-        {
-            get => _preferences;
+            get => _selectedLanguage;
             set
             {
-                _preferences = value;
-                OnPropertyChanged(nameof(Preferences));
+                if (_selectedLanguage == value || _isLoadingPreferences) return;
+                _selectedLanguage = value;
+                OnPropertyChanged(nameof(SelectedLanguage));
             }
         }
 
-        private readonly string _preferencesFilePath;
-        public ReactiveCommand<Unit, Unit>? SaveCommand { get; private set; }
-
-        public PreferencesViewModel()
+        public string SelectedFont
         {
-            _preferencesFilePath =
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "GalaxyViewer", "preferences.xml");
-            var directoryPath = Path.GetDirectoryName(_preferencesFilePath);
-            if (directoryPath != null)
-            {
-                _ = Directory.CreateDirectory(directoryPath);
-            }
-            else
-            {
-                Log.Error("Failed to create preferences directory");
-            }
-
-            SaveCommand = ReactiveCommand.CreateFromTask(SavePreferencesAsync);
-
-            Task.Run(InitializeAsync).Wait();
-        }
-
-        public async Task InitializeAsync()
-        {
-            Preferences = await _preferencesManager.LoadPreferencesAsync();
-
-            // Update local fields from loaded preferences
-            _selectedLanguage = Preferences.Language;
-            _selectedTheme = Preferences.Theme;
-            _selectedFont = Preferences.Font;
-            _selectedLoginLocation = Preferences.LoginLocation;
-
-            // Notify the UI to update
-            OnPropertyChanged(nameof(SelectedLanguage));
-            OnPropertyChanged(nameof(SelectedTheme));
-            OnPropertyChanged(nameof(SelectedFont));
-            OnPropertyChanged(nameof(SelectedLoginLocation));
-
-            ChangeCulture(
-                _selectedLanguage);
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        private string _statusMessage = string.Empty;
-
-        public string StatusMessage
-        {
-            get => _statusMessage;
+            get => _selectedFont;
             set
             {
-                _statusMessage = value;
-                OnPropertyChanged(nameof(StatusMessage));
+                if (_selectedFont == value || _isLoadingPreferences) return;
+                _selectedFont = value;
+                OnPropertyChanged(nameof(SelectedFont));
             }
         }
 
-        public async Task<PreferencesModel> LoadPreferencesAsync()
+        public string SelectedGridNick
         {
-            try
+            get => _selectedGridNick;
+            set
             {
-                // Step 1: Check and copy default preferences if necessary
-                var defaultPreferencesPath = Path.Combine("Assets", "preferences.xml");
-                if (!File.Exists(_preferencesFilePath) && File.Exists(defaultPreferencesPath))
-                {
-                    File.Copy(defaultPreferencesPath, _preferencesFilePath);
-                }
-
-                // Step 2: Open the preferences file
-                await using var stream = new FileStream(_preferencesFilePath, FileMode.OpenOrCreate,
-                    FileAccess.Read, FileShare.Read);
-                var serializer = new XmlSerializer(typeof(PreferencesModel));
-
-                // Step 3 & 4: Deserialize the XML content
-                var loadedPreferences = await Task.Run(() =>
-                {
-                    try
-                    {
-                        var result = serializer.Deserialize(stream);
-                        if (result is PreferencesModel preferences)
-                        {
-                            return preferences;
-                        }
-
-                        throw new InvalidCastException(
-                            "Deserialized object is not of type PreferencesModel.");
-                    }
-                    catch (Exception ex)
-                    {
-                        // Step 5: Handle deserialization failure
-                        Log.Error(ex, "Failed to deserialize preferences");
-                        StatusMessage = "Failed to load preferences. Using default settings.";
-                        return new PreferencesModel(); // Return default preferences on error
-                    }
-                });
-                return loadedPreferences;
-            }
-            catch (Exception ex)
-            {
-                // Step 6: Handle any other exceptions
-                Log.Error(ex, "Error loading preferences");
-                StatusMessage = "Error loading preferences. Using default settings.";
-                return new PreferencesModel(); // Return default preferences on error
+                if (_selectedGridNick == value || _isLoadingPreferences) return;
+                _selectedGridNick = value;
+                OnPropertyChanged(nameof(SelectedGridNick));
             }
         }
 
         private async Task SavePreferencesAsync()
         {
-            try
-            {
-                Preferences.LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                await _preferencesManager.SavePreferencesAsync(Preferences);
-                StatusMessage = "Preferences saved successfully.";
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Error saving preferences: {ex.Message}";
-                Log.Error(ex, "Error saving preferences");
-            }
+            _preferences.Theme = SelectedTheme;
+            _preferences.LoginLocation = SelectedLoginLocation;
+            _preferences.Language = SelectedLanguage;
+            _preferences.Font = SelectedFont;
+            _preferences.SelectedGridNick = SelectedGridNick;
+
+            if (_preferencesManager != null)
+                await _preferencesManager.SavePreferencesAsync(_preferences);
         }
+
+        public ICommand SaveCommand { get; }
     }
 }

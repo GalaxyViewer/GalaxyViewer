@@ -1,71 +1,95 @@
 ﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using LiteDB;
 using GalaxyViewer.Models;
-using Serilog;
+using System.Threading.Tasks;
 
-namespace GalaxyViewer.Services;
-
-public class PreferencesManager
+namespace GalaxyViewer.Services
 {
-    private readonly string _preferencesFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GalaxyViewer", "preferences.xml");
-    private bool _preferencesLoaded;
-
-    public PreferencesManager()
+    public sealed class PreferencesManager
     {
-        EnsurePreferencesDirectory();
-    }
+        private readonly ILiteCollection<PreferencesModel> _preferencesCollection;
+        private readonly ILiteCollection<GridModel>? _gridsCollection;
 
-    private void EnsurePreferencesDirectory()
-    {
-        var directoryPath = Path.GetDirectoryName(_preferencesFilePath);
-        if (!string.IsNullOrEmpty(directoryPath))
+
+        public event EventHandler<PreferencesModel>? PreferencesChanged;
+
+        public PreferencesManager(LiteDbService? liteDbService)
         {
-            Directory.CreateDirectory(directoryPath);
-        }
-    }
-
-    public Task<PreferencesModel> LoadPreferencesAsync()
-    {
-        if (_preferencesLoaded)
-        {
-            return Task.FromResult(new PreferencesModel());
+            Debug.Assert(liteDbService != null, nameof(liteDbService) + " != null");
+            var database = liteDbService.Database();
+            Debug.Assert(database != null, nameof(database) + " != null");
+            _preferencesCollection = database.GetCollection<PreferencesModel>("preferences");
+            _gridsCollection = database?.GetCollection<GridModel>("grids");
         }
 
-        try
+        public PreferencesModel CurrentPreferences
         {
-            if (!File.Exists(_preferencesFilePath))
+            get
             {
-                _preferencesLoaded = true;
-                return Task.FromResult(new PreferencesModel());
+                var preferences = _preferencesCollection.FindOne(Query.All());
+                return preferences ?? new PreferencesModel
+                {
+                    Id = ObjectId.NewObjectId(),
+                    Theme = "Default",
+                    LoginLocation = "Home",
+                    Font = "Atkinson Hyperlegible",
+                    Language = "en-US",
+                    LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                    SelectedGridNick = string.Empty
+                };
             }
+        }
 
-            using var stream = new FileStream(_preferencesFilePath, FileMode.Open, FileAccess.Read);
-            var serializer = new XmlSerializer(typeof(PreferencesModel));
-            var preferences = (PreferencesModel)serializer.Deserialize(stream)!;
-            _preferencesLoaded = true;
-            return Task.FromResult(preferences);
-        }
-        catch (Exception ex)
+        public async Task<PreferencesModel> LoadPreferencesAsync()
         {
-            Log.Error(ex, "Failed to load preferences");
-            _preferencesLoaded = true;
-            return Task.FromResult(new PreferencesModel());
+            return await Task.Run(() =>
+            {
+                var preferences = _preferencesCollection.FindOne(Query.All());
+                return preferences ?? new PreferencesModel
+                {
+                    Id = ObjectId.NewObjectId(),
+                    Theme = "Default",
+                    LoginLocation = "Home",
+                    Font = "Atkinson Hyperlegible",
+                    Language = "en-US",
+                    SelectedGridNick = "agni",
+                    LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                };
+            });
         }
-    }
 
-    public async Task SavePreferencesAsync(PreferencesModel preferences)
-    {
-        try
+        public async Task SavePreferencesAsync(PreferencesModel preferences)
         {
-            await using var stream = new FileStream(_preferencesFilePath, FileMode.Create, FileAccess.Write);
-            var serializer = new XmlSerializer(typeof(PreferencesModel));
-            serializer.Serialize(stream, preferences);
+            await Task.Run(() =>
+            {
+                _preferencesCollection.Upsert(preferences);
+                OnPreferencesChanged(preferences);
+            });
         }
-        catch (Exception ex)
+
+        public Dictionary<string, List<string>> GetCurrentPreferencesOptions()
         {
-            Log.Error(ex, "Failed to save preferences");
+            return new Dictionary<string, List<string>>
+            {
+                { "ThemeOptions", PreferencesOptions.ThemeOptions },
+                { "LoginLocationOptions", PreferencesOptions.LoginLocationOptions },
+                { "FontOptions", PreferencesOptions.FontOptions },
+                { "LanguageOptions", PreferencesOptions.LanguageOptions }
+            };
+        }
+
+        public List<string> GetGridOptions()
+        {
+            return _gridsCollection?.FindAll().Select(grid => grid.GridNick).ToList() ??
+                   [];
+        }
+
+        private void OnPreferencesChanged(PreferencesModel preferences)
+        {
+            PreferencesChanged?.Invoke(this, preferences);
         }
     }
 }

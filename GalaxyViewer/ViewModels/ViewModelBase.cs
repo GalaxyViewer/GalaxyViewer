@@ -2,6 +2,6 @@
 
 namespace GalaxyViewer.ViewModels;
 
-public class ViewModelBase : ReactiveObject
+public abstract partial class ViewModelBase : ReactiveObject
 {
 }

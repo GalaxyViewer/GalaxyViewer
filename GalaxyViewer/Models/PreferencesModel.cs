@@ -1,22 +1,16 @@
-using System;
 using System.Collections.Generic;
+using LiteDB;
 
 namespace GalaxyViewer.Models
 {
-    [Serializable]
     public class PreferencesModel
     {
-        public List<string> ThemeOptions { get; set; } = ["Light", "Dark", "Default"];
-        public List<string> LoginLocationOptions { get; set; } = ["Home", "Last Location"];
-        public List<string> FontOptions { get; set; } =
-            ["Inter", "Atkinson Hyperlegible"];
-        public List<string> LanguageOptions { get; set; } = ["en-US"];
-
-        // Default values
-        public string Theme { get; set; } = "Default";
-        public string LoginLocation { get; set; } = "Home";
-        public string Font { get; set; } = "Atkinson Hyperlegible";
-        public string Language { get; set; } = "en-US";
+        [BsonId] public ObjectId Id { get; set; }
+        public string Theme { get; set; }
+        public string LoginLocation { get; set; }
+        public string Font { get; set; }
+        public string Language { get; set; }
+        public string SelectedGridNick { get; set; }
         public long LastSavedEpoch { get; set; }
     }
 }

@@ -1,5 +1,5 @@
-﻿<Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<Styles xmlns="https://github.com/avaloniaui"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Style Selector="TextBlock">
         <Setter Property="FontFamily" Value="avares://GalaxyViewer/Assets/Fonts/#Noto Emoji, avar://GalaxyViewer/Assets/Fonts/#Atkinson Hyperlegible" />
     </Style>
