@@ -1,45 +1,49 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="GalaxyViewer.Views.LoginView"
-             xmlns:converters="clr-namespace:GalaxyViewer.Converters"
              xmlns:viewModels="clr-namespace:GalaxyViewer.ViewModels"
              x:DataType="viewModels:LoginViewModel">
-    <UserControl.Resources>
-        <converters:LocalizedStringConverter x:Key="LocalizedStringConverter" />
-    </UserControl.Resources>
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-        <!-- WebView or Image goes here -->
-        <Image Grid.Row="0" Source="/Assets/Images/banner.jpg" Stretch="Fill" />
-        <!-- Login Options -->
-        <Grid Grid.Row="1" Margin="20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="240" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="240" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+    <Grid RowDefinitions="*,Auto">
+        <Grid>
+            <Image Source="/Assets/Images/banner.jpg" Stretch="UniformToFill" />
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Image Source="/Assets/GalaxyViewerLogo.ico" Width="150" Height="150" />
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24" FontWeight="Bold">
+                    <Run
+                        Text="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=WelcomeMessage}" />
+                </TextBlock>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="1" Margin="20" ColumnDefinitions="Auto,240,Auto,240,Auto,Auto,*">
             <Label Grid.Column="0"
                    Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
                    VerticalAlignment="Center" />
             <TextBox Grid.Column="1" Name="UsernameBox"
                      Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
+                     Text="{Binding Username}"
                      Margin="5,0" />
             <Label Grid.Column="2"
                    Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
                    VerticalAlignment="Center" Margin="5,0" />
             <TextBox Grid.Column="3" Name="PasswordBox"
                      Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
-                     PasswordChar="*" Margin="5,0" />
-            <Button Grid.Column="4"
+                     PasswordChar="*"
+                     Text="{Binding Password}"
+                     Margin="5,0" />
+            <ComboBox Grid.Column="4" Name="LoginLocation"
+                      ItemsSource="{Binding LoginLocations}"
+                      SelectedItem="{Binding SelectedLoginLocation}"
+                      Margin="5,0" />
+            <ComboBox Grid.Column="5" Name="GridSelection"
+                      ItemsSource="{Binding Grids}"
+                      SelectedItem="{Binding SelectedGrid}"
+                      Margin="5,0" />
+            <!-- TODO: Fix the visibility of the GridSelection ComboBox options -->
+            <Button Grid.Column="6" Name="ButtonLogin"
                     Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenLoginButton}"
-                    Margin="5,0" VerticalAlignment="Center" />
+                    Command="{Binding TryLoginCommand}"
+                    Margin="5,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
         </Grid>
-        <!-- TODO: Add in the Grid selector -->
-        <!-- TODO: Add in the Location selector -->
+        <TextBlock Grid.Row="0" Text="{Binding LoginStatusMessage}" />
     </Grid>
 </UserControl>

@@ -1,6 +1,6 @@
 # GalaxyViewer
 
-GalaxyViewer is a viewer for Second Life and OpenSimulator. It is heavily inspired by Radegast, using the Avalonia UI framework and .NET Core. It should work on Windows, Linux, and Android. iOS and macOS may be supported in the future.
+GalaxyViewer is a viewer for Second Life and OpenSimulator. It is heavily inspired by Radegast and Lumiya, using the Avalonia UI framework and .NET Core. It should work on Windows, Linux, and Android. iOS and macOS may be supported in the future.
 
 Features unique to this viewer (compared to the stock viewer) will include:
 
@@ -12,7 +12,7 @@ Features unique to this viewer (compared to the stock viewer) will include:
 
 - [ ] User Authentication
 
-  - [ ] Login
+  - [x] Login
   - [ ] MFA Support
 
 - [ ] Communication
@@ -51,18 +51,25 @@ Features unique to this viewer (compared to the stock viewer) will include:
 
 - [ ] User Interface
 
-  - [ ] Light and Dark Modes
+  - [x] Light and Dark Modes
   - [ ] Customizable UI
   - [ ] Customizable Keybinds
   - [ ] Customizable Notifications
 
 - [ ] Grid Manager
-- [ ] Preferences
+- [x] Preferences
 - [ ] Plugin System
 - [ ] RLV Support
 - [ ] Automation Support
 - [ ] Accessibility
-- [ ] Discord Rich Presence
+  - [ ] Screen Reader Support
+  - [ ] High Contrast Mode
+  - [ ] Keyboard Navigation
+  - [ ] Voice Commands
+  - [ ] Text-to-Speech
+  - [ ] Speech-to-Text
+- [x] Localization
+- [ ] Discord Rich Presence (Desktop only)
 
 ## Installation
 
@@ -70,7 +77,7 @@ To be added...
 
 ## Building
 
-Make sure you have the [.NET Core SDK](https://dotnet.microsoft.com/download) installed. We use .NET 8.0.
+Make sure you have the [.NET Core SDK](https://dotnet.microsoft.com/download) installed. We currently use .NET 8.0.
 
 Clone the repository and navigate to the project directory.
 
@@ -89,7 +96,7 @@ Also, please note the [Code of Conduct](CODE_OF_CONDUCT.md) for this project.
 
 Please note that while the viewer is in the early development stage, it is not recommended for everyday use and no support will be given. This ReadMe will be updated with support information once the viewer is in a more stable state.
 
-If you have any questions or concerns, please contact [Galaxy Littlepaws](mailto:support@galaxyviewer.com) and include "Galaxy Viewer" in the subject line.
+If you have any questions or concerns, please feel free to use our [Discussion](https://github.com/GalaxyViewer/GalaxyViewer/discussions) forum.
 
 ## License
 

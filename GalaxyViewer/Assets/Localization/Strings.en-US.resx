@@ -25,12 +25,6 @@
     </resheader>
     <!-- Add your English strings here -->
     <!-- General Stuff -->
-    <data name="ViewerName" xml:space="preserve">
-        <value>GalaxyViewer</value>
-    </data>
-    <data name="Version" xml:space="preserve">
-        <value>0.1</value>
-    </data>
     <data name="WelcomeMessage" xml:space="preserve">
         <value>Welcome to GalaxyViewer 🌌</value>
     </data>

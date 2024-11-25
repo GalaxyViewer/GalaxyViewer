@@ -1,29 +1,17 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using GalaxyViewer.Services;
-using GalaxyViewer.ViewModels;
 
-namespace GalaxyViewer.Views
+namespace GalaxyViewer.Views;
+
+public partial class MainView : UserControl
 {
-    public partial class MainView : UserControl
+    public MainView()
     {
-        public MainView()
-        {
-            InitializeComponent();
-            var contentControl = this.FindControl<ContentControl>("ContentControl");
-            var navigationService = new NavigationService(contentControl);
+        InitializeComponent();
+    }
 
-            // Register routes
-            navigationService.RegisterRoute("login", typeof(LoginView));
-            navigationService.RegisterRoute("debug", typeof(DebugView));
-            navigationService.RegisterRoute("preferences", typeof(PreferencesView));
-
-            DataContext = new MainViewModel(navigationService);
-        }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+    private void InitializeComponent()
+    {
+        AvaloniaXamlLoader.Load(this);
     }
 }

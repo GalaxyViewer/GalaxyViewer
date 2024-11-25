@@ -1,25 +1,53 @@
-﻿using Avalonia.Controls;
+﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.Styling;
 using GalaxyViewer.Models;
+using Ursa.ReactiveUIExtension;
 
-namespace GalaxyViewer.Views
+namespace GalaxyViewer.Views;
+
+public class BaseWindow : ReactiveUrsaWindow<PreferencesModel>, IStyleable
 {
-    public class BaseWindow : Window
-    {
-        protected BaseWindow()
-        {
-            Icon = new WindowIcon("Assets/galaxy.ico");
-            CanResize = true;
-            App.PreferencesManager!.PreferencesChanged += OnPreferencesChanged;
-            ApplyTheme(App.PreferencesManager.LoadPreferencesAsync().Result.Theme);
-        }
+    Type IStyleable.StyleKey => typeof(Window);
 
-        private void OnPreferencesChanged(object? sender, PreferencesModel preferences)
+    protected BaseWindow()
+    {
+        Title = "GalaxyViewer";
+        Icon = new WindowIcon("Assets/GalaxyViewerLogo.ico");
+        CanResize = true;
+        if (App.PreferencesManager != null)
+            App.PreferencesManager.PreferencesChanged += OnPreferencesChanged;
+
+        // Load preferences asynchronously without blocking the UI thread
+        _ = LoadPreferencesAsync();
+    }
+
+    private async Task LoadPreferencesAsync()
+    {
+        if (App.PreferencesManager == null) return;
+        var preferences = await App.PreferencesManager.LoadPreferencesAsync();
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
         {
             ApplyTheme(preferences.Theme);
-        }
+            FontFamily = new FontFamily(preferences.Font);
+        });
+    }
 
-        public void ApplyTheme(string theme)
+    private void OnPreferencesChanged(object? sender, PreferencesModel preferences)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            ApplyTheme(preferences.Theme);
+            FontFamily = new FontFamily(preferences.Font);
+        });
+    }
+
+    internal void ApplyTheme(string theme)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
         {
             RequestedThemeVariant = theme switch
             {
@@ -27,6 +55,6 @@ namespace GalaxyViewer.Views
                 "Dark" => ThemeVariant.Dark,
                 _ => ThemeVariant.Default
             };
-        }
+        });
     }
 }

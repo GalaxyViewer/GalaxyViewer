@@ -43,19 +43,28 @@
                 <MenuItem Header="People Nearby" />
                 <MenuItem Header="Objects Nearby" />
             </MenuItem>
+            <MenuItem Header="Communicate" IsEnabled="{Binding IsLoggedIn}">
+                <MenuItem Header="Chat" />
+                <MenuItem Header="Friends List" />
+                <MenuItem Header="Nearby People" />
+                <MenuItem Header="Voice" />
+                <MenuItem Header="Nearby Media" />
+                <MenuItem Header="Nearby Objects" />
+            </MenuItem>
             <MenuItem Header="Community" IsEnabled="{Binding IsLoggedIn}">
                 <MenuItem Header="Friends" />
                 <MenuItem Header="Groups" />
                 <MenuItem Header="Events" />
+                <MenuItem Header="Classifieds" />
                 <MenuItem Header="Marketplace" />
                 <MenuItem Header="Search" />
             </MenuItem>
             <MenuItem Header="Dev">
-                <MenuItem Header="Debug View" Command="{Binding ShowDevViewCommand}" />
+                <MenuItem Header="Debug View" />
             </MenuItem>
             <!-- Add more menu items as needed -->
         </Menu>
 
-        <ContentControl x:Name="ContentControl" />
+        <ContentControl Content="{Binding CurrentView}"/>
     </DockPanel>
 </UserControl>

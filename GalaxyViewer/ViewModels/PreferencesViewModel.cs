@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -17,15 +18,24 @@ namespace GalaxyViewer.ViewModels
         {
             if (App.PreferencesManager != null) _preferencesManager = App.PreferencesManager;
             _preferences = App.PreferencesManager?.CurrentPreferences ?? new PreferencesModel();
-            ThemeOptions = new ObservableCollection<string>(_preferences.ThemeOptions);
-            LoginLocationOptions = new ObservableCollection<string>(_preferences.LoginLocationOptions);
-            LanguageOptions = new ObservableCollection<string>(_preferences.LanguageOptions);
-            FontOptions = new ObservableCollection<string>(_preferences.FontOptions);
+            var preferencesOptions = _preferencesManager?.GetCurrentPreferencesOptions();
+            ThemeOptions = new ObservableCollection<string>(preferencesOptions?["ThemeOptions"] ??
+                                                            []);
+            LoginLocationOptions = new ObservableCollection<string>(
+                preferencesOptions?["LoginLocationOptions"] ??
+                []);
+            LanguageOptions = new ObservableCollection<string>(
+                preferencesOptions?["LanguageOptions"] ??
+                []);
+            FontOptions =
+                new ObservableCollection<string>(preferencesOptions?["FontOptions"] ?? []);
             _selectedTheme = _preferences.Theme;
             _selectedLoginLocation = _preferences.LoginLocation;
             _selectedLanguage = _preferences.Language;
             _selectedFont = _preferences.Font;
+            _selectedGridNick = _preferences.SelectedGridNick;
             SaveCommand = new RelayCommand(async () => await SavePreferencesAsync());
+            LoadPreferences();
         }
 
         private async void LoadPreferences()
@@ -34,20 +44,14 @@ namespace GalaxyViewer.ViewModels
             if (_preferencesManager != null)
                 _preferences = await _preferencesManager.LoadPreferencesAsync();
 
-            // Set selected options from preferences.xml
-            if (_selectedTheme != _preferences.Theme)
-                _selectedTheme = _preferences.Theme;
-            if (_selectedLoginLocation != _preferences.LoginLocation)
-                _selectedLoginLocation = _preferences.LoginLocation;
-            if (_selectedLanguage != _preferences.Language)
-                _selectedLanguage = _preferences.Language;
-            if (_selectedFont != _preferences.Font)
-                _selectedFont = _preferences.Font;
+            SelectedTheme = _preferences.Theme;
+            SelectedLoginLocation = _preferences.LoginLocation;
+            SelectedLanguage = _preferences.Language;
+            SelectedFont = _preferences.Font;
+            SelectedGridNick = _preferences.SelectedGridNick;
+            var gridOptions = _preferencesManager?.GetGridOptions();
+            GridOptions = new ObservableCollection<string>(gridOptions ?? []);
 
-            OnPropertyChanged(nameof(SelectedTheme));
-            OnPropertyChanged(nameof(SelectedLoginLocation));
-            OnPropertyChanged(nameof(SelectedLanguage));
-            OnPropertyChanged(nameof(SelectedFont));
             _isLoadingPreferences = false;
         }
 
@@ -55,22 +59,22 @@ namespace GalaxyViewer.ViewModels
         public ObservableCollection<string> LoginLocationOptions { get; private set; }
         public ObservableCollection<string> LanguageOptions { get; private set; }
         public ObservableCollection<string> FontOptions { get; private set; }
+        public ObservableCollection<string> GridOptions { get; private set; }
 
         private string _selectedLoginLocation;
         private string _selectedLanguage;
         private string _selectedFont;
         private string _selectedTheme;
+        private string _selectedGridNick;
 
         public string SelectedTheme
         {
             get => _selectedTheme;
             set
             {
-                if (_selectedTheme != value && !_isLoadingPreferences)
-                {
-                    _selectedTheme = value;
-                    OnPropertyChanged(nameof(SelectedTheme));
-                }
+                if (_selectedTheme == value || _isLoadingPreferences) return;
+                _selectedTheme = value;
+                OnPropertyChanged(nameof(SelectedTheme));
             }
         }
 
@@ -79,11 +83,9 @@ namespace GalaxyViewer.ViewModels
             get => _selectedLoginLocation;
             set
             {
-                if (_selectedLoginLocation != value && !_isLoadingPreferences)
-                {
-                    _selectedLoginLocation = value;
-                    OnPropertyChanged(nameof(SelectedLoginLocation));
-                }
+                if (_selectedLoginLocation == value || _isLoadingPreferences) return;
+                _selectedLoginLocation = value;
+                OnPropertyChanged(nameof(SelectedLoginLocation));
             }
         }
 
@@ -92,11 +94,9 @@ namespace GalaxyViewer.ViewModels
             get => _selectedLanguage;
             set
             {
-                if (_selectedLanguage != value && !_isLoadingPreferences)
-                {
-                    _selectedLanguage = value;
-                    OnPropertyChanged(nameof(SelectedLanguage));
-                }
+                if (_selectedLanguage == value || _isLoadingPreferences) return;
+                _selectedLanguage = value;
+                OnPropertyChanged(nameof(SelectedLanguage));
             }
         }
 
@@ -105,11 +105,20 @@ namespace GalaxyViewer.ViewModels
             get => _selectedFont;
             set
             {
-                if (_selectedFont != value && !_isLoadingPreferences)
-                {
-                    _selectedFont = value;
-                    OnPropertyChanged(nameof(SelectedFont));
-                }
+                if (_selectedFont == value || _isLoadingPreferences) return;
+                _selectedFont = value;
+                OnPropertyChanged(nameof(SelectedFont));
+            }
+        }
+
+        public string SelectedGridNick
+        {
+            get => _selectedGridNick;
+            set
+            {
+                if (_selectedGridNick == value || _isLoadingPreferences) return;
+                _selectedGridNick = value;
+                OnPropertyChanged(nameof(SelectedGridNick));
             }
         }
 
@@ -119,6 +128,7 @@ namespace GalaxyViewer.ViewModels
             _preferences.LoginLocation = SelectedLoginLocation;
             _preferences.Language = SelectedLanguage;
             _preferences.Font = SelectedFont;
+            _preferences.SelectedGridNick = SelectedGridNick;
 
             if (_preferencesManager != null)
                 await _preferencesManager.SavePreferencesAsync(_preferences);
