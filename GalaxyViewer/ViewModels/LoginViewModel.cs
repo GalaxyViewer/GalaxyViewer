@@ -30,6 +30,21 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         }
     }
 
+    private bool _isLoggedIn;
+
+    public bool IsLoggedIn
+    {
+        get => App.IsLoggedIn;
+        set => App.IsLoggedIn = value;
+    }
+
+    private string _loginStatusMessage;
+    public string LoginStatusMessage
+    {
+        get => _loginStatusMessage;
+        set => this.RaiseAndSetIfChanged(ref _loginStatusMessage, value);
+    }
+
     private readonly PreferencesViewModel _preferencesViewModel;
     private string _username;
     private string _password;
@@ -93,8 +108,6 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         }
     }
 
-    public string LoginStatusMessage { get; set; }
-
     public ObservableCollection<GridModel> Grids { get; set; }
 
     public GridModel? SelectedGrid
@@ -134,13 +147,13 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
     private async Task ShowLoginErrorAsync(string errorMessage)
     {
-        ToastManager?.Show(
-            new Toast(
-                errorMessage),
-            showIcon: true,
-            showClose: true,
-            type: NotificationType.Error
-        );
+        // ToastManager?.Show(
+        //     new Toast(
+        //         errorMessage),
+        //     showIcon: true,
+        //     showClose: true,
+        //     type: NotificationType.Error
+        // );
         await Task.CompletedTask;
     }
 
@@ -152,6 +165,8 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
             await ShowLoginErrorAsync("Username or password is empty");
             return;
         }
+
+        LoginStatusMessage = "Logging in...";
 
         var platformMap = new Dictionary<OSPlatform, string>
         {
@@ -196,7 +211,8 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
         if (loginSuccess)
         {
-            Log.Information("Login successful");
+            Log.Information("Login successful as {Name}", _client.Self.Name);
+            IsLoggedIn = true;
             await ProcessCapabilitiesAsync();
         }
         else if (_client?.Network?.LoginMessage.Contains("MFA required") == true)
@@ -229,6 +245,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         else
         {
             Log.Error("Login failed: {Error}", _client?.Network?.LoginMessage);
+            IsLoggedIn = false;
             await ShowLoginErrorAsync($"Login failed: {_client?.Network?.LoginMessage}");
         }
     }

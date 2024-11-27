@@ -16,7 +16,8 @@
 
     <DockPanel LastChildFill="True">
         <OnPlatform>
-            <OnPlatform.Default>
+            <!-- On platform Windows or Linux -->
+            <On Options="Windows, Linux">
                 <Menu DockPanel.Dock="Top">
                     <MenuItem Header="File">
                         <MenuItem Header="New Window" />
@@ -71,12 +72,19 @@
                     </MenuItem>
                     <!-- Add more menu items as needed -->
                 </Menu>
-            </OnPlatform.Default>
-            <OnPlatform.Android>
-
-            </OnPlatform.Android>
+            </On>
+            <!-- On platform Android -->
+            <On Options="Android">
+                <ListBox DockPanel.Dock="Top">
+                    <ListBoxItem Content="File" />
+                    <ListBoxItem Content="World" />
+                    <ListBoxItem Content="Communicate" />
+                    <ListBoxItem Content="Community" />
+                    <ListBoxItem Content="Dev" />
+                </ListBox>
+            </On>
         </OnPlatform>
 
-        <ContentControl Content="{Binding CurrentView}"/>
+        <ContentControl Content="{Binding CurrentView}" />
     </DockPanel>
 </UserControl>

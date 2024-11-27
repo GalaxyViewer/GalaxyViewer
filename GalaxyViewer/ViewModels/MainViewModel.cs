@@ -15,8 +15,8 @@ namespace GalaxyViewer.ViewModels;
 public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 {
     private UserControl _currentView;
-    private bool _isLoggedIn;
     private readonly GridClient _client = new();
+    private readonly LoginViewModel _loginViewModel;
 
     public new event PropertyChangedEventHandler? PropertyChanged;
 
@@ -36,11 +36,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    public bool IsLoggedIn
-    {
-        get => _isLoggedIn;
-        set { this.RaiseAndSetIfChanged(ref _isLoggedIn, value); }
-    }
+    public bool IsLoggedIn => App.IsLoggedIn;
 
     public ICommand ExitCommand { get; }
     public ICommand LogoutCommand { get; }
@@ -49,7 +45,16 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 
     public MainViewModel()
     {
-        _currentView = new LoginView { DataContext = new LoginViewModel() };
+        App.StaticPropertyChanged += (sender, args) =>
+        {
+            if (args.PropertyName == nameof(App.IsLoggedIn))
+            {
+                OnPropertyChanged(nameof(IsLoggedIn));
+            }
+        };
+
+        _loginViewModel = new LoginViewModel();
+        _currentView = new LoginView { DataContext = _loginViewModel };
         ExitCommand = ReactiveCommand.Create(LogoutAndExit);
         LogoutCommand = ReactiveCommand.Create(Logout);
         NavToLoginViewCommand = ReactiveCommand.Create(NavigateToLoginView);
@@ -59,8 +64,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
     private void LogoutAndExit()
     {
         Logout();
-        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime
-            desktop)
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.Shutdown();
         }
@@ -68,10 +72,10 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 
     private void Logout()
     {
-        if (IsLoggedIn)
+        if (App.IsLoggedIn)
         {
             _client.Network.Logout();
-            IsLoggedIn = false;
+            _loginViewModel.IsLoggedIn = false;
         }
 
         NavigateToLoginView();
@@ -79,7 +83,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 
     private void NavigateToLoginView()
     {
-        CurrentView = new LoginView { DataContext = new LoginViewModel() };
+        CurrentView = new LoginView { DataContext = _loginViewModel };
     }
 
     private void NavigateToPreferencesView()

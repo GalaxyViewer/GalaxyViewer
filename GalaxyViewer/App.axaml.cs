@@ -1,6 +1,8 @@
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -93,6 +95,28 @@ public class App : Application, IDisposable
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static bool _isLoggedIn;
+
+    public static bool IsLoggedIn
+    {
+        get => _isLoggedIn;
+        set
+        {
+            if (_isLoggedIn != value)
+            {
+                _isLoggedIn = value;
+                OnStaticPropertyChanged();
+            }
+        }
+    }
+
+    public static event PropertyChangedEventHandler? StaticPropertyChanged;
+
+    private static void OnStaticPropertyChanged([CallerMemberName] string propertyName = null)
+    {
+        StaticPropertyChanged?.Invoke(null, new PropertyChangedEventArgs(propertyName));
     }
 
     private void OnPreferencesChanged(object? sender, PreferencesModel preferences)

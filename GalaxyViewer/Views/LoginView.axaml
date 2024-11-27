@@ -3,47 +3,87 @@
              x:Class="GalaxyViewer.Views.LoginView"
              xmlns:viewModels="clr-namespace:GalaxyViewer.ViewModels"
              x:DataType="viewModels:LoginViewModel">
-    <Grid RowDefinitions="*,Auto">
-        <Grid>
-            <Image Source="/Assets/Images/banner.jpg" Stretch="UniformToFill" />
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Image Source="/Assets/GalaxyViewerLogo.ico" Width="150" Height="150" />
-                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24" FontWeight="Bold">
-                    <Run
-                        Text="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=WelcomeMessage}" />
-                </TextBlock>
-            </StackPanel>
-        </Grid>
-        <Grid Grid.Row="1" Margin="20" ColumnDefinitions="Auto,240,Auto,240,Auto,Auto,*">
-            <Label Grid.Column="0"
-                   Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
-                   VerticalAlignment="Center" />
-            <TextBox Grid.Column="1" Name="UsernameBox"
-                     Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
-                     Text="{Binding Username}"
-                     Margin="5,0" />
-            <Label Grid.Column="2"
-                   Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
-                   VerticalAlignment="Center" Margin="5,0" />
-            <TextBox Grid.Column="3" Name="PasswordBox"
-                     Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
-                     PasswordChar="*"
-                     Text="{Binding Password}"
-                     Margin="5,0" />
-            <ComboBox Grid.Column="4" Name="LoginLocation"
-                      ItemsSource="{Binding LoginLocations}"
-                      SelectedItem="{Binding SelectedLoginLocation}"
-                      Margin="5,0" />
-            <ComboBox Grid.Column="5" Name="GridSelection"
-                      ItemsSource="{Binding Grids}"
-                      SelectedItem="{Binding SelectedGrid}"
-                      Margin="5,0" />
-            <!-- TODO: Fix the visibility of the GridSelection ComboBox options -->
-            <Button Grid.Column="6" Name="ButtonLogin"
-                    Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenLoginButton}"
-                    Command="{Binding TryLoginCommand}"
-                    Margin="5,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
-        </Grid>
-        <TextBlock Grid.Row="0" Text="{Binding LoginStatusMessage}" />
+    <Grid>
+        <OnPlatform>
+            <!-- On platform Windows or Linux -->
+            <On Options="Windows, Linux">
+                <Grid RowDefinitions="*,Auto,Auto">
+                    <Grid>
+                        <Image Source="/Assets/Images/banner.jpg" Stretch="UniformToFill" />
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Image Source="/Assets/GalaxyViewerLogo.ico" Width="150" Height="150" />
+                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24"
+                                       FontWeight="Bold">
+                                <Run
+                                    Text="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=WelcomeMessage}" />
+                            </TextBlock>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Grid.Row="1" Text="{Binding LoginStatusMessage}" Margin="20,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <Grid Grid.Row="2" Margin="20" ColumnDefinitions="Auto,240,Auto,240,Auto,Auto,*">
+                        <Label Grid.Column="0"
+                               Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
+                               VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Name="UsernameBoxWindows"
+                                 Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
+                                 Text="{Binding Username}"
+                                 Margin="5,0" />
+                        <Label Grid.Column="2"
+                               Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
+                               VerticalAlignment="Center" Margin="5,0" />
+                        <TextBox Grid.Column="3" Name="PasswordBoxWindows"
+                                 Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
+                                 PasswordChar="*"
+                                 Text="{Binding Password}"
+                                 Margin="5,0" />
+                        <ComboBox Grid.Column="4" Name="LoginLocationWindows"
+                                  ItemsSource="{Binding LoginLocations}"
+                                  SelectedItem="{Binding SelectedLoginLocation}"
+                                  Margin="5,0" />
+                        <ComboBox Grid.Column="5" Name="GridSelectionWindows"
+                                  ItemsSource="{Binding Grids}"
+                                  SelectedItem="{Binding SelectedGrid}"
+                                  Margin="5,0" />
+                        <Button Grid.Column="6" Name="ButtonLoginWindows"
+                                Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenLoginButton}"
+                                Command="{Binding TryLoginCommand}"
+                                Margin="5,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                    </Grid>
+                </Grid>
+            </On>
+            <!-- On platform Android -->
+            <On Options="Android">
+                <StackPanel>
+                    <Image Source="/Assets/Images/banner.jpg" Stretch="UniformToFill" Height="100" />
+                    <Image Source="/Assets/GalaxyViewerLogo.ico" Width="100" Height="100" HorizontalAlignment="Center" />
+                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="Bold">
+                        <Run
+                            Text="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=WelcomeMessage}" />
+                    </TextBlock>
+                    <TextBox Name="UsernameBoxAndroid"
+                             Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
+                             Text="{Binding Username}"
+                             Margin="5" />
+                    <TextBox Name="PasswordBoxAndroid"
+                             Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
+                             PasswordChar="*"
+                             Text="{Binding Password}"
+                             Margin="5" />
+                    <ComboBox Name="LoginLocationAndroid"
+                              ItemsSource="{Binding LoginLocations}"
+                              SelectedItem="{Binding SelectedLoginLocation}"
+                              Margin="5" />
+                    <ComboBox Name="GridSelectionAndroid"
+                              ItemsSource="{Binding Grids}"
+                              SelectedItem="{Binding SelectedGrid}"
+                              Margin="5" />
+                    <Button Name="ButtonLoginAndroid"
+                            Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenLoginButton}"
+                            Command="{Binding TryLoginCommand}"
+                            Margin="5" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding LoginStatusMessage}" Margin="5" />
+                </StackPanel>
+            </On>
+        </OnPlatform>
     </Grid>
 </UserControl>
