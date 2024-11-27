@@ -32,7 +32,8 @@ namespace GalaxyViewer.Android
             }
             else
             {
-                InitializeLiteDbService();
+                LoadResources();
+                // TODO: Fix this so that it doesn't instantly crash and asks for permission before loading resources
             }
         }
 
@@ -44,17 +45,23 @@ namespace GalaxyViewer.Android
             {
                 if (grantResults.Length > 0 && grantResults[0] == Permission.Granted)
                 {
-                    // Permission granted, proceed with file operations
-                    InitializeLiteDbService();
+                    // Permission granted, proceed with loading resources
+                    LoadResources();
                 }
                 else
                 {
                     // Permission denied, show a message to the user
-                    var message = "Permission to create data storage file denied. The application will not be able to function.";
+                    var message = "Permission to access storage denied. The application will not be able to load resources.";
                     var toast = Toast.MakeText(this, message, ToastLength.Long);
                     toast.Show();
                 }
             }
+        }
+
+        private void LoadResources()
+        {
+            // Load your resources here
+            InitializeLiteDbService();
         }
 
         private void InitializeLiteDbService()
