@@ -3,6 +3,7 @@
                   xmlns:views="clr-namespace:GalaxyViewer.Views"
                   x:Class="GalaxyViewer.Views.PreferencesWindow"
                   Title="Preferences"
+                  Icon="/Assets/Icons/GalaxyViewer.ico"
                   Width="450" Height="350">
     <views:PreferencesView/>
 </views:BaseWindow>
