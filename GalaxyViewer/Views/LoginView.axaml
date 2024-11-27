@@ -19,7 +19,7 @@
                             </TextBlock>
                         </StackPanel>
                     </Grid>
-                    <TextBlock Grid.Row="1" Text="{Binding LoginStatusMessage}" Margin="20,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <TextBlock Grid.Row="1" Text="{Binding LoginStatusMessage}" Margin="20,20,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" />
                     <Grid Grid.Row="2" Margin="20" ColumnDefinitions="Auto,240,Auto,240,Auto,Auto,*">
                         <Label Grid.Column="0"
                                Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"

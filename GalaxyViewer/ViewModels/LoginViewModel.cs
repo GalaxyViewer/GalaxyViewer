@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
 using System.Runtime.InteropServices;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Avalonia.Controls.Notifications;
 using GalaxyViewer.Models;
@@ -39,6 +40,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
     }
 
     private string _loginStatusMessage;
+
     public string LoginStatusMessage
     {
         get => _loginStatusMessage;
@@ -202,9 +204,12 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         loginParams.Platform = ourPlatform; // Set the platform - our operating system
         loginParams.PlatformVersion =
             Environment.OSVersion.VersionString; // Set the platform version
-        loginParams.Start =
-            _preferencesViewModel
-                ?.SelectedLoginLocation; // Set the start location to the selected login location
+        loginParams.Start = _preferencesViewModel?.SelectedLoginLocation switch
+        {
+            "Home" => "home",
+            "Last Location" => "last",
+            _ => "home"
+        }; // Set the start location to the selected login location
         loginParams.MfaHash = string.Empty; // Clear the MFA hash
 
         var loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
@@ -252,11 +257,11 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
     private async Task ProcessCapabilitiesAsync()
     {
-        var capabilities = _client.Network.CurrentSim.Caps;
-        if (capabilities != null)
-        {
-            // TODO: Process the capabilities as needed
-        }
+        var loginMessage = await Task.Run(() => _client?.Network?.LoginMessage);
+        Log.Information("Login message: {Message}", loginMessage);
+
+        var currentSim = await Task.Run(() => _client?.Network?.CurrentSim);
+        Log.Information("Current location: {Sim}", currentSim);
 
         await Task.CompletedTask;
     }
@@ -279,7 +284,8 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
                 LoginStatusMessage = "Reading response...";
                 break;
             case LoginStatus.Success:
-                LoginStatusMessage = $"Logged in as {_client.Self.Name}";
+                LoginStatusMessage = $"Logged in as {_client.Self.Name}, welcome to {_client.Network.CurrentSim}";
+                IsLoggedIn = true;
                 break;
             case LoginStatus.Failed:
                 LoginStatusMessage = $"Login failed: {e.Message}";
