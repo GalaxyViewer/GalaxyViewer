@@ -5,39 +5,38 @@ using System.Linq;
 using LiteDB;
 using GalaxyViewer.Models;
 
-namespace GalaxyViewer.Services
+namespace GalaxyViewer.Services;
+
+public class GridService
 {
-    public class GridService
+    private readonly string _databasePath;
+
+    public GridService()
     {
-        private readonly string _databasePath;
+        var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GalaxyViewer");
+        Directory.CreateDirectory(appDataPath); // Ensure the directory exists
+        _databasePath = Path.Combine(appDataPath, "data.db");
+    }
 
-        public GridService()
+    public List<GridModel> GetAllGrids()
+    {
+        try
         {
-            var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GalaxyViewer");
-            Directory.CreateDirectory(appDataPath); // Ensure the directory exists
-            _databasePath = Path.Combine(appDataPath, "data.db");
+            using var db = new LiteDatabase(_databasePath);
+            var collection = db.GetCollection<GridModel>("grids");
+            return collection.FindAll().ToList();
         }
-
-        public List<GridModel> GetAllGrids()
+        catch (IOException ex) when (ex.Message.Contains("Read-only file system"))
         {
-            try
-            {
-                using var db = new LiteDatabase(_databasePath);
-                var collection = db.GetCollection<GridModel>("grids");
-                return collection.FindAll().ToList();
-            }
-            catch (IOException ex) when (ex.Message.Contains("Read-only file system"))
-            {
-                // Handle read-only file system scenario
-                Console.Error.WriteLine("Error: The file system is read-only. Please check the file system permissions.");
-                return [];
-            }
-            catch (Exception ex)
-            {
-                // Handle other exceptions
-                Console.Error.WriteLine($"An error occurred: {ex.Message}");
-                throw;
-            }
+            // Handle read-only file system scenario
+            Console.Error.WriteLine("Error: The file system is read-only. Please check the file system permissions.");
+            return [];
+        }
+        catch (Exception ex)
+        {
+            // Handle other exceptions
+            Console.Error.WriteLine($"An error occurred: {ex.Message}");
+            throw;
         }
     }
 }

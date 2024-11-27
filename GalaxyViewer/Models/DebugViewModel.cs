@@ -1,10 +1,9 @@
 using ReactiveUI;
 
-namespace GalaxyViewer.Models
+namespace GalaxyViewer.Models;
+
+public class DebugViewModel(IScreen screen) : ReactiveObject, IRoutableViewModel
 {
-    public class DebugViewModel(IScreen screen) : ReactiveObject, IRoutableViewModel
-    {
-        public string UrlPathSegment => "debug";
-        public IScreen HostScreen { get; } = screen;
-    }
+    public string UrlPathSegment => "debug";
+    public IScreen HostScreen { get; } = screen;
 }
