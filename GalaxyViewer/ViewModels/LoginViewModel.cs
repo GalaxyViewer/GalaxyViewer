@@ -284,7 +284,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
                 LoginStatusMessage = "Reading response...";
                 break;
             case LoginStatus.Success:
-                LoginStatusMessage = $"Logged in as {_client.Self.Name}, welcome to {_client.Network.CurrentSim}";
+                LoginStatusMessage = $"Logged in as {_client.Self.Name}, welcome to {_client.Network.CurrentSim?.Name}";
                 IsLoggedIn = true;
                 break;
             case LoginStatus.Failed:

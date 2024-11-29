@@ -18,7 +18,7 @@ Features unique to this viewer (compared to the stock viewer) will include:
 - [ ] Communication
 
   - [ ] Chat
-  - [ ] Voice Chat
+  - [ ] Voice Chat (WebRTC)
 
 - [ ] User Interaction
 
@@ -69,6 +69,7 @@ Features unique to this viewer (compared to the stock viewer) will include:
   - [ ] Text-to-Speech
   - [ ] Speech-to-Text
 - [x] Localization
+- [ ] Sending Abuse Reports
 - [ ] Discord Rich Presence (Desktop only)
 
 ## Installation

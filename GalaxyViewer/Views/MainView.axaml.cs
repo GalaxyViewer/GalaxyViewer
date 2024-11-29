@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using GalaxyViewer.ViewModels;
 
 namespace GalaxyViewer.Views;
 

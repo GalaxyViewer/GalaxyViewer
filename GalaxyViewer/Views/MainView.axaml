@@ -2,14 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="clr-namespace:GalaxyViewer.ViewModels"
-             xmlns:converters="clr-namespace:Avalonia.Controls.Converters;assembly=Avalonia.Controls"
              mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="400"
              x:Class="GalaxyViewer.Views.MainView"
              x:DataType="vm:MainViewModel">
-    <UserControl.Resources>
-        <converters:CornerRadiusFilterConverter x:Key="NullToVisibilityConverter" />
-    </UserControl.Resources>
     <Design.DataContext>
         <vm:MainViewModel />
     </Design.DataContext>
@@ -75,13 +72,8 @@
             </On>
             <!-- On platform Android -->
             <On Options="Android">
-                <ListBox DockPanel.Dock="Top">
-                    <ListBoxItem Content="File" />
-                    <ListBoxItem Content="World" />
-                    <ListBoxItem Content="Communicate" />
-                    <ListBoxItem Content="Community" />
-                    <ListBoxItem Content="Dev" />
-                </ListBox>
+                <!-- TODO: Add hamburger menu -->
+                <u:IconButton></u:IconButton>
             </On>
         </OnPlatform>
 
