@@ -47,6 +47,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         set => this.RaiseAndSetIfChanged(ref _loginStatusMessage, value);
     }
 
+    private readonly LiteDbService _liteDbService;
     private readonly PreferencesViewModel _preferencesViewModel;
     private string _username;
     private string _password;
@@ -61,8 +62,9 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
     public WindowToastManager? ToastManager { get; set; }
 
-    public LoginViewModel()
+    public LoginViewModel(LiteDbService liteDbService)
     {
+        _liteDbService = liteDbService;
         _preferencesViewModel = new PreferencesViewModel();
         _username = string.Empty;
         _password = string.Empty;
@@ -170,24 +172,13 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
         LoginStatusMessage = "Logging in...";
 
-        var platformMap = new Dictionary<OSPlatform, string>
-        {
-            { OSPlatform.Windows, "Win" },
-            { OSPlatform.Linux, "Lin" },
-            { OSPlatform.OSX, "Mac" },
-            { OSPlatform.Create("ANDROID"), "And" },
-            { OSPlatform.Create("IOS"), "iOS" }
-        };
-
-        var ourPlatform =
-            platformMap.FirstOrDefault(kv => RuntimeInformation.IsOSPlatform(kv.Key)).Value ??
-            "Unk";
+        var ourPlatform = GetPlatformString();
 
         var loginParams = _client?.Network?.DefaultLoginParams(
             Username.Split(' ')[0], // firstName
             Username.Contains(' ') ? Username.Split(' ')[1] : "Resident", // lastName
             Password,
-            "GalaxyViewer", // ViewerName
+            "GalaxyViewer-test", // ViewerName
             "0.1.0" // ViewerVersion
         );
 
@@ -198,60 +189,96 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
             return;
         }
 
-        loginParams.URI =
-            SelectedGrid?.LoginUri; // Set the login URI to the selected grid's URI
-        loginParams.MfaEnabled = true; // Inform the server that we support MFA
-        loginParams.Platform = ourPlatform; // Set the platform - our operating system
-        loginParams.PlatformVersion =
-            Environment.OSVersion.VersionString; // Set the platform version
+        loginParams.URI = SelectedGrid?.LoginUri;
+        loginParams.MfaEnabled = true;
+        loginParams.Platform = ourPlatform;
+        loginParams.PlatformVersion = Environment.OSVersion.VersionString;
         loginParams.Start = _preferencesViewModel?.SelectedLoginLocation switch
         {
             "Home" => "home",
             "Last Location" => "last",
             _ => "home"
-        }; // Set the start location to the selected login location
-        loginParams.MfaHash = string.Empty; // Clear the MFA hash
+        };
+        loginParams.MfaHash = string.Empty;
 
         var loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
 
         if (loginSuccess)
         {
-            Log.Information("Login successful as {Name}", _client.Self.Name);
-            IsLoggedIn = true;
-            await ProcessCapabilitiesAsync();
+            await HandleSuccessfulLogin();
         }
         else if (_client?.Network?.LoginMessage.Contains("MFA required") == true)
         {
-            Log.Warning("MFA required");
-            var mfaCode = await ShowMfaInputDialogAsync();
-            if (!string.IsNullOrEmpty(mfaCode))
-            {
-                loginParams.MfaHash = Utils.MD5(mfaCode);
-                loginSuccess =
-                    await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
-                if (loginSuccess)
-                {
-                    Log.Information("Login successful with MFA");
-                    await ProcessCapabilitiesAsync();
-                }
-                else
-                {
-                    Log.Error("Login failed with MFA: {Error}", _client?.Network?.LoginMessage);
-                    await ShowLoginErrorAsync(
-                        $"Login failed with MFA: {_client?.Network?.LoginMessage}");
-                }
-            }
-            else
-            {
-                Log.Warning("MFA code entry was canceled");
-                await ShowLoginErrorAsync("MFA code entry was canceled");
-            }
+            await HandleMfaLogin(loginParams);
         }
         else
         {
             Log.Error("Login failed: {Error}", _client?.Network?.LoginMessage);
             IsLoggedIn = false;
             await ShowLoginErrorAsync($"Login failed: {_client?.Network?.LoginMessage}");
+        }
+    }
+
+    private string GetPlatformString()
+    {
+        var platformMap = new Dictionary<OSPlatform, string>
+        {
+            { OSPlatform.Windows, "Win" },
+            { OSPlatform.Linux, "Lin" },
+            { OSPlatform.OSX, "Mac" },
+            { OSPlatform.Create("ANDROID"), "And" },
+            { OSPlatform.Create("IOS"), "iOS" }
+        };
+
+        return platformMap.FirstOrDefault(kv => RuntimeInformation.IsOSPlatform(kv.Key)).Value ??
+               "Unk";
+    }
+
+    private async Task HandleSuccessfulLogin()
+    {
+        Log.Information("Login successful as {Name}", _client.Self.Name);
+        IsLoggedIn = true;
+
+        var session = new SessionModel
+        {
+            Id = 1, // Assuming a single session record
+            IsLoggedIn = true,
+            AvatarName = _client.Self.Name,
+            AvatarKey = _client.Self.AgentID,
+            Balance = _client.Self.Balance,
+            CurrentLocation = _client.Network.CurrentSim.Name,
+            CurrentLocationWelcomeMessage = "Welcome to " + _client.Network.CurrentSim.Name
+        };
+
+        _liteDbService.SaveSession(session);
+        Log.Information("Session updated on successful login");
+
+        await ProcessCapabilitiesAsync();
+    }
+
+    private async Task HandleMfaLogin(LoginParams loginParams)
+    {
+        Log.Warning("MFA required");
+        var mfaCode = await ShowMfaInputDialogAsync();
+        if (!string.IsNullOrEmpty(mfaCode))
+        {
+            loginParams.MfaHash = Utils.MD5(mfaCode);
+            var loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
+            if (loginSuccess)
+            {
+                await HandleSuccessfulLogin();
+            }
+            else
+            {
+                Log.Error("Login failed with MFA: {Error}", _client?.Network?.LoginMessage);
+                await ShowLoginErrorAsync(
+                    $"Login failed with MFA: {_client?.Network?.LoginMessage}");
+            }
+        }
+        else
+        {
+            Log.Warning("MFA code entry was canceled");
+            await ShowLoginErrorAsync("MFA code entry was canceled");
         }
     }
 
@@ -284,7 +311,8 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
                 LoginStatusMessage = "Reading response...";
                 break;
             case LoginStatus.Success:
-                LoginStatusMessage = $"Logged in as {_client.Self.Name}, welcome to {_client.Network.CurrentSim?.Name}";
+                LoginStatusMessage =
+                    $"Logged in as {_client.Self.Name}, welcome to {_client.Network.CurrentSim?.Name}";
                 IsLoggedIn = true;
                 break;
             case LoginStatus.Failed:

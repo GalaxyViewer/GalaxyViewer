@@ -13,16 +13,15 @@ public sealed class PreferencesManager
     private readonly ILiteCollection<PreferencesModel> _preferencesCollection;
     private readonly ILiteCollection<GridModel>? _gridsCollection;
 
-
     public event EventHandler<PreferencesModel>? PreferencesChanged;
 
     public PreferencesManager(LiteDbService? liteDbService)
     {
         Debug.Assert(liteDbService != null, nameof(liteDbService) + " != null");
-        var database = liteDbService.Database();
+        var database = liteDbService?.Database;
         Debug.Assert(database != null, nameof(database) + " != null");
         _preferencesCollection = database.GetCollection<PreferencesModel>("preferences");
-        _gridsCollection = database?.GetCollection<GridModel>("grids");
+        _gridsCollection = database.GetCollection<GridModel>("grids");
     }
 
     public PreferencesModel CurrentPreferences

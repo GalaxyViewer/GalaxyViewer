@@ -1,6 +1,6 @@
-using LiteDB;
 using System;
 using System.IO;
+using LiteDB;
 using GalaxyViewer.Models;
 using Serilog;
 
@@ -10,17 +10,32 @@ public class LiteDbService : IDisposable
 {
     private LiteDatabase? _database;
     private readonly string _databasePath;
+    public LiteDatabase? Database => _database;
 
     public LiteDbService()
     {
+        _databasePath = GetDatabasePath();
+        InitializeDatabase();
+    }
+
+    private static string GetDatabasePath()
+    {
+        var appDataPath =
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "GalaxyViewer");
+        return Path.Combine(appDataPath, "data.db");
+    }
+
+    private void InitializeDatabase()
+    {
         try
         {
-            _databasePath = GetDatabasePath();
-            Directory.CreateDirectory(Path.GetDirectoryName(_databasePath) ?? throw new InvalidOperationException()); // Ensure the directory exists
+            Directory.CreateDirectory(Path.GetDirectoryName(_databasePath) ??
+                                      throw new InvalidOperationException());
             _database = new LiteDatabase(_databasePath);
-            Log.Information("LiteDbService initialized with database path: {DbPath}", _databasePath);
-
-            // Call SeedDatabase to ensure the grids table is generated
+            Log.Information("LiteDbService initialized with database path: {DbPath}",
+                _databasePath);
+            ClearSessionData();
             SeedDatabase();
         }
         catch (LiteException ex)
@@ -35,21 +50,15 @@ public class LiteDbService : IDisposable
         }
     }
 
-    private static string GetDatabasePath()
-    {
-        string appDataPath;
-        appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GalaxyViewer");
-        return Path.Combine(appDataPath, "data.db");
-    }
-
     private void HandleDatabaseCorruption()
     {
         try
         {
             if (File.Exists(_databasePath))
             {
-                File.Delete(_databasePath);
+                File.Move(_databasePath, _databasePath + ".bak");
             }
+
             _database = new LiteDatabase(_databasePath);
             SeedDatabase();
             Log.Information("Database recreated successfully.");
@@ -61,17 +70,6 @@ public class LiteDbService : IDisposable
         }
     }
 
-    public ILiteCollection<T> GetCollection<T>(string name)
-    {
-        Log.Information("Retrieving collection: {CollectionName}", name);
-        return _database.GetCollection<T>(name);
-    }
-
-    public LiteDatabase? Database()
-    {
-        return _database;
-    }
-
     private void SeedDatabase()
     {
         SeedPreferences();
@@ -80,10 +78,9 @@ public class LiteDbService : IDisposable
 
     private void SeedPreferences()
     {
-        try
+        var preferencesCollection = _database.GetCollection<PreferencesModel>("preferences");
+        if (preferencesCollection.Count() == 0)
         {
-            var preferencesCollection = _database.GetCollection<PreferencesModel>("preferences");
-            if (preferencesCollection.Count() != 0) return;
             var defaultPreferences = new PreferencesModel
             {
                 Theme = "Default",
@@ -96,18 +93,13 @@ public class LiteDbService : IDisposable
             preferencesCollection.Insert(defaultPreferences);
             Log.Information("Database seeded with default preferences");
         }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Failed to seed preferences");
-        }
     }
 
     private void SeedGrids()
     {
-        try
+        var gridsCollection = _database.GetCollection<GridModel>("grids");
+        if (gridsCollection.Count() == 0)
         {
-            var gridsCollection = _database.GetCollection<GridModel>("grids");
-            if (gridsCollection.Count() != 0) return;
             var grids = new[]
             {
                 new GridModel
@@ -139,14 +131,43 @@ public class LiteDbService : IDisposable
                     Version = "1"
                 }
             };
-
             gridsCollection.InsertBulk(grids);
             Log.Information("Database seeded with default grids");
         }
-        catch (Exception ex)
+    }
+
+    private void ClearSessionData()
+    {
+        ILiteCollection<SessionModel>? sessionCollection;
+        if (_database.CollectionExists("session"))
         {
-            Log.Error(ex, "Failed to seed grids");
+            sessionCollection = _database.GetCollection<SessionModel>("session");
+            sessionCollection.DeleteAll();
+            Log.Information("Session data cleared on startup");
         }
+
+        sessionCollection = _database.GetCollection<SessionModel>("session");
+        sessionCollection.Insert(new SessionModel());
+        Log.Information("Session data created on startup");
+    }
+
+    public ILiteCollection<T> GetCollection<T>(string name)
+    {
+        Log.Information("Retrieving collection: {CollectionName}", name);
+        return _database.GetCollection<T>(name);
+    }
+
+    public SessionModel GetSession()
+    {
+        var collection = _database.GetCollection<SessionModel>("session");
+        return collection.FindOne(Query.All()) ?? new SessionModel();
+    }
+
+    public void SaveSession(SessionModel session)
+    {
+        var collection = _database.GetCollection<SessionModel>("session");
+        collection.Upsert(session);
+        Log.Information("Session data saved");
     }
 
     public void Dispose()

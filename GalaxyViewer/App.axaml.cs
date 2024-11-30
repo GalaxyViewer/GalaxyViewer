@@ -22,6 +22,8 @@ public class App : Application, IDisposable
 {
     private static IServiceProvider? _serviceProvider;
     public static PreferencesManager? PreferencesManager { get; private set; }
+    private static LiteDbService _liteDbService;
+    private static SessionModel _session;
 
     public App()
     {
@@ -52,17 +54,33 @@ public class App : Application, IDisposable
         ConfigureServices(serviceCollection);
         _serviceProvider = serviceCollection.BuildServiceProvider();
 
-        var liteDbService = _serviceProvider.GetService<LiteDbService>();
-        if (liteDbService == null)
+        _liteDbService = _serviceProvider.GetService<LiteDbService>();
+        if (_liteDbService == null)
         {
             throw new InvalidOperationException("LiteDbService is not registered.");
         }
 
-        PreferencesManager = new PreferencesManager(liteDbService);
+        PreferencesManager = new PreferencesManager(_liteDbService);
         PreferencesManager.PreferencesChanged += OnPreferencesChanged;
+
+        _session = _liteDbService.GetSession();
 
         AvaloniaXamlLoader.Load(this);
         base.Initialize();
+    }
+
+    public static bool IsLoggedIn
+    {
+        get => _session.IsLoggedIn;
+        set
+        {
+            if (_session.IsLoggedIn != value)
+            {
+                _session.IsLoggedIn = value;
+                _liteDbService.SaveSession(_session);
+                OnStaticPropertyChanged();
+            }
+        }
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -75,7 +93,7 @@ public class App : Application, IDisposable
                     Log.Information("Initializing MainWindow for desktop application.");
                     desktop.MainWindow = new MainWindow
                     {
-                        DataContext = new MainViewModel()
+                        DataContext = new MainViewModel(_liteDbService)
                     };
                     desktop.MainWindow.Show();
                     break;
@@ -83,7 +101,7 @@ public class App : Application, IDisposable
                     Log.Information("Initializing MainView for single view application.");
                     singleViewPlatform.MainView = new MainView
                     {
-                        DataContext = new MainViewModel()
+                        DataContext = new MainViewModel(_liteDbService)
                     };
                     break;
             }
@@ -95,21 +113,6 @@ public class App : Application, IDisposable
         }
 
         base.OnFrameworkInitializationCompleted();
-    }
-
-    private static bool _isLoggedIn;
-
-    public static bool IsLoggedIn
-    {
-        get => _isLoggedIn;
-        set
-        {
-            if (_isLoggedIn != value)
-            {
-                _isLoggedIn = value;
-                OnStaticPropertyChanged();
-            }
-        }
     }
 
     public static event PropertyChangedEventHandler? StaticPropertyChanged;

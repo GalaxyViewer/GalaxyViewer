@@ -1,37 +1,67 @@
 using OpenMetaverse;
 using ReactiveUI;
-using System;
-using System.Reactive.Linq;
+using GalaxyViewer.Services;
+using GalaxyViewer.Models;
 
-namespace GalaxyViewer.ViewModels
+namespace GalaxyViewer.ViewModels;
+
+public class LoggedInViewModel : ViewModelBase
 {
-    public class LoggedInViewModel : ViewModelBase
-    {
-        private readonly GridClient _client = new();
-        private string _currentLocation;
-        private string _currentLocationWelcomeMessage;
+    private readonly LiteDbService _liteDbService;
+    private SessionModel _session;
 
-        public string CurrentLocation
+    public string CurrentLocation
+    {
+        get => _session.CurrentLocation;
+        set
         {
-            get => _currentLocation;
-            set
+            if (_session.CurrentLocation != value)
             {
-                if (_currentLocation == value) return;
-                _currentLocation = value;
+                _session.CurrentLocation = value;
+                _liteDbService.SaveSession(_session);
+                var sessionCurrentLocation = _session.CurrentLocation;
+                this.RaiseAndSetIfChanged(ref sessionCurrentLocation, value);
             }
         }
+    }
 
-        public string CurrentLocationWelcomeMessage
+    public string CurrentLocationWelcomeMessage
+    {
+        get => _session.CurrentLocationWelcomeMessage;
+        set
         {
-            get => _currentLocationWelcomeMessage;
-            set => this.RaiseAndSetIfChanged(ref _currentLocationWelcomeMessage, value);
+            if (_session.CurrentLocationWelcomeMessage != value)
+            {
+                _session.CurrentLocationWelcomeMessage = value;
+                _liteDbService.SaveSession(_session);
+                var sessionCurrentLocationWelcomeMessage = _session.CurrentLocationWelcomeMessage;
+                this.RaiseAndSetIfChanged(ref sessionCurrentLocationWelcomeMessage, value);
+            }
         }
+    }
+    
+    public int Balance
+    {
+        get => _session.Balance;
+        set
+        {
+            if (_session.Balance != value)
+            {
+                _session.Balance = value;
+                _liteDbService.SaveSession(_session);
+                var sessionBalance = _session.Balance;
+                this.RaiseAndSetIfChanged(ref sessionBalance, value);
+            }
+        }
+    }
 
-        public LoggedInViewModel()
-        {
-            // Initialize CurrentLocation with the current region name
-            CurrentLocation = _client.Network.CurrentSim?.Name;
-            CurrentLocationWelcomeMessage = $"Welcome to {CurrentLocation}!";
-        }
+    public LoggedInViewModel(LiteDbService liteDbService)
+    {
+        _liteDbService = liteDbService;
+        _session = _liteDbService.GetSession();
+
+        // Initialize properties with session data
+        CurrentLocation = _session.CurrentLocation;
+        CurrentLocationWelcomeMessage = _session.CurrentLocationWelcomeMessage;
     }
 }
