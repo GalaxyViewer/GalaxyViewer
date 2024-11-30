@@ -2,8 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="clr-namespace:GalaxyViewer.ViewModels"
+             xmlns:views="clr-namespace:GalaxyViewer.Views"
              mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="400"
              x:Class="GalaxyViewer.Views.MainView"
              x:DataType="vm:MainViewModel">
@@ -15,65 +15,11 @@
         <OnPlatform>
             <!-- On platform Windows or Linux -->
             <On Options="Windows, Linux">
-                <Menu DockPanel.Dock="Top">
-                    <MenuItem Header="File">
-                        <MenuItem Header="New Window" />
-                        <Separator />
-                        <MenuItem Header="Upload Blinn-Phong Texture" IsEnabled="{Binding IsLoggedIn}" />
-                        <MenuItem Header="Upload PBR Material" IsEnabled="{Binding IsLoggedIn}" />
-                        <MenuItem Header="Upload Mesh" IsEnabled="{Binding IsLoggedIn}" />
-                        <MenuItem Header="Import Object" IsEnabled="{Binding IsLoggedIn}" />
-                        <MenuItem Header="Script Editor" IsEnabled="{Binding IsLoggedIn}" />
-                        <Separator />
-                        <MenuItem Header="Login" Command="{Binding NavToLoginViewCommand}"
-                                  IsEnabled="{Binding !IsLoggedIn}" />
-                        <MenuItem Header="Logout" Command="{Binding LogoutCommand}" IsEnabled="{Binding IsLoggedIn}" />
-                        <MenuItem Header="Relog" IsEnabled="{Binding !IsLoggedIn}" />
-                        <MenuItem Header="Preferences" Command="{Binding NavToPreferencesViewCommand}" />
-                        <Separator />
-                        <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
-                    </MenuItem>
-                    <MenuItem Header="World" IsEnabled="{Binding IsLoggedIn}">
-                        <MenuItem Header="Create new Landmark Here" />
-                        <MenuItem Header="Landmarks" />
-                        <MenuItem Header="Teleport History" />
-                        <MenuItem Header="Favorites" />
-                        <MenuItem Header="Set Home to Here" />
-                        <MenuItem Header="Teleport Home" />
-                        <Separator />
-                        <MenuItem Header="About Land" />
-                        <MenuItem Header="About Region" />
-                        <MenuItem Header="World Map" />
-                        <MenuItem Header="Mini-Map" />
-                        <MenuItem Header="People Nearby" />
-                        <MenuItem Header="Objects Nearby" />
-                    </MenuItem>
-                    <MenuItem Header="Communicate" IsEnabled="{Binding IsLoggedIn}">
-                        <MenuItem Header="Chat" />
-                        <MenuItem Header="Friends List" />
-                        <MenuItem Header="Nearby People" />
-                        <MenuItem Header="Voice" />
-                        <MenuItem Header="Nearby Media" />
-                        <MenuItem Header="Nearby Objects" />
-                    </MenuItem>
-                    <MenuItem Header="Community" IsEnabled="{Binding IsLoggedIn}">
-                        <MenuItem Header="Friends" />
-                        <MenuItem Header="Groups" />
-                        <MenuItem Header="Events" />
-                        <MenuItem Header="Classifieds" />
-                        <MenuItem Header="Marketplace" />
-                        <MenuItem Header="Search" />
-                    </MenuItem>
-                    <MenuItem Header="Dev">
-                        <MenuItem Header="Debug View" />
-                    </MenuItem>
-                    <!-- Add more menu items as needed -->
-                </Menu>
+                <views:MenuDesktopView DockPanel.Dock="Top" />
             </On>
             <!-- On platform Android -->
             <On Options="Android">
-                <!-- TODO: Add hamburger menu -->
-                <u:IconButton></u:IconButton>
+                <views:MenuAndroidView DockPanel.Dock="Top" />
             </On>
         </OnPlatform>
 

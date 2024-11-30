@@ -1,14 +1,12 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using Avalonia.VisualTree;
 using GalaxyViewer.ViewModels;
-using Ursa.Controls;
 
 namespace GalaxyViewer.Views;
 
-public partial class DevView : UserControl
+public partial class MenuAndroidView : UserControl
 {
-    public DevView()
+    public MenuAndroidView()
     {
         InitializeComponent();
     }
