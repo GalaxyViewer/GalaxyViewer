@@ -166,7 +166,9 @@ namespace GalaxyViewer.ViewModels
 
             // Use a specific uriString for the testing phase
             var isTestingPhase = true; // Set this flag based on your testing condition
-            loginParams.URI = isTestingPhase ? "https://login.agni.lindenlab.com/cgi-bin/login.cgi" : SelectedGrid.LoginUri;
+            loginParams.URI = isTestingPhase
+                ? "https://login.agni.lindenlab.com/cgi-bin/login.cgi"
+                : SelectedGrid.LoginUri;
             loginParams.MfaEnabled = true;
             loginParams.Platform = ourPlatform;
             loginParams.PlatformVersion = Environment.OSVersion.VersionString;

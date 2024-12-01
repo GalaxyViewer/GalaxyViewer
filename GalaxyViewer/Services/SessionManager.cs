@@ -1,9 +1,9 @@
-using System;
 using GalaxyViewer.Models;
 using GalaxyViewer.Services;
-using Serilog;
+using LiteDB;
+using System;
 
-namespace GalaxyViewer
+namespace GalaxyViewer.Services
 {
     public class SessionManager
     {
@@ -23,19 +23,15 @@ namespace GalaxyViewer
             get => _session;
             set
             {
-                if (_session != value)
-                {
-                    _session = value;
-                    _liteDbService.SaveSession(_session);
-                    OnSessionChanged();
-                }
+                _session = value;
+                _liteDbService.SaveSession(_session);
+                OnSessionChanged(_session);
             }
         }
 
-        protected virtual void OnSessionChanged()
+        protected virtual void OnSessionChanged(SessionModel session)
         {
-            SessionChanged?.Invoke(this, _session);
-            Log.Information("Session changed: {@Session}", _session);
+            SessionChanged?.Invoke(this, session);
         }
     }
 }

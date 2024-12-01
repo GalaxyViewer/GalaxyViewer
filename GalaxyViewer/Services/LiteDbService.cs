@@ -95,15 +95,6 @@ namespace GalaxyViewer.Services
 
         private void ClearSessionData()
         {
-            // Commented out the code that clears the session data
-            // ILiteCollection<SessionModel>? sessionCollection;
-            // if (_database.CollectionExists("session"))
-            // {
-            //     sessionCollection = _database.GetCollection<SessionModel>("session");
-            //     sessionCollection.DeleteAll();
-            //     Log.Information("Session data cleared on startup");
-            // }
-
             var sessionCollection = _database.GetCollection<SessionModel>("session");
             if (sessionCollection.Count() == 0)
             {
@@ -119,12 +110,12 @@ namespace GalaxyViewer.Services
 
         public SessionModel GetSession()
         {
-            return _database.GetCollection<SessionModel>("sessions").FindOne(Query.All()) ?? new SessionModel();
+            return _database.GetCollection<SessionModel>("session").FindOne(Query.All()) ?? new SessionModel();
         }
 
         public void SaveSession(SessionModel session)
         {
-            _database.GetCollection<SessionModel>("sessions").Upsert(session);
+            _database.GetCollection<SessionModel>("session").Upsert(session);
         }
 
         public void Dispose()
