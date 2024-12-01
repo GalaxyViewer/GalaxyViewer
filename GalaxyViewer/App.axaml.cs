@@ -16,153 +16,170 @@ using GalaxyViewer.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
-namespace GalaxyViewer;
-
-public class App : Application, IDisposable
+namespace GalaxyViewer
 {
-    private static IServiceProvider? _serviceProvider;
-    public static PreferencesManager? PreferencesManager { get; private set; }
-    private static LiteDbService _liteDbService;
-    private static SessionModel _session;
-
-    public App()
+    public class App : Application, IDisposable
     {
-        ConfigureLogging();
-    }
+        private static IServiceProvider? _serviceProvider;
+        public static PreferencesManager? PreferencesManager { get; private set; }
+        public static SessionManager? SessionManager { get; private set; }
+        private static ILiteDbService _liteDbService;
 
-    private static void ConfigureLogging()
-    {
-        var logFilePath =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "GalaxyViewer", "logs", "error.log");
-
-        Log.Logger = new LoggerConfiguration()
-            .WriteTo.Console()
-            .WriteTo.File(logFilePath, rollingInterval: RollingInterval.Day)
-            .CreateLogger();
-    }
-
-    private static void ConfigureServices(IServiceCollection services)
-    {
-        services.AddSingleton<LiteDbService>();
-        // Register other services here
-    }
-
-    public override void Initialize()
-    {
-        var serviceCollection = new ServiceCollection();
-        ConfigureServices(serviceCollection);
-        _serviceProvider = serviceCollection.BuildServiceProvider();
-
-        _liteDbService = _serviceProvider.GetService<LiteDbService>();
-        if (_liteDbService == null)
+        public App()
         {
-            throw new InvalidOperationException("LiteDbService is not registered.");
+            ConfigureLogging();
         }
 
-        PreferencesManager = new PreferencesManager(_liteDbService);
-        PreferencesManager.PreferencesChanged += OnPreferencesChanged;
-
-        _session = _liteDbService.GetSession();
-
-        AvaloniaXamlLoader.Load(this);
-        base.Initialize();
-    }
-
-    public static bool IsLoggedIn
-    {
-        get => _session.IsLoggedIn;
-        set
+        private static void ConfigureLogging()
         {
-            if (_session.IsLoggedIn != value)
+            var logFilePath =
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "GalaxyViewer", "logs", "error.log");
+
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console()
+                .WriteTo.File(logFilePath, rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+        }
+
+        private static void ConfigureServices(IServiceCollection services)
+        {
+            services.AddSingleton<ILiteDbService, LiteDbService>();
+            services.AddSingleton<SessionManager>();
+            services.AddSingleton<IGridService, GridService>();
+            services.AddSingleton<PreferencesViewModel>();
+            services.AddSingleton<MainViewModel>();
+            services.AddSingleton<LoginViewModel>();
+            services.AddSingleton<LoggedInViewModel>();
+        }
+
+        public override void Initialize()
+        {
+            var serviceCollection = new ServiceCollection();
+            ConfigureServices(serviceCollection);
+            _serviceProvider = serviceCollection.BuildServiceProvider();
+
+            _liteDbService = _serviceProvider.GetRequiredService<ILiteDbService>();
+            if (_liteDbService == null)
             {
-                _session.IsLoggedIn = value;
-                _liteDbService.SaveSession(_session);
-                OnStaticPropertyChanged();
+                throw new InvalidOperationException("LiteDbService is not registered.");
+            }
+
+            PreferencesManager = new PreferencesManager(_liteDbService);
+            PreferencesManager.PreferencesChanged += OnPreferencesChanged;
+
+            SessionManager = _serviceProvider.GetRequiredService<SessionManager>();
+            if (SessionManager == null)
+            {
+                throw new InvalidOperationException("SessionManager is not registered.");
+            }
+
+            SessionManager.SessionChanged += OnSessionChanged;
+
+            AvaloniaXamlLoader.Load(this);
+            base.Initialize();
+        }
+
+        public static bool IsLoggedIn
+        {
+            get => SessionManager?.Session.IsLoggedIn ?? false;
+            set
+            {
+                if (SessionManager != null && SessionManager.Session.IsLoggedIn != value)
+                {
+                    var session = SessionManager.Session;
+                    session.IsLoggedIn = value;
+                    SessionManager.Session = session;
+                    OnStaticPropertyChanged();
+                }
             }
         }
-    }
 
-    public override void OnFrameworkInitializationCompleted()
-    {
-        try
+        public override void OnFrameworkInitializationCompleted()
         {
-            switch (ApplicationLifetime)
+            var serviceCollection = new ServiceCollection();
+            ConfigureServices(serviceCollection);
+            _serviceProvider = serviceCollection.BuildServiceProvider();
+
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                case IClassicDesktopStyleApplicationLifetime desktop:
-                    Log.Information("Initializing MainWindow for desktop application.");
-                    desktop.MainWindow = new MainWindow
-                    {
-                        DataContext = new MainViewModel(_liteDbService)
-                    };
-                    desktop.MainWindow.Show();
-                    break;
-                case ISingleViewApplicationLifetime singleViewPlatform:
-                    Log.Information("Initializing MainView for single view application.");
-                    singleViewPlatform.MainView = new MainView
-                    {
-                        DataContext = new MainViewModel(_liteDbService)
-                    };
-                    break;
+                desktop.MainWindow = new MainWindow
+                {
+                    DataContext = _serviceProvider.GetRequiredService<MainViewModel>()
+                };
             }
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "An error occurred while initializing the main window.");
-            throw; // Optionally rethrow the exception if you want to halt the application
+            else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
+            {
+                singleViewPlatform.MainView = new MainView
+                {
+                    DataContext = _serviceProvider.GetRequiredService<MainViewModel>()
+                };
+            }
+
+            base.OnFrameworkInitializationCompleted();
         }
 
-        base.OnFrameworkInitializationCompleted();
-    }
+        public static event PropertyChangedEventHandler? StaticPropertyChanged;
 
-    public static event PropertyChangedEventHandler? StaticPropertyChanged;
-
-    private static void OnStaticPropertyChanged([CallerMemberName] string propertyName = null)
-    {
-        StaticPropertyChanged?.Invoke(null, new PropertyChangedEventArgs(propertyName));
-    }
-
-    private void OnPreferencesChanged(object? sender, PreferencesModel preferences)
-    {
-        ApplyPreferences(preferences);
-        RefreshThemeForAllWindows();
-    }
-
-    private void ApplyPreferences(PreferencesModel preferences)
-    {
-        Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        private static void OnStaticPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            RequestedThemeVariant = preferences.Theme switch
-            {
-                "Light" => ThemeVariant.Light,
-                "Dark" => ThemeVariant.Dark,
-                _ => ThemeVariant.Default
-            };
+            StaticPropertyChanged?.Invoke(null, new PropertyChangedEventArgs(propertyName));
+        }
 
-            // TODO: Apply other preferences
-        });
-    }
-
-    private async void RefreshThemeForAllWindows()
-    {
-        if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktopLifetime)
-            return;
-
-        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+        private void OnPreferencesChanged(object? sender, PreferencesModel preferences)
         {
-            foreach (var window in desktopLifetime.Windows)
+            ApplyPreferences(preferences);
+            RefreshThemeForAllWindows();
+        }
+
+        private void OnSessionChanged(object? sender, SessionModel session)
+        {
+            if (session.IsLoggedIn)
             {
-                if (window is not BaseWindow baseWindow) continue;
-                var resultTheme = (await PreferencesManager?.LoadPreferencesAsync())?.Theme;
-                if (resultTheme != null)
-                    baseWindow.ApplyTheme(resultTheme);
+                IsLoggedIn = true;
             }
-        });
-    }
+            else if (IsLoggedIn)
+            {
+                IsLoggedIn = false;
+            }
+        }
 
-    public void Dispose()
-    {
-        //PreferencesManager?.Dispose();
-        (_serviceProvider as IDisposable)?.Dispose();
+        private void ApplyPreferences(PreferencesModel preferences)
+        {
+            Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                RequestedThemeVariant = preferences.Theme switch
+                {
+                    "Light" => ThemeVariant.Light,
+                    "Dark" => ThemeVariant.Dark,
+                    _ => ThemeVariant.Default
+                };
+
+                // TODO: Apply other preferences
+            });
+        }
+
+        private async void RefreshThemeForAllWindows()
+        {
+            if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktopLifetime)
+                return;
+
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                foreach (var window in desktopLifetime.Windows)
+                {
+                    if (window is not BaseWindow baseWindow) continue;
+                    var resultTheme = (await PreferencesManager?.LoadPreferencesAsync())?.Theme;
+                    if (resultTheme != null)
+                        baseWindow.ApplyTheme(resultTheme);
+                }
+            });
+        }
+
+        public void Dispose()
+        {
+            //PreferencesManager?.Dispose();
+            (_serviceProvider as IDisposable)?.Dispose();
+        }
     }
 }

@@ -1,67 +1,103 @@
+using System.ComponentModel;
+using GalaxyViewer.Models;
+using GalaxyViewer.Services;
 using OpenMetaverse;
 using ReactiveUI;
-using GalaxyViewer.Services;
-using GalaxyViewer.Models;
 
-namespace GalaxyViewer.ViewModels;
-
-public class LoggedInViewModel : ViewModelBase
+namespace GalaxyViewer.ViewModels
 {
-    private readonly LiteDbService _liteDbService;
-    private SessionModel _session;
-
-    public string CurrentLocation
+    public class LoggedInViewModel : ViewModelBase
     {
-        get => _session.CurrentLocation;
-        set
+        private readonly ILiteDbService _liteDbService;
+        private SessionModel _session;
+
+        public LoggedInViewModel(ILiteDbService liteDbService)
         {
-            if (_session.CurrentLocation != value)
+            _liteDbService = liteDbService;
+            _session = _liteDbService.GetSession();
+            _session.PropertyChanged += OnSessionPropertyChanged;
+        }
+
+        private void OnSessionPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
             {
-                _session.CurrentLocation = value;
-                _liteDbService.SaveSession(_session);
-                var sessionCurrentLocation = _session.CurrentLocation;
-                this.RaiseAndSetIfChanged(ref sessionCurrentLocation, value);
+                case nameof(SessionModel.AvatarName):
+                    this.RaisePropertyChanged(nameof(AvatarName));
+                    break;
+                case nameof(SessionModel.AvatarKey):
+                    this.RaisePropertyChanged(nameof(AvatarKey));
+                    break;
+                case nameof(SessionModel.Balance):
+                    this.RaisePropertyChanged(nameof(Balance));
+                    break;
+                case nameof(SessionModel.CurrentLocation):
+                    this.RaisePropertyChanged(nameof(CurrentLocation));
+                    break;
+                case nameof(SessionModel.CurrentLocationWelcomeMessage):
+                    this.RaisePropertyChanged(nameof(CurrentLocationWelcomeMessage));
+                    break;
             }
         }
-    }
 
-    public string CurrentLocationWelcomeMessage
-    {
-        get => _session.CurrentLocationWelcomeMessage;
-        set
+        public string AvatarName
         {
-            if (_session.CurrentLocationWelcomeMessage != value)
+            get => _session.AvatarName;
+            set
             {
-                _session.CurrentLocationWelcomeMessage = value;
+                if (_session.AvatarName == value) return;
+                _session.AvatarName = value;
                 _liteDbService.SaveSession(_session);
-                var sessionCurrentLocationWelcomeMessage = _session.CurrentLocationWelcomeMessage;
-                this.RaiseAndSetIfChanged(ref sessionCurrentLocationWelcomeMessage, value);
+                this.RaisePropertyChanged();
             }
         }
-    }
-    
-    public int Balance
-    {
-        get => _session.Balance;
-        set
+
+        public UUID AvatarKey
         {
-            if (_session.Balance != value)
+            get => _session.AvatarKey;
+            set
             {
+                if (_session.AvatarKey == value) return;
+                _session.AvatarKey = value;
+                _liteDbService.SaveSession(_session);
+                this.RaisePropertyChanged();
+            }
+        }
+
+        public int Balance
+        {
+            get => _session.Balance;
+            set
+            {
+                if (_session.Balance == value) return;
                 _session.Balance = value;
                 _liteDbService.SaveSession(_session);
-                var sessionBalance = _session.Balance;
-                this.RaiseAndSetIfChanged(ref sessionBalance, value);
+                this.RaisePropertyChanged();
             }
         }
-    }
 
-    public LoggedInViewModel(LiteDbService liteDbService)
-    {
-        _liteDbService = liteDbService;
-        _session = _liteDbService.GetSession();
+        public string CurrentLocation
+        {
+            get => _session.CurrentLocation;
+            set
+            {
+                if (_session.CurrentLocation == value) return;
+                _session.CurrentLocation = value;
+                _liteDbService.SaveSession(_session);
+                this.RaisePropertyChanged();
+            }
+        }
 
-        // Initialize properties with session data
-        CurrentLocation = _session.CurrentLocation;
-        CurrentLocationWelcomeMessage = _session.CurrentLocationWelcomeMessage;
+        public string CurrentLocationWelcomeMessage
+        {
+            get => _session.CurrentLocationWelcomeMessage;
+            set
+            {
+                if (_session.CurrentLocationWelcomeMessage == value) return;
+                _session.CurrentLocationWelcomeMessage = value;
+                _liteDbService.SaveSession(_session);
+                this.RaisePropertyChanged();
+            }
+        }
     }
 }

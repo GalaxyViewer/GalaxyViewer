@@ -1,22 +1,19 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using GalaxyViewer.Services;
 using GalaxyViewer.ViewModels;
 
-namespace GalaxyViewer.Views;
-
-public partial class LoginView : UserControl
+namespace GalaxyViewer.Views
 {
-    private LiteDbService _liteDbService;
-
-    public LoginView()
+    public partial class LoginView : UserControl
     {
-        InitializeComponent();
-        DataContext = new LoginViewModel(_liteDbService);
-    }
+        public LoginView()
+        {
+            InitializeComponent();
+        }
 
-    private void InitializeComponent()
-    {
-        AvaloniaXamlLoader.Load(this);
+        private void InitializeComponent()
+        {
+            AvaloniaXamlLoader.Load(this);
+        }
     }
 }

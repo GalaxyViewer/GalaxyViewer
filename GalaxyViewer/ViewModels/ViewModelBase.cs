@@ -1,7 +1,12 @@
-﻿using ReactiveUI;
+﻿using System.Runtime.CompilerServices;
+using ReactiveUI;
 
 namespace GalaxyViewer.ViewModels;
 
-public abstract partial class ViewModelBase : ReactiveObject
+public partial class ViewModelBase : ReactiveObject
 {
+    protected void RaisePropertyChanged([CallerMemberName] string propertyName = null)
+    {
+        this.RaisePropertyChanged(propertyName);
+    }
 }

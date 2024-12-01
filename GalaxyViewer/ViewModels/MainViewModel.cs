@@ -1,121 +1,110 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using GalaxyViewer.Views;
 using GalaxyViewer.Services;
-using OpenMetaverse;
+using GalaxyViewer.Views;
 using ReactiveUI;
 
-namespace GalaxyViewer.ViewModels;
-
-public class MainViewModel : ViewModelBase, INotifyPropertyChanged
+namespace GalaxyViewer.ViewModels
 {
-    private UserControl _currentView;
-    private readonly GridClient _client = new();
-    private readonly LoginViewModel _loginViewModel;
-    private readonly LoggedInViewModel _loggedInViewModel;
-    private readonly LiteDbService _liteDbService;
-
-    public new event PropertyChangedEventHandler? PropertyChanged;
-
-    public object CurrentView
+    public class MainViewModel : ViewModelBase, INotifyPropertyChanged
     {
-        get => _currentView;
-        set
+        private UserControl _currentView;
+        private readonly LoginViewModel _loginViewModel;
+        private readonly LoggedInViewModel _loggedInViewModel;
+        private readonly SessionManager _sessionManager;
+
+        public SessionManager SessionManager { get; }
+
+        public MainViewModel(LoginViewModel loginViewModel, LoggedInViewModel loggedInViewModel,
+            SessionManager sessionManager)
         {
-            if (_currentView == value) return;
-            _currentView = (UserControl)value;
-            OnPropertyChanged();
-        }
-    }
+            SessionManager = sessionManager;
+            _loginViewModel = loginViewModel;
+            _loggedInViewModel = loggedInViewModel;
+            _sessionManager = sessionManager;
 
-    private new void OnPropertyChanged([CallerMemberName] string propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
+            // Retrieve the session from the database
+            var session = _sessionManager.Session;
 
-    public bool IsLoggedIn => App.IsLoggedIn;
-
-    public ICommand ExitCommand { get; }
-    public ICommand LogoutCommand { get; }
-    public ICommand NavToLoginViewCommand { get; }
-    public ICommand NavToPreferencesViewCommand { get; }
-    public ICommand NavToDevViewCommand { get; }
-
-    public MainViewModel(LiteDbService liteDbService)
-    {
-        _liteDbService = liteDbService;
-
-        App.StaticPropertyChanged += (sender, args) =>
-        {
-            if (args.PropertyName != nameof(App.IsLoggedIn)) return;
-            OnPropertyChanged(nameof(IsLoggedIn));
-            if (IsLoggedIn)
+            // Check the session's IsLoggedIn property during initialization
+            if (session != null && session.IsLoggedIn)
             {
                 NavigateToLoggedInView();
             }
-        };
+            else
+            {
+                _currentView = new LoginView { DataContext = _loginViewModel };
+            }
 
-        _loginViewModel = new LoginViewModel(_liteDbService);
-        _loggedInViewModel = new LoggedInViewModel(_liteDbService);
-        _currentView = new LoginView { DataContext = _loginViewModel };
-        ExitCommand = ReactiveCommand.Create(LogoutAndExit);
-        LogoutCommand = ReactiveCommand.Create(Logout);
-        NavToLoginViewCommand = ReactiveCommand.Create(NavigateToLoginView);
-        NavToPreferencesViewCommand = ReactiveCommand.Create(NavigateToPreferencesView);
-        NavToDevViewCommand = ReactiveCommand.Create(NavigateToDevView);
-    }
-
-    private void LogoutAndExit()
-    {
-        Logout();
-        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime
-            desktop)
-        {
-            desktop.Shutdown();
-        }
-    }
-
-    private void Logout()
-    {
-        if (App.IsLoggedIn)
-        {
-            _client.Network.Logout();
-            _loginViewModel.IsLoggedIn = false;
+            ExitCommand = ReactiveCommand.Create(LogoutAndExit);
+            LogoutCommand = ReactiveCommand.Create(Logout);
+            NavToLoginViewCommand = ReactiveCommand.Create(NavigateToLoginView);
+            NavToPreferencesViewCommand = ReactiveCommand.Create(NavigateToPreferencesView);
+            NavToDevViewCommand = ReactiveCommand.Create(NavigateToDevView);
         }
 
-        NavigateToLoginView();
-    }
+        public object CurrentView
+        {
+            get => _currentView;
+            set
+            {
+                if (_currentView == value) return;
+                _currentView = (UserControl)value;
+                OnPropertyChanged();
+            }
+        }
 
-    private void NavigateToLoginView()
-    {
-        CurrentView = new LoginView { DataContext = _loginViewModel };
-    }
+        public ICommand ExitCommand { get; }
+        public ICommand LogoutCommand { get; }
+        public ICommand NavToLoginViewCommand { get; }
+        public ICommand NavToPreferencesViewCommand { get; }
+        public ICommand NavToDevViewCommand { get; }
 
-    private void NavigateToLoggedInView()
-    {
-        CurrentView = new LoggedInView { DataContext = _loggedInViewModel };
-    }
+        private void LogoutAndExit()
+        {
+            Logout();
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime
+                desktop)
+            {
+                desktop.Shutdown();
+            }
+        }
 
-    private void NavigateToPreferencesView()
-    {
-#if ANDROID
+        private void Logout()
+        {
+            _sessionManager.Session.IsLoggedIn = false;
+            NavigateToLoginView();
+        }
+
+        private void NavigateToLoginView()
+        {
+            CurrentView = new LoginView { DataContext = _loginViewModel };
+        }
+
+        private void NavigateToLoggedInView()
+        {
+            CurrentView = new LoggedInView(_loggedInViewModel);
+        }
+
+        private void NavigateToPreferencesView()
+        {
             CurrentView = new PreferencesView { DataContext = new PreferencesViewModel() };
-#else
-        var preferencesWindow = new PreferencesWindow
-        {
-            DataContext = new PreferencesViewModel()
-        };
-        preferencesWindow.Show();
-#endif
-    }
+        }
 
-    private void NavigateToDevView()
-    {
-        CurrentView = new DevView { DataContext = new DevViewModel() };
+        private void NavigateToDevView()
+        {
+            CurrentView = new DevView { DataContext = new DevViewModel() };
+        }
+
+        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public new event PropertyChangedEventHandler PropertyChanged;
     }
 }

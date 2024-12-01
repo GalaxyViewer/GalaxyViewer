@@ -1,42 +1,27 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using LiteDB;
 using GalaxyViewer.Models;
+using LiteDB;
 
-namespace GalaxyViewer.Services;
-
-public class GridService
+namespace GalaxyViewer.Services
 {
-    private readonly string _databasePath;
-
-    public GridService()
+    public class GridService : IGridService
     {
-        var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GalaxyViewer");
-        Directory.CreateDirectory(appDataPath); // Ensure the directory exists
-        _databasePath = Path.Combine(appDataPath, "data.db");
-    }
+        private readonly ILiteDbService _liteDbService;
 
-    public List<GridModel> GetAllGrids()
-    {
-        try
+        public GridService(ILiteDbService liteDbService)
         {
-            using var db = new LiteDatabase(_databasePath);
-            var collection = db.GetCollection<GridModel>("grids");
-            return collection.FindAll().ToList();
+            _liteDbService = liteDbService;
         }
-        catch (IOException ex) when (ex.Message.Contains("Read-only file system"))
+
+        public IEnumerable<GridModel> GetAllGrids()
         {
-            // Handle read-only file system scenario
-            Console.Error.WriteLine("Error: The file system is read-only. Please check the file system permissions.");
-            return [];
+            return _liteDbService.Database.GetCollection<GridModel>("grids").FindAll();
         }
-        catch (Exception ex)
+
+        public GridModel GetGridByNick(string gridNick)
         {
-            // Handle other exceptions
-            Console.Error.WriteLine($"An error occurred: {ex.Message}");
-            throw;
+            return _liteDbService.Database.GetCollection<GridModel>("grids").FindOne(g => g.GridNick == gridNick);
         }
     }
 }

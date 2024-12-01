@@ -1,17 +1,20 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using GalaxyViewer.ViewModels;
 
-namespace GalaxyViewer.Views;
-
-public partial class LoggedInView : UserControl
+namespace GalaxyViewer.Views
 {
-    public LoggedInView()
+    public partial class LoggedInView : UserControl
     {
-        InitializeComponent();
-    }
+        public LoggedInView(LoggedInViewModel viewModel)
+        {
+            InitializeComponent();
+            DataContext = viewModel;
+        }
 
-    private void InitializeComponent()
-    {
-        AvaloniaXamlLoader.Load(this);
+        private void InitializeComponent()
+        {
+            AvaloniaXamlLoader.Load(this);
+        }
     }
 }
