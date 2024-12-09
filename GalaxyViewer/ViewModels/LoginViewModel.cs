@@ -1,313 +1,333 @@
 ﻿using System;
-using System.Collections.ObjectModel;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using System.Linq;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Linq;
 using System.Reactive;
+using System.Runtime.InteropServices;
+using System.Threading.Channels;
+using System.Threading.Tasks;
+using Avalonia.Controls.Notifications;
 using GalaxyViewer.Models;
 using GalaxyViewer.Services;
-using OpenMetaverse;
 using ReactiveUI;
+using Ursa.Controls;
 using Serilog;
+using OpenMetaverse;
 
-namespace GalaxyViewer.ViewModels
+namespace GalaxyViewer.ViewModels;
+
+public class LoginViewModel : ReactiveObject, IRoutableViewModel
 {
-    public class LoginViewModel : ViewModelBase
+    public string UrlPathSegment => "login";
+
+    public IScreen HostScreen
     {
-        private readonly IGridService _gridService;
-        private readonly PreferencesViewModel _preferencesViewModel;
-        private readonly SessionManager _sessionManager;
-        private readonly GridClient _client;
-        private string _username;
-        private string _password;
-        private ObservableCollection<GridModel> _grids;
-        private GridModel _selectedGrid;
-        private string _loginStatusMessage;
-        private bool _isLoggedIn;
-
-        public LoginViewModel(IGridService gridService, PreferencesViewModel preferencesViewModel,
-            SessionManager sessionManager)
+        get
         {
-            _gridService = gridService;
-            _preferencesViewModel = preferencesViewModel;
-            _sessionManager = sessionManager;
-            _client = new GridClient();
-            TryLoginCommand = ReactiveCommand.CreateFromTask(TryLoginAsync);
-            LoadGrids();
-            LoginLocations =
-                new ObservableCollection<string>(_preferencesViewModel.LoginLocationOptions);
-            Grids = new ObservableCollection<GridModel>();
+            Debug.Assert(_routableViewModelImplementation?.HostScreen != null,
+                "_routableViewModelImplementation?.HostScreen != null");
+            return _routableViewModelImplementation.HostScreen;
         }
+    }
 
-        public string Username
+    private bool _isLoggedIn;
+
+    public bool IsLoggedIn
+    {
+        get => App.IsLoggedIn;
+        set => App.IsLoggedIn = value;
+    }
+
+    private string _loginStatusMessage;
+
+    public string LoginStatusMessage
+    {
+        get => _loginStatusMessage;
+        set => this.RaiseAndSetIfChanged(ref _loginStatusMessage, value);
+    }
+
+    private readonly LiteDbService _liteDbService;
+    private readonly PreferencesViewModel _preferencesViewModel;
+    private string _username;
+    private string _password;
+    private readonly GridClient _client = new();
+    private IRoutableViewModel? _routableViewModelImplementation;
+    private readonly GridService _gridService;
+    private ObservableCollection<GridModel?> _grids;
+    private GridModel _selectedGrid;
+
+    private const string DefaultGridUri =
+        "https://login.agni.lindenlab.com/cgi-bin/login.cgi";
+
+    public WindowToastManager? ToastManager { get; set; }
+
+    public LoginViewModel(LiteDbService liteDbService)
+    {
+        _liteDbService = liteDbService;
+        _preferencesViewModel = new PreferencesViewModel();
+        _username = string.Empty;
+        _password = string.Empty;
+        LoginLocations = _preferencesViewModel.LoginLocationOptions;
+        SelectedLoginLocation = _preferencesViewModel.SelectedLoginLocation;
+        TryLoginCommand = ReactiveCommand.CreateFromTask(TryLoginAsync);
+        _gridService = new GridService();
+        _grids = new ObservableCollection<GridModel?>();
+
+        LoadGrids();
+
+        // Subscribe to the ThrownExceptions property to handle errors
+        TryLoginCommand.ThrownExceptions.Subscribe(ex =>
         {
-            get => _username;
-            set => this.RaiseAndSetIfChanged(ref _username, value);
+            Log.Error("An error occurred during login: {Error}", ex.Message);
+            // Handle the error (e.g., show a dialog to the user)
+            _ = ShowLoginErrorAsync("An error occurred during login. Please try again.");
+        });
+
+        // Subscribe to the Network.LoginProgress event
+        _client.Network.LoginProgress += OnLoginProgress;
+    }
+
+    public ObservableCollection<string> LoginLocations { get; }
+
+    public string Username
+    {
+        get => _username;
+        set => this.RaiseAndSetIfChanged(ref _username, value);
+    }
+
+    public string Password
+    {
+        get => _password;
+        set => this.RaiseAndSetIfChanged(ref _password, value);
+    }
+
+    public string SelectedLoginLocation
+    {
+        get => _preferencesViewModel.SelectedLoginLocation;
+        set
+        {
+            _preferencesViewModel.SelectedLoginLocation = value;
+            this.RaisePropertyChanged();
         }
+    }
 
-        public string Password
+    public ObservableCollection<GridModel> Grids { get; set; }
+
+    public GridModel? SelectedGrid
+    {
+        get
         {
-            get => _password;
-            set => this.RaiseAndSetIfChanged(ref _password, value);
-        }
-
-        private ObservableCollection<string> _loginLocations;
-
-        public ObservableCollection<string> LoginLocations
-        {
-            get => _loginLocations;
-            set => this.RaiseAndSetIfChanged(ref _loginLocations, value);
-        }
-
-        public string SelectedLoginLocation
-        {
-            get => _preferencesViewModel.SelectedLoginLocation;
-            set
+            var selectedGrid = _grids.FirstOrDefault(g =>
+                g.GridNick == _preferencesViewModel.SelectedGridNick);
+            if (selectedGrid == null)
             {
-                _preferencesViewModel.SelectedLoginLocation = value;
-                this.RaisePropertyChanged();
-            }
-        }
-
-        public ObservableCollection<GridModel> Grids
-        {
-            get => _grids;
-            set => this.RaiseAndSetIfChanged(ref _grids, value);
-        }
-
-        public GridModel SelectedGrid
-        {
-            get => _selectedGrid;
-            set
-            {
-                if (value == null) return;
-                _preferencesViewModel.SelectedGridNick = value.GridNick;
-                this.RaiseAndSetIfChanged(ref _selectedGrid, value);
-            }
-        }
-
-        public string LoginStatusMessage
-        {
-            get => _loginStatusMessage;
-            set => this.RaiseAndSetIfChanged(ref _loginStatusMessage, value);
-        }
-
-        public bool IsLoggedIn
-        {
-            get => _sessionManager.Session?.IsLoggedIn ?? false;
-            set
-            {
-                var session = _sessionManager.Session;
-                if (session != null)
+                selectedGrid = new GridModel
                 {
-                    session.IsLoggedIn = value;
-                    _sessionManager.Session = session;
-                }
+                    GridNick = "Second Life",
+                    LoginUri = DefaultGridUri
+                };
             }
+
+            return selectedGrid;
+        }
+        set
+        {
+            if (value == null) return;
+            _preferencesViewModel.SelectedGridNick = value.GridNick;
+            this.RaiseAndSetIfChanged(ref _selectedGrid, value);
+        }
+    }
+
+    private void LoadGrids()
+    {
+        var grids = _gridService.GetAllGrids();
+        _grids = new ObservableCollection<GridModel?>(grids);
+        SelectedGrid = _grids.FirstOrDefault(g =>
+            g.GridNick == _preferencesViewModel.SelectedGridNick);
+    }
+
+    public ReactiveCommand<Unit, Unit> TryLoginCommand { get; }
+
+    private async Task ShowLoginErrorAsync(string errorMessage)
+    {
+        // ToastManager?.Show(
+        //     new Toast(
+        //         errorMessage),
+        //     showIcon: true,
+        //     showClose: true,
+        //     type: NotificationType.Error
+        // );
+        await Task.CompletedTask;
+    }
+
+    private async Task TryLoginAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
+        {
+            Log.Warning("Username or password is empty");
+            await ShowLoginErrorAsync("Username or password is empty");
+            return;
         }
 
-        public ReactiveCommand<Unit, Unit> TryLoginCommand { get; }
+        LoginStatusMessage = "Logging in...";
 
-        private void LoadGrids()
+        var ourPlatform = GetPlatformString();
+
+        var loginParams = _client?.Network?.DefaultLoginParams(
+            Username.Split(' ')[0], // firstName
+            Username.Contains(' ') ? Username.Split(' ')[1] : "Resident", // lastName
+            Password,
+            "GalaxyViewer-test", // ViewerName
+            "0.1.0" // ViewerVersion
+        );
+
+        if (loginParams == null)
         {
-            var grids = _gridService.GetAllGrids();
-            Grids = new ObservableCollection<GridModel>(grids);
-            SelectedGrid =
-                Grids.FirstOrDefault(g => g.GridNick == _preferencesViewModel.SelectedGridNick);
+            Log.Error("Failed to create login parameters");
+            await ShowLoginErrorAsync("Failed to create login parameters");
+            return;
         }
 
-        private async Task ShowLoginErrorAsync(string errorMessage)
+        loginParams.URI = SelectedGrid?.LoginUri;
+        loginParams.MfaEnabled = true;
+        loginParams.Platform = ourPlatform;
+        loginParams.PlatformVersion = Environment.OSVersion.VersionString;
+        loginParams.Start = _preferencesViewModel?.SelectedLoginLocation switch
         {
-            // ToastManager?.Show(
-            //     new Toast(
-            //         errorMessage),
-            //     showIcon: true,
-            //     showClose: true,
-            //     type: NotificationType.Error
-            // );
-            await Task.CompletedTask;
+            "Home" => "home",
+            "Last Location" => "last",
+            _ => "home"
+        };
+        loginParams.MfaHash = string.Empty;
+
+        var loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
+
+        if (loginSuccess)
+        {
+            await HandleSuccessfulLogin();
         }
-
-        private async Task TryLoginAsync()
+        else if (_client?.Network?.LoginMessage.Contains("MFA required") == true)
         {
-            if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
-            {
-                Log.Warning("Username or password is empty");
-                await ShowLoginErrorAsync("Username or password is empty");
-                return;
-            }
+            await HandleMfaLogin(loginParams);
+        }
+        else
+        {
+            Log.Error("Login failed: {Error}", _client?.Network?.LoginMessage);
+            IsLoggedIn = false;
+            await ShowLoginErrorAsync($"Login failed: {_client?.Network?.LoginMessage}");
+        }
+    }
 
-            if (SelectedGrid == null || string.IsNullOrWhiteSpace(SelectedGrid.LoginUri))
-            {
-                Log.Warning("Selected grid or its login URI is empty");
-                await ShowLoginErrorAsync("Selected grid or its login URI is empty");
-                return;
-            }
+    private string GetPlatformString()
+    {
+        var platformMap = new Dictionary<OSPlatform, string>
+        {
+            { OSPlatform.Windows, "Win" },
+            { OSPlatform.Linux, "Lin" },
+            { OSPlatform.OSX, "Mac" },
+            { OSPlatform.Create("ANDROID"), "And" },
+            { OSPlatform.Create("IOS"), "iOS" }
+        };
 
-            LoginStatusMessage = "Logging in...";
+        return platformMap.FirstOrDefault(kv => RuntimeInformation.IsOSPlatform(kv.Key)).Value ??
+               "Unk";
+    }
 
-            var ourPlatform = GetPlatformString();
+    private async Task HandleSuccessfulLogin()
+    {
+        Log.Information("Login successful as {Name}", _client.Self.Name);
+        IsLoggedIn = true;
 
-            var loginParams = _client.Network.DefaultLoginParams(
-                Username.Split(' ')[0], // firstName
-                Username.Contains(' ') ? Username.Split(' ')[1] : "Resident", // lastName
-                Password,
-                "GalaxyViewer-test", // ViewerName
-                "0.1.0" // ViewerVersion
-            );
+        var session = new SessionModel
+        {
+            Id = 1, // Assuming a single session record
+            IsLoggedIn = true,
+            AvatarName = _client.Self.Name,
+            AvatarKey = _client.Self.AgentID,
+            Balance = _client.Self.Balance,
+            CurrentLocation = _client.Network.CurrentSim.Name,
+            CurrentLocationWelcomeMessage = "Welcome to " + _client.Network.CurrentSim.Name
+        };
 
-            if (loginParams == null)
-            {
-                Log.Error("Failed to create login parameters");
-                await ShowLoginErrorAsync("Failed to create login parameters");
-                return;
-            }
+        _liteDbService.SaveSession(session);
+        Log.Information("Session updated on successful login");
 
-            // Use a specific uriString for the testing phase
-            var isTestingPhase = true; // Set this flag based on your testing condition
-            loginParams.URI = isTestingPhase ? "https://login.agni.lindenlab.com/cgi-bin/login.cgi" : SelectedGrid.LoginUri;
-            loginParams.MfaEnabled = true;
-            loginParams.Platform = ourPlatform;
-            loginParams.PlatformVersion = Environment.OSVersion.VersionString;
-            loginParams.Start = _preferencesViewModel?.SelectedLoginLocation switch
-            {
-                "Home" => "home",
-                "Last Location" => "last",
-                _ => "home"
-            };
-            loginParams.MfaHash = string.Empty;
+        await ProcessCapabilitiesAsync();
+    }
 
-            var loginSuccess = await Task.Run(() => _client.Network.Login(loginParams));
-
+    private async Task HandleMfaLogin(LoginParams loginParams)
+    {
+        Log.Warning("MFA required");
+        var mfaCode = await ShowMfaInputDialogAsync();
+        if (!string.IsNullOrEmpty(mfaCode))
+        {
+            loginParams.MfaHash = Utils.MD5(mfaCode);
+            var loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
             if (loginSuccess)
             {
                 await HandleSuccessfulLogin();
             }
-            else if (_client.Network.LoginMessage.Contains("MFA required"))
-            {
-                await HandleMfaLogin(loginParams);
-            }
             else
             {
-                Log.Error("Login failed: {Error}", _client.Network.LoginMessage);
-                IsLoggedIn = false;
-                await ShowLoginErrorAsync($"Login failed: {_client.Network.LoginMessage}");
+                Log.Error("Login failed with MFA: {Error}", _client?.Network?.LoginMessage);
+                await ShowLoginErrorAsync(
+                    $"Login failed with MFA: {_client?.Network?.LoginMessage}");
             }
         }
-
-        private string GetPlatformString()
+        else
         {
-            var platformMap = new Dictionary<OSPlatform, string>
-            {
-                { OSPlatform.Windows, "Win" },
-                { OSPlatform.Linux, "Lin" },
-                { OSPlatform.OSX, "Mac" },
-                { OSPlatform.Create("ANDROID"), "And" },
-                { OSPlatform.Create("IOS"), "iOS" }
-            };
-
-            return platformMap.FirstOrDefault(kv => RuntimeInformation.IsOSPlatform(kv.Key))
-                .Value ?? "Unk";
+            Log.Warning("MFA code entry was canceled");
+            await ShowLoginErrorAsync("MFA code entry was canceled");
         }
+    }
 
-        private async Task HandleSuccessfulLogin()
+    private async Task ProcessCapabilitiesAsync()
+    {
+        var loginMessage = await Task.Run(() => _client?.Network?.LoginMessage);
+        Log.Information("Login message: {Message}", loginMessage);
+
+        var currentSim = await Task.Run(() => _client?.Network?.CurrentSim);
+        Log.Information("Current location: {Sim}", currentSim);
+
+        await Task.CompletedTask;
+    }
+
+    private void OnLoginProgress(object? sender, LoginProgressEventArgs e)
+    {
+        Log.Information("Login progress: {Status}", e.Status);
+        switch (e.Status)
         {
-            Log.Information("Login successful as {Name}", _client.Self.Name);
-            IsLoggedIn = true;
-            LoginStatusMessage =
-                $"Logged in as {_client.Self.Name}, welcome to {_client.Network.CurrentSim?.Name}";
-
-            // Update session data
-            var session = _sessionManager.Session;
-            session.IsLoggedIn = true;
-            session.AvatarName = _client.Self.Name;
-            session.AvatarKey = _client.Self.AgentID;
-            session.Balance = _client.Self.Balance;
-            session.CurrentLocation = _client.Network.CurrentSim?.Name;
-            session.CurrentLocationWelcomeMessage =
-                "Welcome to " + _client.Network.CurrentSim?.Name;
-
-            // Save session data to the database once after all properties are updated
-            _sessionManager.Session = session;
-            Log.Information("Session saved after login: {@Session}", session);
-
-            await ProcessCapabilitiesAsync();
+            case LoginStatus.ConnectingToLogin:
+                LoginStatusMessage = "Connecting to login server...";
+                break;
+            case LoginStatus.ConnectingToSim:
+                LoginStatusMessage = "Connecting to region...";
+                break;
+            case LoginStatus.Redirecting:
+                LoginStatusMessage = "Redirecting...";
+                break;
+            case LoginStatus.ReadingResponse:
+                LoginStatusMessage = "Reading response...";
+                break;
+            case LoginStatus.Success:
+                LoginStatusMessage =
+                    $"Logged in as {_client.Self.Name}, welcome to {_client.Network.CurrentSim?.Name}";
+                IsLoggedIn = true;
+                break;
+            case LoginStatus.Failed:
+                LoginStatusMessage = $"Login failed: {e.Message}";
+                break;
+            case LoginStatus.None:
+            default:
+                LoginStatusMessage = $"Unknown login status: {e.Status}";
+                break;
         }
+    }
 
-        private async Task HandleMfaLogin(LoginParams loginParams)
-        {
-            Log.Warning("MFA required");
-            var mfaCode = await ShowMfaInputDialogAsync();
-            if (!string.IsNullOrEmpty(mfaCode))
-            {
-                loginParams.MfaHash = Utils.MD5(mfaCode);
-                var loginSuccess = await Task.Run(() => _client.Network.Login(loginParams));
-                if (loginSuccess)
-                {
-                    await HandleSuccessfulLogin();
-                }
-                else
-                {
-                    Log.Error("Login failed with MFA: {Error}", _client.Network.LoginMessage);
-                    await ShowLoginErrorAsync(
-                        $"Login failed with MFA: {_client.Network.LoginMessage}");
-                }
-            }
-            else
-            {
-                Log.Warning("MFA code entry was canceled");
-                await ShowLoginErrorAsync("MFA code entry was canceled");
-            }
-        }
-
-        private async Task ProcessCapabilitiesAsync()
-        {
-            var loginMessage = await Task.Run(() => _client.Network.LoginMessage);
-            Log.Information("Login message: {Message}", loginMessage);
-
-            var currentSim = await Task.Run(() => _client.Network.CurrentSim);
-            Log.Information("Current location: {Sim}", currentSim);
-
-            await Task.CompletedTask;
-        }
-
-        private void OnLoginProgress(object? sender, LoginProgressEventArgs e)
-        {
-            Log.Information("Login progress: {Status}", e.Status);
-            switch (e.Status)
-            {
-                case LoginStatus.ConnectingToLogin:
-                    LoginStatusMessage = "Connecting to login server...";
-                    break;
-                case LoginStatus.ConnectingToSim:
-                    LoginStatusMessage = "Connecting to region...";
-                    break;
-                case LoginStatus.Redirecting:
-                    LoginStatusMessage = "Redirecting...";
-                    break;
-                case LoginStatus.ReadingResponse:
-                    LoginStatusMessage = "Reading response...";
-                    break;
-                case LoginStatus.Success:
-                    LoginStatusMessage =
-                        $"Logged in as {_client.Self.Name}, welcome to {_client.Network.CurrentSim?.Name}";
-                    IsLoggedIn = true;
-                    break;
-                case LoginStatus.Failed:
-                    LoginStatusMessage = $"Login failed: {e.Message}";
-                    break;
-                case LoginStatus.None:
-                default:
-                    LoginStatusMessage = $"Unknown login status: {e.Status}";
-                    break;
-            }
-        }
-
-        private async Task<string> ShowMfaInputDialogAsync()
-        {
-            // TODO: Implement MFA input dialog
-            return await Task.FromResult(string.Empty);
-        }
+    private async Task<string> ShowMfaInputDialogAsync()
+    {
+        // TODO: Implement MFA input dialog
+        return await Task.FromResult(string.Empty);
     }
 }

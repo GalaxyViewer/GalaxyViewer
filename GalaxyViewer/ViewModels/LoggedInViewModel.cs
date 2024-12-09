@@ -1,103 +1,67 @@
-using System.ComponentModel;
-using GalaxyViewer.Models;
-using GalaxyViewer.Services;
 using OpenMetaverse;
 using ReactiveUI;
+using GalaxyViewer.Services;
+using GalaxyViewer.Models;
 
-namespace GalaxyViewer.ViewModels
+namespace GalaxyViewer.ViewModels;
+
+public class LoggedInViewModel : ViewModelBase
 {
-    public class LoggedInViewModel : ViewModelBase
+    private readonly LiteDbService _liteDbService;
+    private SessionModel _session;
+
+    public string CurrentLocation
     {
-        private readonly ILiteDbService _liteDbService;
-        private SessionModel _session;
-
-        public LoggedInViewModel(ILiteDbService liteDbService)
+        get => _session.CurrentLocation;
+        set
         {
-            _liteDbService = liteDbService;
-            _session = _liteDbService.GetSession();
-            _session.PropertyChanged += OnSessionPropertyChanged;
-        }
-
-        private void OnSessionPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
+            if (_session.CurrentLocation != value)
             {
-                case nameof(SessionModel.AvatarName):
-                    this.RaisePropertyChanged(nameof(AvatarName));
-                    break;
-                case nameof(SessionModel.AvatarKey):
-                    this.RaisePropertyChanged(nameof(AvatarKey));
-                    break;
-                case nameof(SessionModel.Balance):
-                    this.RaisePropertyChanged(nameof(Balance));
-                    break;
-                case nameof(SessionModel.CurrentLocation):
-                    this.RaisePropertyChanged(nameof(CurrentLocation));
-                    break;
-                case nameof(SessionModel.CurrentLocationWelcomeMessage):
-                    this.RaisePropertyChanged(nameof(CurrentLocationWelcomeMessage));
-                    break;
-            }
-        }
-
-        public string AvatarName
-        {
-            get => _session.AvatarName;
-            set
-            {
-                if (_session.AvatarName == value) return;
-                _session.AvatarName = value;
-                _liteDbService.SaveSession(_session);
-                this.RaisePropertyChanged();
-            }
-        }
-
-        public UUID AvatarKey
-        {
-            get => _session.AvatarKey;
-            set
-            {
-                if (_session.AvatarKey == value) return;
-                _session.AvatarKey = value;
-                _liteDbService.SaveSession(_session);
-                this.RaisePropertyChanged();
-            }
-        }
-
-        public int Balance
-        {
-            get => _session.Balance;
-            set
-            {
-                if (_session.Balance == value) return;
-                _session.Balance = value;
-                _liteDbService.SaveSession(_session);
-                this.RaisePropertyChanged();
-            }
-        }
-
-        public string CurrentLocation
-        {
-            get => _session.CurrentLocation;
-            set
-            {
-                if (_session.CurrentLocation == value) return;
                 _session.CurrentLocation = value;
                 _liteDbService.SaveSession(_session);
-                this.RaisePropertyChanged();
+                var sessionCurrentLocation = _session.CurrentLocation;
+                this.RaiseAndSetIfChanged(ref sessionCurrentLocation, value);
             }
         }
+    }
 
-        public string CurrentLocationWelcomeMessage
+    public string CurrentLocationWelcomeMessage
+    {
+        get => _session.CurrentLocationWelcomeMessage;
+        set
         {
-            get => _session.CurrentLocationWelcomeMessage;
-            set
+            if (_session.CurrentLocationWelcomeMessage != value)
             {
-                if (_session.CurrentLocationWelcomeMessage == value) return;
                 _session.CurrentLocationWelcomeMessage = value;
                 _liteDbService.SaveSession(_session);
-                this.RaisePropertyChanged();
+                var sessionCurrentLocationWelcomeMessage = _session.CurrentLocationWelcomeMessage;
+                this.RaiseAndSetIfChanged(ref sessionCurrentLocationWelcomeMessage, value);
             }
         }
+    }
+    
+    public int Balance
+    {
+        get => _session.Balance;
+        set
+        {
+            if (_session.Balance != value)
+            {
+                _session.Balance = value;
+                _liteDbService.SaveSession(_session);
+                var sessionBalance = _session.Balance;
+                this.RaiseAndSetIfChanged(ref sessionBalance, value);
+            }
+        }
+    }
+
+    public LoggedInViewModel(LiteDbService liteDbService)
+    {
+        _liteDbService = liteDbService;
+        _session = _liteDbService.GetSession();
+
+        // Initialize properties with session data
+        CurrentLocation = _session.CurrentLocation;
+        CurrentLocationWelcomeMessage = _session.CurrentLocationWelcomeMessage;
     }
 }

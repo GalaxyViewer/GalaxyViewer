@@ -1,30 +1,26 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:GalaxyViewer.ViewModels"
-             xmlns:converters="clr-namespace:Avalonia.Controls.Converters;assembly=Avalonia.Controls"
              x:Class="GalaxyViewer.Views.MenuDesktopView"
              x:DataType="vm:MainViewModel">
     <Menu DockPanel.Dock="Top">
         <MenuItem Header="File">
-            <MenuItem.Resources>
-                <converters:CornerRadiusFilterConverter x:Key="InverseBooleanConverter" />
-            </MenuItem.Resources>
             <MenuItem Header="New Window" />
             <Separator />
-            <MenuItem Header="Upload Blinn-Phong Texture" IsEnabled="{Binding SessionManager.Session.IsLoggedIn}" />
-            <MenuItem Header="Upload PBR Material" IsEnabled="{Binding SessionManager.Session.IsLoggedIn}" />
-            <MenuItem Header="Upload Mesh" IsEnabled="{Binding SessionManager.Session.IsLoggedIn}" />
-            <MenuItem Header="Import Object" IsEnabled="{Binding SessionManager.Session.IsLoggedIn}" />
-            <MenuItem Header="Script Editor" IsEnabled="{Binding SessionManager.Session.IsLoggedIn}" />
+            <MenuItem Header="Upload Blinn-Phong Texture" IsEnabled="{Binding IsLoggedIn}" />
+            <MenuItem Header="Upload PBR Material" IsEnabled="{Binding IsLoggedIn}" />
+            <MenuItem Header="Upload Mesh" IsEnabled="{Binding IsLoggedIn}" />
+            <MenuItem Header="Import Object" IsEnabled="{Binding IsLoggedIn}" />
+            <MenuItem Header="Script Editor" IsEnabled="{Binding IsLoggedIn}" />
             <Separator />
-            <MenuItem Header="Login" Command="{Binding NavToLoginViewCommand}" IsEnabled="{Binding SessionManager.Session.IsLoggedIn, Converter={StaticResource InverseBooleanConverter}}" />
-            <MenuItem Header="Logout" Command="{Binding LogoutCommand}" IsEnabled="{Binding SessionManager.Session.IsLoggedIn}" />
-            <MenuItem Header="Relog" IsEnabled="{Binding SessionManager.Session.IsLoggedIn, Converter={StaticResource InverseBooleanConverter}}" />
+            <MenuItem Header="Login" Command="{Binding NavToLoginViewCommand}" IsEnabled="{Binding !IsLoggedIn}" />
+            <MenuItem Header="Logout" Command="{Binding LogoutCommand}" IsEnabled="{Binding IsLoggedIn}" />
+            <MenuItem Header="Relog" IsEnabled="{Binding !IsLoggedIn}" />
             <MenuItem Header="Preferences" Command="{Binding NavToPreferencesViewCommand}" />
             <Separator />
             <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
         </MenuItem>
-        <MenuItem Header="World" IsEnabled="{Binding SessionManager.Session.IsLoggedIn}">
+        <MenuItem Header="World" IsEnabled="{Binding IsLoggedIn}">
             <MenuItem Header="Create new Landmark Here" />
             <MenuItem Header="Landmarks" />
             <MenuItem Header="Teleport History" />
@@ -39,7 +35,7 @@
             <MenuItem Header="People Nearby" />
             <MenuItem Header="Objects Nearby" />
         </MenuItem>
-        <MenuItem Header="Communicate" IsEnabled="{Binding SessionManager.Session.IsLoggedIn}">
+        <MenuItem Header="Communicate" IsEnabled="{Binding IsLoggedIn}">
             <MenuItem Header="Chat" />
             <MenuItem Header="Friends List" />
             <MenuItem Header="Nearby People" />
@@ -47,7 +43,7 @@
             <MenuItem Header="Nearby Media" />
             <MenuItem Header="Nearby Objects" />
         </MenuItem>
-        <MenuItem Header="Community" IsEnabled="{Binding SessionManager.Session.IsLoggedIn}">
+        <MenuItem Header="Community" IsEnabled="{Binding IsLoggedIn}">
             <MenuItem Header="Friends" />
             <MenuItem Header="Groups" />
             <MenuItem Header="Events" />
