@@ -24,11 +24,8 @@ public class SessionManagerTests
         };
 
         var mockSessionCollection = new Mock<ILiteCollection<SessionModel>>();
-        mockLiteDbService.Setup(service => service.GetCollection<SessionModel>("session"))
-            .Returns(mockSessionCollection.Object);
-        mockLiteDbService.Setup(service => service.GetSession()).Returns(session);
-        mockLiteDbService.Setup(service => service.SaveSession(It.IsAny<SessionModel>()))
-            .Callback<SessionModel>(s => mockSessionCollection.Object.Upsert(s));
+        mockLiteDbService.Setup(service => service.GetCollection<SessionModel>("sessions")).Returns(mockSessionCollection.Object);
+        mockSessionCollection.Setup(collection => collection.FindOne(It.IsAny<Query>())).Returns(session);
 
         var sessionManager = new SessionManager(mockLiteDbService.Object);
 
@@ -44,7 +41,6 @@ public class SessionManagerTests
         };
 
         // Assert
-        mockSessionCollection.Verify(collection => collection.Upsert(It.IsAny<SessionModel>()),
-            Times.Once);
+        mockSessionCollection.Verify(collection => collection.Upsert(It.IsAny<SessionModel>()), Times.Once);
     }
 }
