@@ -1,21 +1,38 @@
 using System;
+using System.ComponentModel;
 using System.IO;
+using System.Runtime.CompilerServices;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using LiteDB;
 using GalaxyViewer.Models;
 using Serilog;
 
 namespace GalaxyViewer.Services;
 
-public class LiteDbService : IDisposable
+public class LiteDbService : IDisposable, INotifyPropertyChanged
 {
     private LiteDatabase? _database;
     private readonly string _databasePath;
     public LiteDatabase? Database => _database;
 
+    private SessionModel _session;
+    public SessionModel Session
+    {
+        get => _session;
+        private set
+        {
+            _session = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+
     public LiteDbService()
     {
         _databasePath = GetDatabasePath();
         InitializeDatabase();
+        Session = GetSession();
     }
 
     private static string GetDatabasePath()
@@ -151,10 +168,9 @@ public class LiteDbService : IDisposable
         Log.Information("Session data created on startup");
     }
 
-    public ILiteCollection<T> GetCollection<T>(string name)
+    public void OnPropertyChanged([CallerMemberName] string propertyName = null)
     {
-        Log.Information("Retrieving collection: {CollectionName}", name);
-        return _database.GetCollection<T>(name);
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     public SessionModel GetSession()
@@ -163,11 +179,19 @@ public class LiteDbService : IDisposable
         return collection.FindOne(Query.All()) ?? new SessionModel();
     }
 
+    public bool HasSessionChanged(SessionModel currentSession)
+    {
+        var storedSession = GetSession();
+        return !storedSession.Equals(currentSession);
+    }
+
     public void SaveSession(SessionModel session)
     {
         var collection = _database.GetCollection<SessionModel>("session");
         collection.Upsert(session);
         Log.Information("Session data saved");
+
+        Session = session;
     }
 
     public void Dispose()

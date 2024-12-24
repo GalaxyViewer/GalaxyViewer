@@ -1,12 +1,15 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using GalaxyViewer.Services;
+using GalaxyViewer.ViewModels;
 
 namespace GalaxyViewer.Views;
 
 public partial class LoggedInView : UserControl
 {
-    public LoggedInView()
+    public LoggedInView(LiteDbService liteDbService)
     {
+        DataContext = new LoggedInViewModel(liteDbService);
         InitializeComponent();
     }
 

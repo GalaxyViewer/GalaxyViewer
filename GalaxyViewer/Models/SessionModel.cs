@@ -1,3 +1,4 @@
+using System;
 using OpenMetaverse;
 
 namespace GalaxyViewer.Models;
@@ -10,5 +11,5 @@ public class SessionModel
     public UUID AvatarKey { get; set; }
     public int Balance { get; set; }
     public string CurrentLocation { get; set; }
-    public string CurrentLocationWelcomeMessage { get; set; }
+    public string LoginWelcomeMessage { get; set; }
 }

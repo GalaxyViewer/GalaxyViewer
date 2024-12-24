@@ -1,14 +1,21 @@
-using OpenMetaverse;
+using System.ComponentModel;
 using ReactiveUI;
 using GalaxyViewer.Services;
 using GalaxyViewer.Models;
 
 namespace GalaxyViewer.ViewModels;
 
-public class LoggedInViewModel : ViewModelBase
+public class LoggedInViewModel : ViewModelBase, INotifyPropertyChanged
 {
     private readonly LiteDbService _liteDbService;
     private SessionModel _session;
+
+    public LoggedInViewModel(LiteDbService liteDbService)
+    {
+        _liteDbService = liteDbService;
+        _session = _liteDbService.GetSession();
+        _liteDbService.PropertyChanged += OnLiteDbServicePropertyChanged;
+    }
 
     public string CurrentLocation
     {
@@ -19,27 +26,25 @@ public class LoggedInViewModel : ViewModelBase
             {
                 _session.CurrentLocation = value;
                 _liteDbService.SaveSession(_session);
-                var sessionCurrentLocation = _session.CurrentLocation;
-                this.RaiseAndSetIfChanged(ref sessionCurrentLocation, value);
+                OnPropertyChanged(nameof(CurrentLocation));
             }
         }
     }
 
-    public string CurrentLocationWelcomeMessage
+    public string LoginWelcomeMessage
     {
-        get => _session.CurrentLocationWelcomeMessage;
+        get => _session.LoginWelcomeMessage;
         set
         {
-            if (_session.CurrentLocationWelcomeMessage != value)
+            if (_session.LoginWelcomeMessage != value)
             {
-                _session.CurrentLocationWelcomeMessage = value;
+                _session.LoginWelcomeMessage = value;
                 _liteDbService.SaveSession(_session);
-                var sessionCurrentLocationWelcomeMessage = _session.CurrentLocationWelcomeMessage;
-                this.RaiseAndSetIfChanged(ref sessionCurrentLocationWelcomeMessage, value);
+                OnPropertyChanged(nameof(LoginWelcomeMessage));
             }
         }
     }
-    
+
     public int Balance
     {
         get => _session.Balance;
@@ -49,19 +54,26 @@ public class LoggedInViewModel : ViewModelBase
             {
                 _session.Balance = value;
                 _liteDbService.SaveSession(_session);
-                var sessionBalance = _session.Balance;
-                this.RaiseAndSetIfChanged(ref sessionBalance, value);
+                OnPropertyChanged(nameof(Balance));
             }
         }
     }
 
-    public LoggedInViewModel(LiteDbService liteDbService)
+    private void OnLiteDbServicePropertyChanged(object sender, PropertyChangedEventArgs e)
     {
-        _liteDbService = liteDbService;
-        _session = _liteDbService.GetSession();
+        if (e.PropertyName == nameof(LiteDbService.Session))
+        {
+            _session = _liteDbService.GetSession();
+            OnPropertyChanged(nameof(CurrentLocation));
+            OnPropertyChanged(nameof(LoginWelcomeMessage));
+            OnPropertyChanged(nameof(Balance));
+        }
+    }
 
-        // Initialize properties with session data
-        CurrentLocation = _session.CurrentLocation;
-        CurrentLocationWelcomeMessage = _session.CurrentLocationWelcomeMessage;
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    protected virtual void OnPropertyChanged(string propertyName)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

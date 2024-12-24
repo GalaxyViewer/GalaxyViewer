@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Avalonia.Controls.Notifications;
@@ -49,6 +50,8 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
     private readonly LiteDbService _liteDbService;
     private readonly PreferencesViewModel _preferencesViewModel;
+    private readonly Timer _sessionCheckTimer;
+    private SessionModel _currentSession;
     private string _username;
     private string _password;
     private readonly GridClient _client = new();
@@ -64,8 +67,12 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
     public LoginViewModel(LiteDbService liteDbService)
     {
-        _liteDbService = liteDbService;
+        _liteDbService = liteDbService ?? throw new ArgumentNullException(nameof(liteDbService));
         _preferencesViewModel = new PreferencesViewModel();
+        _currentSession = _liteDbService.GetSession() ??
+                          throw new InvalidOperationException("Session could not be retrieved.");
+        _sessionCheckTimer =
+            new Timer(CheckSessionChanges, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
         _username = string.Empty;
         _password = string.Empty;
         LoginLocations = _preferencesViewModel.LoginLocationOptions;
@@ -86,6 +93,28 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
         // Subscribe to the Network.LoginProgress event
         _client.Network.LoginProgress += OnLoginProgress;
+    }
+
+    private void CheckSessionChanges(object? state)
+    {
+        if (_liteDbService == null || _currentSession == null)
+        {
+            Log.Error("LiteDbService or current session is null.");
+            return;
+        }
+
+        if (_liteDbService.HasSessionChanged(_currentSession))
+        {
+            _currentSession = _liteDbService.GetSession();
+            UpdateViewBindings();
+        }
+    }
+
+    private void UpdateViewBindings()
+    {
+        // Update the properties bound to the view
+        this.RaisePropertyChanged(nameof(IsLoggedIn));
+        this.RaisePropertyChanged(nameof(LoginStatusMessage));
     }
 
     public ObservableCollection<string> LoginLocations { get; }
@@ -247,7 +276,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
             AvatarKey = _client.Self.AgentID,
             Balance = _client.Self.Balance,
             CurrentLocation = _client.Network.CurrentSim.Name,
-            CurrentLocationWelcomeMessage = "Welcome to " + _client.Network.CurrentSim.Name
+            LoginWelcomeMessage = _client.Network.LoginMessage
         };
 
         _liteDbService.SaveSession(session);

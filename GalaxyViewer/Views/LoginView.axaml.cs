@@ -7,12 +7,10 @@ namespace GalaxyViewer.Views;
 
 public partial class LoginView : UserControl
 {
-    private LiteDbService _liteDbService;
-
-    public LoginView()
+    public LoginView(LiteDbService liteDbService)
     {
         InitializeComponent();
-        DataContext = new LoginViewModel(_liteDbService);
+        DataContext = new LoginViewModel(liteDbService);
     }
 
     private void InitializeComponent()

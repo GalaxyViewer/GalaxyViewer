@@ -62,7 +62,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 
         _loginViewModel = new LoginViewModel(_liteDbService);
         _loggedInViewModel = new LoggedInViewModel(_liteDbService);
-        _currentView = new LoginView { DataContext = _loginViewModel };
+        _currentView = new LoginView(_liteDbService);
         ExitCommand = ReactiveCommand.Create(LogoutAndExit);
         LogoutCommand = ReactiveCommand.Create(Logout);
         NavToLoginViewCommand = ReactiveCommand.Create(NavigateToLoginView);
@@ -93,12 +93,12 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 
     private void NavigateToLoginView()
     {
-        CurrentView = new LoginView { DataContext = _loginViewModel };
+        CurrentView = new LoginView(_liteDbService);
     }
 
     private void NavigateToLoggedInView()
     {
-        CurrentView = new LoggedInView { DataContext = _loggedInViewModel };
+        CurrentView = new LoggedInView(_liteDbService);
     }
 
     private void NavigateToPreferencesView()
