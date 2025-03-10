@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:u="https://irihi.tech/ursa"
              x:Class="GalaxyViewer.Views.LoginView"
              xmlns:viewModels="clr-namespace:GalaxyViewer.ViewModels"
              x:DataType="viewModels:LoginViewModel">
@@ -7,7 +8,7 @@
         <OnPlatform>
             <!-- On platform Windows or Linux -->
             <On Options="Windows, Linux">
-                <Grid RowDefinitions="*,Auto,Auto">
+                <Grid RowDefinitions="*,Auto,Auto,Auto">
                     <Grid>
                         <Image Source="/Assets/Images/banner.jpg" Stretch="UniformToFill" />
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -19,7 +20,9 @@
                             </TextBlock>
                         </StackPanel>
                     </Grid>
-                    <TextBlock Grid.Row="1" Text="{Binding LoginStatusMessage}" Margin="20,20,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <TextBlock Grid.Row="1" Text="{Binding LoginStatusMessage}" Margin="20,20,0,0"
+                               VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <ContentControl Grid.Row="0" Content="{Binding MfaPromptContainer}" />
                     <Grid Grid.Row="2" Margin="20" ColumnDefinitions="Auto,240,Auto,240,Auto,Auto,*">
                         <Label Grid.Column="0"
                                Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
@@ -81,6 +84,7 @@
                             Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenLoginButton}"
                             Command="{Binding TryLoginCommand}"
                             Margin="5" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <ContentControl Content="{Binding MfaPromptContainer}" />
                     <TextBlock Text="{Binding LoginStatusMessage}" Margin="5" />
                 </StackPanel>
             </On>

@@ -4,13 +4,15 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
-using Avalonia.Controls.Notifications;
+using Avalonia.Controls;
 using GalaxyViewer.Models;
 using GalaxyViewer.Services;
+using GalaxyViewer.Views;
+using Newtonsoft.Json;
 using ReactiveUI;
 using Ursa.Controls;
 using Serilog;
@@ -26,8 +28,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
     {
         get
         {
-            Debug.Assert(_routableViewModelImplementation?.HostScreen != null,
-                "_routableViewModelImplementation?.HostScreen != null");
+            Debug.Assert(_routableViewModelImplementation?.HostScreen != null);
             return _routableViewModelImplementation.HostScreen;
         }
     }
@@ -97,17 +98,15 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
     private void CheckSessionChanges(object? state)
     {
-        if (_liteDbService == null || _currentSession == null)
+        if (_currentSession == null)
         {
             Log.Error("LiteDbService or current session is null.");
             return;
         }
 
-        if (_liteDbService.HasSessionChanged(_currentSession))
-        {
-            _currentSession = _liteDbService.GetSession();
-            UpdateViewBindings();
-        }
+        if (!_liteDbService.HasSessionChanged(_currentSession)) return;
+        _currentSession = _liteDbService.GetSession();
+        UpdateViewBindings();
     }
 
     private void UpdateViewBindings()
@@ -141,6 +140,14 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         }
     }
 
+    private UserControl _mfaPromptContainer;
+
+    public UserControl MfaPromptContainer
+    {
+        get => _mfaPromptContainer;
+        set => this.RaiseAndSetIfChanged(ref _mfaPromptContainer, value);
+    }
+
     public ObservableCollection<GridModel> Grids { get; set; }
 
     public GridModel? SelectedGrid
@@ -148,15 +155,11 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         get
         {
             var selectedGrid = _grids.FirstOrDefault(g =>
-                g.GridNick == _preferencesViewModel.SelectedGridNick);
-            if (selectedGrid == null)
+                g.GridNick == _preferencesViewModel.SelectedGridNick) ?? new GridModel
             {
-                selectedGrid = new GridModel
-                {
-                    GridNick = "Second Life",
-                    LoginUri = DefaultGridUri
-                };
-            }
+                GridNick = "Second Life",
+                LoginUri = DefaultGridUri
+            };
 
             return selectedGrid;
         }
@@ -203,12 +206,16 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
         var ourPlatform = GetPlatformString();
 
+        var version = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion ?? "Version not found";
+
         var loginParams = _client?.Network?.DefaultLoginParams(
             Username.Split(' ')[0], // firstName
             Username.Contains(' ') ? Username.Split(' ')[1] : "Resident", // lastName
             Password,
-            "GalaxyViewer-test", // ViewerName
-            "0.1.0" // ViewerVersion
+            "GalaxyViewer", // ViewerName
+            version // ViewerVersion
         );
 
         if (loginParams == null)
@@ -222,13 +229,18 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         loginParams.MfaEnabled = true;
         loginParams.Platform = ourPlatform;
         loginParams.PlatformVersion = Environment.OSVersion.VersionString;
-        loginParams.Start = _preferencesViewModel?.SelectedLoginLocation switch
+        loginParams.LoginLocation = _preferencesViewModel?.SelectedLoginLocation switch
         {
             "Home" => "home",
             "Last Location" => "last",
             _ => "home"
         };
-        loginParams.MfaHash = string.Empty;
+        loginParams.UserAgent = "LibreMetaverse";
+
+#if DEBUG
+        Log.Information("Login parameters: {LoginParams}",
+            JsonConvert.SerializeObject(loginParams, Formatting.Indented));
+#endif
 
         var loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
 
@@ -236,9 +248,36 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         {
             await HandleSuccessfulLogin();
         }
-        else if (_client?.Network?.LoginMessage.Contains("MFA required") == true)
+        else if (_client?.Network?.LoginMessage.Contains("multifactor") == true)
         {
-            await HandleMfaLogin(loginParams);
+            Log.Information("MFA required for login");
+            var mfaCode = await ShowMfaPromptDialogAsync();
+            if (string.IsNullOrWhiteSpace(mfaCode))
+            {
+                Log.Warning("MFA code is empty");
+                await ShowLoginErrorAsync("MFA code is required");
+                return;
+            }
+
+            loginParams.Token = mfaCode;
+
+#if DEBUG
+            Log.Information("Login parameters with MFA: {LoginParams}",
+                JsonConvert.SerializeObject(loginParams, Formatting.Indented));
+#endif
+
+            loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
+
+            if (loginSuccess)
+            {
+                await HandleSuccessfulLogin();
+            }
+            else
+            {
+                Log.Error("MFA login failed: {Error}", _client?.Network?.LoginMessage);
+                IsLoggedIn = false;
+                await ShowLoginErrorAsync($"MFA login failed: {_client?.Network?.LoginMessage}");
+            }
         }
         else
         {
@@ -248,13 +287,33 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         }
     }
 
-    private string GetPlatformString()
+    private async Task<string> ShowMfaPromptDialogAsync()
+    {
+        var tcs = new TaskCompletionSource<string>();
+
+        var mfaPromptDialog = new MfaPromptDialog
+        {
+            DataContext = new MfaPromptDialogViewModel(tcs)
+        };
+
+        MfaPromptContainer = mfaPromptDialog;
+
+        var mfaCode = await tcs.Task;
+
+        // Clear the MFA prompt container after getting the code
+        MfaPromptContainer = null;
+
+        return mfaCode;
+    }
+
+    private static string GetPlatformString()
     {
         var platformMap = new Dictionary<OSPlatform, string>
         {
             { OSPlatform.Windows, "Win" },
             { OSPlatform.Linux, "Lin" },
             { OSPlatform.OSX, "Mac" },
+            { OSPlatform.Create("BROWSER"), "Web" },
             { OSPlatform.Create("ANDROID"), "And" },
             { OSPlatform.Create("IOS"), "iOS" }
         };
@@ -283,32 +342,6 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         Log.Information("Session updated on successful login");
 
         await ProcessCapabilitiesAsync();
-    }
-
-    private async Task HandleMfaLogin(LoginParams loginParams)
-    {
-        Log.Warning("MFA required");
-        var mfaCode = await ShowMfaInputDialogAsync();
-        if (!string.IsNullOrEmpty(mfaCode))
-        {
-            loginParams.MfaHash = Utils.MD5(mfaCode);
-            var loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
-            if (loginSuccess)
-            {
-                await HandleSuccessfulLogin();
-            }
-            else
-            {
-                Log.Error("Login failed with MFA: {Error}", _client?.Network?.LoginMessage);
-                await ShowLoginErrorAsync(
-                    $"Login failed with MFA: {_client?.Network?.LoginMessage}");
-            }
-        }
-        else
-        {
-            Log.Warning("MFA code entry was canceled");
-            await ShowLoginErrorAsync("MFA code entry was canceled");
-        }
     }
 
     private async Task ProcessCapabilitiesAsync()
@@ -352,11 +385,5 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
                 LoginStatusMessage = $"Unknown login status: {e.Status}";
                 break;
         }
-    }
-
-    private async Task<string> ShowMfaInputDialogAsync()
-    {
-        // TODO: Implement MFA input dialog
-        return await Task.FromResult(string.Empty);
     }
 }
