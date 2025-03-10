@@ -1,16 +1,14 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using GalaxyViewer.Services;
 using GalaxyViewer.ViewModels;
 
 namespace GalaxyViewer.Views;
 
-public partial class LoginView : UserControl
+public partial class MenuAndroidView : UserControl
 {
-    public LoginView(LiteDbService liteDbService)
+    public MenuAndroidView()
     {
         InitializeComponent();
-        DataContext = new LoginViewModel(liteDbService);
     }
 
     private void InitializeComponent()

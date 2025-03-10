@@ -4,7 +4,7 @@ using GalaxyViewer.ViewModels;
 
 namespace GalaxyViewer.Views;
 
-public partial class PreferencesWindow : Window
+public partial class PreferencesWindow : BaseWindow
 {
     public PreferencesWindow()
     {

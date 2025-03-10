@@ -13,12 +13,13 @@ Features unique to this viewer (compared to the stock viewer) will include:
 - [ ] User Authentication
 
   - [x] Login
-  - [ ] MFA Support
+  - [x] MFA Support
+  - [ ] Saving Credentials
 
 - [ ] Communication
 
   - [ ] Chat
-  - [ ] Voice Chat
+  - [ ] Voice Chat (WebRTC)
 
 - [ ] User Interaction
 
@@ -69,6 +70,7 @@ Features unique to this viewer (compared to the stock viewer) will include:
   - [ ] Text-to-Speech
   - [ ] Speech-to-Text
 - [x] Localization
+- [ ] Sending Abuse Reports
 - [ ] Discord Rich Presence (Desktop only)
 
 ## Installation
@@ -77,7 +79,7 @@ To be added...
 
 ## Building
 
-Make sure you have the [.NET Core SDK](https://dotnet.microsoft.com/download) installed. We currently use .NET 8.0.
+Make sure you have the [.NET Core SDK](https://dotnet.microsoft.com/download) installed. We currently use .NET 9.0.
 
 Clone the repository and navigate to the project directory.
 
