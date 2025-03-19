@@ -5,9 +5,9 @@ using GalaxyViewer.ViewModels;
 
 namespace GalaxyViewer.Views;
 
-public partial class LoggedInView : UserControl
+public partial class WelcomeView : UserControl
 {
-    public LoggedInView(LiteDbService liteDbService)
+    public WelcomeView(LiteDbService liteDbService)
     {
         DataContext = new LoggedInViewModel(liteDbService);
         InitializeComponent();

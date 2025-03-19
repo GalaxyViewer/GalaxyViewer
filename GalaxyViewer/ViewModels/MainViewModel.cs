@@ -98,7 +98,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 
     private void NavigateToLoggedInView()
     {
-        CurrentView = new LoggedInView(_liteDbService);
+        CurrentView = new WelcomeView(_liteDbService);
     }
 
     private void NavigateToPreferencesView()
