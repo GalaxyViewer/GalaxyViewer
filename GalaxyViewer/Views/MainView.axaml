@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:GalaxyViewer.ViewModels"
              xmlns:views="clr-namespace:GalaxyViewer.Views"
-             mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="400"
              x:Class="GalaxyViewer.Views.MainView"
              x:DataType="vm:MainViewModel">
     <Design.DataContext>

@@ -3,13 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:GalaxyViewer.ViewModels"
              x:Class="GalaxyViewer.Views.WelcomeView"
-             x:DataType="viewModels:LoggedInViewModel">
+             x:DataType="viewModels:WelcomeViewModel">
     <StackPanel>
         <!-- Top Bar -->
         <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Padding="10" Margin="10">
-            <DockPanel>
-                <TextBlock Text="{Binding CurrentLocation}" DockPanel.Dock="Top" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" FontWeight="Medium" Foreground="Gray" />
-                <TextBlock Text="{Binding Balance}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="14" FontWeight="Medium" Foreground="Gray" />
+            <DockPanel Name="TopBar" HorizontalAlignment="Stretch" VerticalAlignment="Top">
+                <TextBlock Name="AddressBar" Text="{Binding CurrentLocation}" DockPanel.Dock="Top" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" FontWeight="Medium" Foreground="Gray" />
+                <TextBlock Name="TokenBalance" Text="{Binding Balance}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="14" FontWeight="Medium" Foreground="Gray" />
             </DockPanel>
         </Border>
 

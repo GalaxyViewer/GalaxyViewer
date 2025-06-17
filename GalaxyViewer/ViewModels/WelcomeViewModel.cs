@@ -1,16 +1,17 @@
 using System.ComponentModel;
 using ReactiveUI;
+using Avalonia.Threading;
 using GalaxyViewer.Services;
 using GalaxyViewer.Models;
 
 namespace GalaxyViewer.ViewModels;
 
-public class LoggedInViewModel : ViewModelBase, INotifyPropertyChanged
+public class WelcomeViewModel : ViewModelBase, INotifyPropertyChanged
 {
     private readonly LiteDbService _liteDbService;
     private SessionModel _session;
 
-    public LoggedInViewModel(LiteDbService liteDbService)
+    public WelcomeViewModel(LiteDbService liteDbService)
     {
         _liteDbService = liteDbService;
         _session = _liteDbService.GetSession();
@@ -22,12 +23,10 @@ public class LoggedInViewModel : ViewModelBase, INotifyPropertyChanged
         get => _session.CurrentLocation;
         set
         {
-            if (_session.CurrentLocation != value)
-            {
-                _session.CurrentLocation = value;
-                _liteDbService.SaveSession(_session);
-                OnPropertyChanged(nameof(CurrentLocation));
-            }
+            if (_session.CurrentLocation == value) return;
+            _session.CurrentLocation = value;
+            _liteDbService.SaveSession(_session);
+            OnPropertyChanged(nameof(CurrentLocation));
         }
     }
 
@@ -36,12 +35,10 @@ public class LoggedInViewModel : ViewModelBase, INotifyPropertyChanged
         get => _session.LoginWelcomeMessage;
         set
         {
-            if (_session.LoginWelcomeMessage != value)
-            {
-                _session.LoginWelcomeMessage = value;
-                _liteDbService.SaveSession(_session);
-                OnPropertyChanged(nameof(LoginWelcomeMessage));
-            }
+            if (_session.LoginWelcomeMessage == value) return;
+            _session.LoginWelcomeMessage = value;
+            _liteDbService.SaveSession(_session);
+            OnPropertyChanged(nameof(LoginWelcomeMessage));
         }
     }
 
@@ -50,29 +47,28 @@ public class LoggedInViewModel : ViewModelBase, INotifyPropertyChanged
         get => _session.Balance;
         set
         {
-            if (_session.Balance != value)
-            {
-                _session.Balance = value;
-                _liteDbService.SaveSession(_session);
-                OnPropertyChanged(nameof(Balance));
-            }
+            if (_session.Balance == value) return;
+            _session.Balance = value;
+            _liteDbService.SaveSession(_session);
+            OnPropertyChanged(nameof(Balance));
         }
     }
 
     private void OnLiteDbServicePropertyChanged(object sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(LiteDbService.Session))
+        if (e.PropertyName != nameof(LiteDbService.Session)) return;
+        Dispatcher.UIThread.Post(() =>
         {
             _session = _liteDbService.GetSession();
             OnPropertyChanged(nameof(CurrentLocation));
             OnPropertyChanged(nameof(LoginWelcomeMessage));
             OnPropertyChanged(nameof(Balance));
-        }
+        });
     }
 
-    public event PropertyChangedEventHandler PropertyChanged;
+    public new event PropertyChangedEventHandler? PropertyChanged;
 
-    protected virtual void OnPropertyChanged(string propertyName)
+    protected new virtual void OnPropertyChanged(string propertyName)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }

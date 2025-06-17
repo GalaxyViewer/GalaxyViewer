@@ -96,61 +96,57 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
     private void SeedPreferences()
     {
         var preferencesCollection = _database.GetCollection<PreferencesModel>("preferences");
-        if (preferencesCollection.Count() == 0)
+        if (preferencesCollection.Count() != 0) return;
+        var defaultPreferences = new PreferencesModel
         {
-            var defaultPreferences = new PreferencesModel
-            {
-                Theme = "Default",
-                LoginLocation = "Home",
-                Font = "Atkinson Hyperlegible",
-                Language = "en-US",
-                SelectedGridNick = "agni",
-                LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-            };
-            preferencesCollection.Insert(defaultPreferences);
-            Log.Information("Database seeded with default preferences");
-        }
+            Theme = "Default",
+            LoginLocation = "Home",
+            Font = "Atkinson Hyperlegible",
+            Language = "en-US",
+            SelectedGridNick = "agni",
+            LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+        preferencesCollection.Insert(defaultPreferences);
+        Log.Information("Database seeded with default preferences");
     }
 
     private void SeedGrids()
     {
         var gridsCollection = _database.GetCollection<GridModel>("grids");
-        if (gridsCollection.Count() == 0)
+        if (gridsCollection.Count() != 0) return;
+        var grids = new[]
         {
-            var grids = new[]
+            new GridModel
             {
-                new GridModel
-                {
-                    GridNick = "agni",
-                    GridName = "Second Life (agni)",
-                    Platform = "SecondLife",
-                    LoginUri = "https://login.agni.lindenlab.com/cgi-bin/login.cgi",
-                    LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Release",
-                    HelperUri = "https://secondlife.com/helpers/",
-                    Website = "http://secondlife.com/",
-                    Support = "http://secondlife.com/support/",
-                    Register = "http://secondlife.com/registration/",
-                    Password = "http://secondlife.com/account/request.php",
-                    Version = "0"
-                },
-                new GridModel
-                {
-                    GridNick = "aditi",
-                    GridName = "Second Life Beta (aditi)",
-                    Platform = "SecondLife",
-                    LoginUri = "https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
-                    LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Beta",
-                    HelperUri = "http://aditi-secondlife.webdev.lindenlab.com/helpers/",
-                    Website = "http://secondlife.com/",
-                    Support = "http://secondlife.com/support/",
-                    Register = "http://secondlife.com/registration/",
-                    Password = "http://secondlife.com/account/request.php",
-                    Version = "1"
-                }
-            };
-            gridsCollection.InsertBulk(grids);
-            Log.Information("Database seeded with default grids");
-        }
+                GridNick = "agni",
+                GridName = "Second Life (agni)",
+                Platform = "SecondLife",
+                LoginUri = "https://login.agni.lindenlab.com/cgi-bin/login.cgi",
+                LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Release",
+                HelperUri = "https://secondlife.com/helpers/",
+                Website = "http://secondlife.com/",
+                Support = "http://secondlife.com/support/",
+                Register = "http://secondlife.com/registration/",
+                Password = "http://secondlife.com/account/request.php",
+                Version = "0"
+            },
+            new GridModel
+            {
+                GridNick = "aditi",
+                GridName = "Second Life Beta (aditi)",
+                Platform = "SecondLife",
+                LoginUri = "https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
+                LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Beta",
+                HelperUri = "http://aditi-secondlife.webdev.lindenlab.com/helpers/",
+                Website = "http://secondlife.com/",
+                Support = "http://secondlife.com/support/",
+                Register = "http://secondlife.com/registration/",
+                Password = "http://secondlife.com/account/request.php",
+                Version = "1"
+            }
+        };
+        gridsCollection.InsertBulk(grids);
+        Log.Information("Database seeded with default grids");
     }
 
     private void ClearSessionData()
@@ -168,7 +164,7 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
         Log.Information("Session data created on startup");
     }
 
-    public void OnPropertyChanged([CallerMemberName] string propertyName = null)
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
@@ -194,7 +190,7 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
         Session = session;
     }
 
-    public void Dispose()
+    void IDisposable.Dispose()
     {
         _database?.Dispose();
         Log.Information("LiteDbService disposed");

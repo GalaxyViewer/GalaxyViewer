@@ -5,6 +5,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
 using GalaxyViewer.Views;
 using GalaxyViewer.Services;
 using OpenMetaverse;
@@ -17,7 +18,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
     private UserControl _currentView;
     private readonly GridClient _client = new();
     private readonly LoginViewModel _loginViewModel;
-    private readonly LoggedInViewModel _loggedInViewModel;
+    private readonly WelcomeViewModel _welcomeViewModel;
     private readonly LiteDbService _liteDbService;
 
     public new event PropertyChangedEventHandler? PropertyChanged;
@@ -56,12 +57,12 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
             OnPropertyChanged(nameof(IsLoggedIn));
             if (IsLoggedIn)
             {
-                NavigateToLoggedInView();
+                Dispatcher.UIThread.Post(NavigateToLoggedInView);
             }
         };
 
         _loginViewModel = new LoginViewModel(_liteDbService);
-        _loggedInViewModel = new LoggedInViewModel(_liteDbService);
+        _welcomeViewModel = new WelcomeViewModel(_liteDbService);
         _currentView = new LoginView(_liteDbService);
         ExitCommand = ReactiveCommand.Create(LogoutAndExit);
         LogoutCommand = ReactiveCommand.Create(Logout);

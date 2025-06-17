@@ -237,15 +237,15 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         };
         loginParams.UserAgent = "LibreMetaverse";
 
-#if DEBUG
-        Log.Information("Login parameters: {LoginParams}",
-            JsonConvert.SerializeObject(loginParams, Formatting.Indented));
-#endif
-
         var loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
 
         if (loginSuccess)
         {
+#if DEBUG
+            Log.Information("Login parameters: {LoginParams}",
+                JsonConvert.SerializeObject(loginParams, Formatting.Indented));
+#endif
+
             await HandleSuccessfulLogin();
         }
         else if (_client?.Network?.LoginMessage.Contains("multifactor") == true)

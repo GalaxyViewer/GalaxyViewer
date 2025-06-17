@@ -9,7 +9,7 @@ public partial class WelcomeView : UserControl
 {
     public WelcomeView(LiteDbService liteDbService)
     {
-        DataContext = new LoggedInViewModel(liteDbService);
+        DataContext = new WelcomeViewModel(liteDbService);
         InitializeComponent();
     }
 

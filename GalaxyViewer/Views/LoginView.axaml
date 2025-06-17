@@ -14,14 +14,14 @@
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Image Source="/Assets/GalaxyViewerLogo.ico" Width="150" Height="150" />
                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24"
-                                       FontWeight="Bold">
+                                       FontWeight="Bold" TextWrapping="Wrap">
                                 <Run
                                     Text="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=WelcomeMessage}" />
                             </TextBlock>
                         </StackPanel>
                     </Grid>
                     <TextBlock Grid.Row="1" Text="{Binding LoginStatusMessage}" Margin="20,20,0,0"
-                               VerticalAlignment="Center" HorizontalAlignment="Center" />
+                               VerticalAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap" />
                     <ContentControl Grid.Row="0" Content="{Binding MfaPromptContainer}" />
                     <Grid Grid.Row="2" Margin="20" ColumnDefinitions="Auto,240,Auto,240,Auto,Auto,*">
                         <Label Grid.Column="0"
@@ -59,7 +59,8 @@
                 <StackPanel>
                     <Image Source="/Assets/Images/banner.jpg" Stretch="UniformToFill" Height="100" />
                     <Image Source="/Assets/GalaxyViewerLogo.ico" Width="100" Height="100" HorizontalAlignment="Center" />
-                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="Bold">
+                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="Bold"
+                               TextWrapping="Wrap">
                         <Run
                             Text="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=WelcomeMessage}" />
                     </TextBlock>
@@ -85,7 +86,7 @@
                             Command="{Binding TryLoginCommand}"
                             Margin="5" VerticalAlignment="Center" HorizontalAlignment="Center" />
                     <ContentControl Content="{Binding MfaPromptContainer}" />
-                    <TextBlock Text="{Binding LoginStatusMessage}" Margin="5" />
+                    <TextBlock Text="{Binding LoginStatusMessage}" Margin="5" TextWrapping="Wrap" />
                 </StackPanel>
             </On>
         </OnPlatform>
