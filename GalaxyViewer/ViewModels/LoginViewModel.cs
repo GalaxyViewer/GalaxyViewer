@@ -58,11 +58,8 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
     private readonly GridClient _client = new();
     private IRoutableViewModel? _routableViewModelImplementation;
     private readonly GridService _gridService;
-    private ObservableCollection<GridModel?> _grids;
+    private ObservableCollection<GridModel> _grids;
     private GridModel _selectedGrid;
-
-    private const string DefaultGridUri =
-        "https://login.agni.lindenlab.com/cgi-bin/login.cgi";
 
     public WindowToastManager? ToastManager { get; set; }
 
@@ -80,7 +77,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         SelectedLoginLocation = _preferencesViewModel.SelectedLoginLocation;
         TryLoginCommand = ReactiveCommand.CreateFromTask(TryLoginAsync);
         _gridService = new GridService();
-        _grids = new ObservableCollection<GridModel?>();
+        _grids = [];
 
         LoadGrids();
 
@@ -98,12 +95,6 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
     private void CheckSessionChanges(object? state)
     {
-        if (_currentSession == null)
-        {
-            Log.Error("LiteDbService or current session is null.");
-            return;
-        }
-
         if (!_liteDbService.HasSessionChanged(_currentSession)) return;
         _currentSession = _liteDbService.GetSession();
         UpdateViewBindings();
@@ -140,43 +131,54 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         }
     }
 
-    private UserControl _mfaPromptContainer;
+    private UserControl? _mfaPromptContainer;
 
-    public UserControl MfaPromptContainer
+    public UserControl? MfaPromptContainer
     {
         get => _mfaPromptContainer;
         set => this.RaiseAndSetIfChanged(ref _mfaPromptContainer, value);
     }
 
-    public ObservableCollection<GridModel> Grids { get; set; }
-
-    public GridModel? SelectedGrid
+    public ObservableCollection<GridModel> Grids
     {
-        get
-        {
-            var selectedGrid = _grids.FirstOrDefault(g =>
-                g.GridNick == _preferencesViewModel.SelectedGridNick) ?? new GridModel
-            {
-                GridNick = "Second Life",
-                LoginUri = DefaultGridUri
-            };
-
-            return selectedGrid;
-        }
-        set
-        {
-            if (value == null) return;
-            _preferencesViewModel.SelectedGridNick = value.GridNick;
-            this.RaiseAndSetIfChanged(ref _selectedGrid, value);
-        }
+        get => _grids;
+        set => this.RaiseAndSetIfChanged(ref _grids, value);
     }
 
     private void LoadGrids()
     {
         var grids = _gridService.GetAllGrids();
-        _grids = new ObservableCollection<GridModel?>(grids);
-        SelectedGrid = _grids.FirstOrDefault(g =>
-            g.GridNick == _preferencesViewModel.SelectedGridNick);
+        Grids = new ObservableCollection<GridModel>(grids);
+
+        // If no selection, default to the Second Life grid
+        if (Grids.Count > 0)
+        {
+            if (string.IsNullOrEmpty(_preferencesViewModel.SelectedGridNick))
+                _preferencesViewModel.SelectedGridNick = Grids[0].GridName;
+
+            var selected =
+                Grids.FirstOrDefault(g => g.GridName == _preferencesViewModel.SelectedGridNick)
+                ?? Grids[0];
+
+            if (SelectedGrid != selected)
+                SelectedGrid = selected;
+        }
+        else
+        {
+            SelectedGrid = null;
+        }
+    }
+
+    public GridModel? SelectedGrid
+    {
+        get => _selectedGrid;
+        set
+        {
+            if (_selectedGrid == value) return;
+            _selectedGrid = value;
+            _preferencesViewModel.SelectedGridNick = value?.GridName;
+            this.RaisePropertyChanged();
+        }
     }
 
     public ReactiveCommand<Unit, Unit> TryLoginCommand { get; }
@@ -300,7 +302,6 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
         var mfaCode = await tcs.Task;
 
-        // Clear the MFA prompt container after getting the code
         MfaPromptContainer = null;
 
         return mfaCode;

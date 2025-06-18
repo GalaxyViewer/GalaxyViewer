@@ -5,7 +5,8 @@
                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                   xmlns:views="clr-namespace:GalaxyViewer.Views"
                   x:Class="GalaxyViewer.Views.MainWindow"
-                  Width="500"
+                  Width="1200"
+                  Height="900"
                   Title="GalaxyViewer">
     <views:MainView />
 </views:BaseWindow>
