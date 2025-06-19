@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using LiteDB;
 using GalaxyViewer.Models;
+using OpenMetaverse;
 using Serilog;
 
 namespace GalaxyViewer.Services;
@@ -14,8 +18,18 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
     private LiteDatabase? _database;
     private readonly string _databasePath;
     public LiteDatabase? Database => _database;
+    private readonly GridClient _client;
+
+    public LiteDbService(GridClient client)
+    {
+        _client = client;
+        _databasePath = GetDatabasePath();
+        InitializeDatabase();
+        Session = GetSession();
+    }
 
     private SessionModel _session;
+
     public SessionModel Session
     {
         get => _session;
@@ -27,13 +41,6 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler PropertyChanged;
-
-    public LiteDbService()
-    {
-        _databasePath = GetDatabasePath();
-        InitializeDatabase();
-        Session = GetSession();
-    }
 
     private static string GetDatabasePath()
     {
@@ -52,6 +59,13 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
             _database = new LiteDatabase(_databasePath);
             Log.Information("LiteDbService initialized with database path: {DbPath}",
                 _databasePath);
+
+            var gridsCollection = _database.GetCollection<GridModel>("grids");
+            if (gridsCollection.Count() == 0)
+            {
+                SeedGrids();
+            }
+
             ClearSessionData();
             SeedDatabase();
         }
@@ -89,8 +103,8 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
 
     private void SeedDatabase()
     {
+        ClearSessionData();
         SeedPreferences();
-        SeedGrids();
     }
 
     private void SeedPreferences()
@@ -151,23 +165,24 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
 
     private void ClearSessionData()
     {
-        ILiteCollection<SessionModel>? sessionCollection;
-        if (_database.CollectionExists("session"))
+        var sessionCollection = _database.GetCollection<SessionModel>("session");
+        if (sessionCollection.Count() > 0)
         {
-            sessionCollection = _database.GetCollection<SessionModel>("session");
             sessionCollection.DeleteAll();
-            Log.Information("Session data cleared on startup");
+            Log.Information("Session data cleared");
         }
 
-        sessionCollection = _database.GetCollection<SessionModel>("session");
+        if (sessionCollection.Count() != 0) return;
         sessionCollection.Insert(new SessionModel());
-        Log.Information("Session data created on startup");
+        Log.Information("Session data created");
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
+
+    public event EventHandler? SessionChanged;
 
     public SessionModel GetSession()
     {
@@ -188,6 +203,7 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
         Log.Information("Session data saved");
 
         Session = session;
+        SessionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     void IDisposable.Dispose()

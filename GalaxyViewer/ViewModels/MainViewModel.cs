@@ -16,10 +16,13 @@ namespace GalaxyViewer.ViewModels;
 public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 {
     private UserControl _currentView;
-    private readonly GridClient _client = new();
+    private readonly GridClient _client;
     private readonly LoginViewModel _loginViewModel;
     private readonly WelcomeViewModel _welcomeViewModel;
     private readonly LiteDbService _liteDbService;
+    private readonly SessionService _sessionService;
+
+    private PreferencesWindow _preferencesWindow;
 
     public new event PropertyChangedEventHandler? PropertyChanged;
 
@@ -46,10 +49,15 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
     public ICommand NavToLoginViewCommand { get; }
     public ICommand NavToPreferencesViewCommand { get; }
     public ICommand NavToDevViewCommand { get; }
+    public ICommand OpenSessionDataWindowCommand { get; }
 
-    public MainViewModel(LiteDbService liteDbService)
+
+    public MainViewModel(LiteDbService liteDbService, GridClient client,
+        SessionService sessionService)
     {
         _liteDbService = liteDbService;
+        _client = client;
+        _sessionService = sessionService;
 
         App.StaticPropertyChanged += (sender, args) =>
         {
@@ -62,7 +70,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
         };
 
         _loginViewModel = new LoginViewModel(_liteDbService);
-        _welcomeViewModel = new WelcomeViewModel(_liteDbService);
+        _welcomeViewModel = new WelcomeViewModel(_liteDbService, _client, _sessionService);
         _currentView = new LoginView(_liteDbService);
         ExitCommand = ReactiveCommand.Create(LogoutAndExit);
         LogoutCommand = ReactiveCommand.Create(Logout);
@@ -83,12 +91,8 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 
     private void Logout()
     {
-        if (App.IsLoggedIn)
-        {
-            _client.Network.Logout();
-            _loginViewModel.IsLoggedIn = false;
-        }
-
+        _client.Network.Logout();
+        App.IsLoggedIn = false;
         NavigateToLoginView();
     }
 
@@ -99,19 +103,30 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 
     private void NavigateToLoggedInView()
     {
-        CurrentView = new WelcomeView(_liteDbService);
+        CurrentView = new WelcomeView(_liteDbService, _client, _sessionService)
+        {
+            DataContext = _welcomeViewModel
+        };
     }
 
     private void NavigateToPreferencesView()
     {
 #if ANDROID
-            CurrentView = new PreferencesView { DataContext = new PreferencesViewModel() };
+    CurrentView = new PreferencesView { DataContext = new PreferencesViewModel() };
 #else
-        var preferencesWindow = new PreferencesWindow
+        if (_preferencesWindow == null || !_preferencesWindow.IsVisible)
         {
-            DataContext = new PreferencesViewModel()
-        };
-        preferencesWindow.Show();
+            _preferencesWindow = new PreferencesWindow
+            {
+                DataContext = new PreferencesViewModel()
+            };
+            _preferencesWindow.Closed += (_, __) => _preferencesWindow = null;
+            _preferencesWindow.Show();
+        }
+        else
+        {
+            _preferencesWindow.Activate();
+        }
 #endif
     }
 

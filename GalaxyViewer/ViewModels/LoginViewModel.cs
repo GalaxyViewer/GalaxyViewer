@@ -33,14 +33,6 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         }
     }
 
-    private bool _isLoggedIn;
-
-    public bool IsLoggedIn
-    {
-        get => App.IsLoggedIn;
-        set => App.IsLoggedIn = value;
-    }
-
     private string _loginStatusMessage;
 
     public string LoginStatusMessage
@@ -52,7 +44,6 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
     private readonly LiteDbService _liteDbService;
     private readonly PreferencesViewModel _preferencesViewModel;
     private readonly Timer _sessionCheckTimer;
-    private SessionModel _currentSession;
     private string _username;
     private string _password;
     private readonly GridClient _client = new();
@@ -62,6 +53,14 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
     private GridModel _selectedGrid;
 
     public WindowToastManager? ToastManager { get; set; }
+
+    private SessionModel _currentSession;
+
+    public SessionModel CurrentSession
+    {
+        get => _currentSession;
+        set => this.RaiseAndSetIfChanged(ref _currentSession, value);
+    }
 
     public LoginViewModel(LiteDbService liteDbService)
     {
@@ -102,8 +101,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
     private void UpdateViewBindings()
     {
-        // Update the properties bound to the view
-        this.RaisePropertyChanged(nameof(IsLoggedIn));
+        // Update the properties bound to the view\
         this.RaisePropertyChanged(nameof(LoginStatusMessage));
     }
 
@@ -277,14 +275,12 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
             else
             {
                 Log.Error("MFA login failed: {Error}", _client?.Network?.LoginMessage);
-                IsLoggedIn = false;
                 await ShowLoginErrorAsync($"MFA login failed: {_client?.Network?.LoginMessage}");
             }
         }
         else
         {
             Log.Error("Login failed: {Error}", _client?.Network?.LoginMessage);
-            IsLoggedIn = false;
             await ShowLoginErrorAsync($"Login failed: {_client?.Network?.LoginMessage}");
         }
     }
@@ -326,20 +322,21 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
     private async Task HandleSuccessfulLogin()
     {
         Log.Information("Login successful as {Name}", _client.Self.Name);
-        IsLoggedIn = true;
+        App.IsLoggedIn = true;
 
         var session = new SessionModel
         {
-            Id = 1, // Assuming a single session record
-            IsLoggedIn = true,
+            Id = 1,
             AvatarName = _client.Self.Name,
             AvatarKey = _client.Self.AgentID,
-            Balance = _client.Self.Balance,
             CurrentLocation = _client.Network.CurrentSim.Name,
             LoginWelcomeMessage = _client.Network.LoginMessage
         };
 
         _liteDbService.SaveSession(session);
+        CurrentSession = session;
+        UpdateViewBindings();
+
         Log.Information("Session updated on successful login");
 
         await ProcessCapabilitiesAsync();
@@ -376,7 +373,6 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
             case LoginStatus.Success:
                 LoginStatusMessage =
                     $"Logged in as {_client.Self.Name}, welcome to {_client.Network.CurrentSim?.Name}";
-                IsLoggedIn = true;
                 break;
             case LoginStatus.Failed:
                 LoginStatusMessage = $"Login failed: {e.Message}";

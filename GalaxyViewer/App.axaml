@@ -21,5 +21,6 @@
             </ResourceDictionary.MergedDictionaries>
             <converters:LocalizedStringConverter x:Key="LocalizedStringConverter" />
         </ResourceDictionary>
+        <SolidColorBrush x:Key="SystemControlTransparentBrush" Color="Transparent"/>
     </Application.Resources>
 </Application>

@@ -1,21 +1,43 @@
+using System;
 using System.ComponentModel;
+using System.Net.Http;
+using System.Reactive;
+using System.Windows.Input;
 using ReactiveUI;
 using Avalonia.Threading;
+using OpenMetaverse;
 using GalaxyViewer.Services;
 using GalaxyViewer.Models;
+using Serilog;
 
 namespace GalaxyViewer.ViewModels;
 
-public class WelcomeViewModel : ViewModelBase, INotifyPropertyChanged
+public sealed class WelcomeViewModel : ViewModelBase, INotifyPropertyChanged
 {
     private readonly LiteDbService _liteDbService;
+    private readonly SessionService _sessionService;
+    private readonly GridClient _client;
     private SessionModel _session;
+    private int _balance;
 
-    public WelcomeViewModel(LiteDbService liteDbService)
+    public int CurrentBalance { get; private set; }
+
+    public ReactiveCommand<Unit, Unit> RefreshBalanceCommand { get; }
+
+    public WelcomeViewModel(LiteDbService liteDbService, GridClient client,
+        SessionService sessionService)
     {
         _liteDbService = liteDbService;
+        _client = client;
+        _sessionService = sessionService;
         _session = _liteDbService.GetSession();
         _liteDbService.PropertyChanged += OnLiteDbServicePropertyChanged;
+
+        _sessionService.BalanceChanged += OnBalanceChanged;
+        RefreshBalanceCommand = ReactiveCommand.Create(RequestBalance);
+
+        CurrentBalance = _sessionService.Balance;
+        OnPropertyChanged(nameof(CurrentBalance));
     }
 
     public string CurrentLocation
@@ -42,19 +64,25 @@ public class WelcomeViewModel : ViewModelBase, INotifyPropertyChanged
         }
     }
 
-    public int Balance
+    private void OnBalanceChanged(object? sender, int newBalance)
     {
-        get => _session.Balance;
-        set
+        CurrentBalance = newBalance;
+    }
+
+    private void RequestBalance()
+    {
+        try
         {
-            if (_session.Balance == value) return;
-            _session.Balance = value;
-            _liteDbService.SaveSession(_session);
-            OnPropertyChanged(nameof(Balance));
+            _client.Self.RequestBalance();
+            Log.Information("Balance request sent to the server.");
+        }
+        catch (HttpRequestException ex)
+        {
+            Log.Error(ex, "Failed to request balance from the server.");
         }
     }
 
-    private void OnLiteDbServicePropertyChanged(object sender, PropertyChangedEventArgs e)
+    private void OnLiteDbServicePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(LiteDbService.Session)) return;
         Dispatcher.UIThread.Post(() =>
@@ -62,13 +90,12 @@ public class WelcomeViewModel : ViewModelBase, INotifyPropertyChanged
             _session = _liteDbService.GetSession();
             OnPropertyChanged(nameof(CurrentLocation));
             OnPropertyChanged(nameof(LoginWelcomeMessage));
-            OnPropertyChanged(nameof(Balance));
         });
     }
 
     public new event PropertyChangedEventHandler? PropertyChanged;
 
-    protected new virtual void OnPropertyChanged(string propertyName)
+    private new void OnPropertyChanged(string propertyName)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }

@@ -14,6 +14,7 @@ using GalaxyViewer.Services;
 using GalaxyViewer.ViewModels;
 using GalaxyViewer.Views;
 using Microsoft.Extensions.DependencyInjection;
+using OpenMetaverse;
 using Serilog;
 
 namespace GalaxyViewer;
@@ -22,8 +23,20 @@ public class App : Application, IDisposable
 {
     private static IServiceProvider? _serviceProvider;
     public static PreferencesManager? PreferencesManager { get; private set; }
-    private static LiteDbService _liteDbService;
-    private static SessionModel _session;
+    private static LiteDbService? _liteDbService;
+    private static GridClient? _gridClient;
+
+    private static bool _isLoggedIn;
+    public static bool IsLoggedIn
+    {
+        get => _isLoggedIn;
+        set
+        {
+            if (_isLoggedIn == value) return;
+            _isLoggedIn = value;
+            OnStaticPropertyChanged(nameof(IsLoggedIn));
+        }
+    }
 
     public App()
     {
@@ -44,8 +57,11 @@ public class App : Application, IDisposable
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        services.AddSingleton<LiteDbService>();
-        // Register other services here
+        _gridClient = new GridClient();
+        services.AddSingleton(_gridClient);
+        services.AddSingleton<LiteDbService>(provider => new LiteDbService(_gridClient));
+        services.AddSingleton<SessionService>(provider =>
+            new SessionService(provider.GetRequiredService<LiteDbService>()));
     }
 
     public override void Initialize()
@@ -54,54 +70,36 @@ public class App : Application, IDisposable
         ConfigureServices(serviceCollection);
         _serviceProvider = serviceCollection.BuildServiceProvider();
 
-        _liteDbService = _serviceProvider.GetService<LiteDbService>();
-        if (_liteDbService == null)
-        {
-            throw new InvalidOperationException("LiteDbService is not registered.");
-        }
+        _liteDbService = _serviceProvider.GetRequiredService<LiteDbService>();
 
         PreferencesManager = new PreferencesManager(_liteDbService);
         PreferencesManager.PreferencesChanged += OnPreferencesChanged;
 
-        _session = _liteDbService.GetSession();
-
         AvaloniaXamlLoader.Load(this);
         base.Initialize();
-    }
-
-    public static bool IsLoggedIn
-    {
-        get => _session.IsLoggedIn;
-        set
-        {
-            if (_session.IsLoggedIn != value)
-            {
-                _session.IsLoggedIn = value;
-                _liteDbService.SaveSession(_session);
-                OnStaticPropertyChanged();
-            }
-        }
     }
 
     public override void OnFrameworkInitializationCompleted()
     {
         try
         {
+            var liteDbService = _serviceProvider.GetRequiredService<LiteDbService>();
+            var gridClient = _serviceProvider.GetRequiredService<GridClient>();
+            var sessionService = _serviceProvider.GetRequiredService<SessionService>();
+
             switch (ApplicationLifetime)
             {
                 case IClassicDesktopStyleApplicationLifetime desktop:
-                    Log.Information("Initializing MainWindow for desktop application.");
                     desktop.MainWindow = new MainWindow
                     {
-                        DataContext = new MainViewModel(_liteDbService)
+                        DataContext = new MainViewModel(liteDbService, gridClient, sessionService)
                     };
                     desktop.MainWindow.Show();
                     break;
                 case ISingleViewApplicationLifetime singleViewPlatform:
-                    Log.Information("Initializing MainView for single view application.");
                     singleViewPlatform.MainView = new MainView
                     {
-                        DataContext = new MainViewModel(_liteDbService)
+                        DataContext = new MainViewModel(liteDbService, gridClient, sessionService)
                     };
                     break;
             }
@@ -109,7 +107,7 @@ public class App : Application, IDisposable
         catch (Exception ex)
         {
             Log.Error(ex, "An error occurred while initializing the main window.");
-            throw; // Optionally rethrow the exception if you want to halt the application
+            throw;
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -117,7 +115,7 @@ public class App : Application, IDisposable
 
     public static event PropertyChangedEventHandler? StaticPropertyChanged;
 
-    private static void OnStaticPropertyChanged([CallerMemberName] string propertyName = null)
+    internal static void OnStaticPropertyChanged([CallerMemberName] string propertyName = null)
     {
         StaticPropertyChanged?.Invoke(null, new PropertyChangedEventArgs(propertyName));
     }

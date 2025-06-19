@@ -8,16 +8,32 @@
         <!-- Top Bar -->
         <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Padding="10" Margin="10">
             <DockPanel Name="TopBar" HorizontalAlignment="Stretch" VerticalAlignment="Top">
-                <TextBlock Name="AddressBar" Text="{Binding CurrentLocation}" DockPanel.Dock="Top" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" FontWeight="Medium" Foreground="Gray" />
-                <TextBlock Name="TokenBalance" Text="{Binding Balance}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="14" FontWeight="Medium" Foreground="Gray" />
+                <TextBlock Name="AddressBar" Text="{Binding CurrentLocation}" DockPanel.Dock="Top"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" FontWeight="Medium"
+                           Foreground="Gray" />
+                <Button Name="TokenBalanceButton"
+                        Content="{Binding CurrentBalance}"
+                        Command="{Binding RefreshBalanceCommand}"
+                        DockPanel.Dock="Right"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        FontSize="14"
+                        FontWeight="Medium"
+                        Foreground="Gray"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="0"
+                        Cursor="Hand" />
             </DockPanel>
         </Border>
 
         <!-- Main Content -->
         <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Padding="10" Margin="10">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-                <TextBlock Text="Login Successful" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" FontWeight="Bold" />
-                <TextBlock Text="{Binding LoginWelcomeMessage}" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" FontSize="16" TextWrapping="Wrap" />
+                <TextBlock Text="Login Successful" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="20" FontWeight="Bold" />
+                <TextBlock Text="{Binding LoginWelcomeMessage}" HorizontalAlignment="Center" VerticalAlignment="Top"
+                           Width="200" FontSize="16" TextWrapping="Wrap" />
             </StackPanel>
         </Border>
     </StackPanel>
