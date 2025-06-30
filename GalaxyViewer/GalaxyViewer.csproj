@@ -2,11 +2,11 @@
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
         <LangVersion>latest</LangVersion>
-        <Version>2025.06.16-test</Version>
+        <Version>2025.06.30-test</Version>
         <AssemblyInformationalVersion>$(Version)</AssemblyInformationalVersion>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     </PropertyGroup>
-    
+
     <PropertyGroup>
       <ApplicationIcon>Assets\GalaxyViewerLogo.ico</ApplicationIcon>
     </PropertyGroup>

@@ -46,7 +46,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
     private readonly Timer _sessionCheckTimer;
     private string _username;
     private string _password;
-    private readonly GridClient _client = new();
+    private readonly GridClient _client;
     private IRoutableViewModel? _routableViewModelImplementation;
     private readonly GridService _gridService;
     private ObservableCollection<GridModel> _grids;
@@ -62,9 +62,10 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         set => this.RaiseAndSetIfChanged(ref _currentSession, value);
     }
 
-    public LoginViewModel(LiteDbService liteDbService)
+    public LoginViewModel(LiteDbService liteDbService, GridClient client)
     {
         _liteDbService = liteDbService ?? throw new ArgumentNullException(nameof(liteDbService));
+        _client = client ?? throw new ArgumentNullException(nameof(client));
         _preferencesViewModel = new PreferencesViewModel();
         _currentSession = _liteDbService.GetSession() ??
                           throw new InvalidOperationException("Session could not be retrieved.");
@@ -338,6 +339,16 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         UpdateViewBindings();
 
         Log.Information("Session updated on successful login");
+
+        try
+        {
+            _client.Self.RequestBalance();
+            Log.Information("Balance request sent after successful login");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to request balance after login");
+        }
 
         await ProcessCapabilitiesAsync();
     }

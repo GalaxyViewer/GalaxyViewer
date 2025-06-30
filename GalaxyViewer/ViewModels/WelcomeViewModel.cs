@@ -66,7 +66,11 @@ public sealed class WelcomeViewModel : ViewModelBase, INotifyPropertyChanged
 
     private void OnBalanceChanged(object? sender, int newBalance)
     {
-        CurrentBalance = newBalance;
+        Dispatcher.UIThread.Post(() =>
+        {
+            CurrentBalance = newBalance;
+            OnPropertyChanged(nameof(CurrentBalance));
+        });
     }
 
     private void RequestBalance()

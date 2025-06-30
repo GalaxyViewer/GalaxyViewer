@@ -27,6 +27,7 @@ public class App : Application, IDisposable
     private static GridClient? _gridClient;
 
     private static bool _isLoggedIn;
+
     public static bool IsLoggedIn
     {
         get => _isLoggedIn;
@@ -61,7 +62,10 @@ public class App : Application, IDisposable
         services.AddSingleton(_gridClient);
         services.AddSingleton<LiteDbService>(provider => new LiteDbService(_gridClient));
         services.AddSingleton<SessionService>(provider =>
-            new SessionService(provider.GetRequiredService<LiteDbService>()));
+            new SessionService(
+                provider.GetRequiredService<LiteDbService>(),
+                provider.GetRequiredService<GridClient>()
+            ));
     }
 
     public override void Initialize()

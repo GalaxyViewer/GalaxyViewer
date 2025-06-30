@@ -1,30 +1,23 @@
-// GalaxyViewer/Services/SessionService.cs
-
 using System;
 using GalaxyViewer.Models;
-using GalaxyViewer.Services;
 using OpenMetaverse;
+
+namespace GalaxyViewer.Services;
 
 public class SessionService
 {
     private readonly LiteDbService _dbService;
-    private GridClient? _client;
+    private GridClient _client;
 
-    public SessionService(LiteDbService dbService)
+    public SessionService(LiteDbService dbService, GridClient client)
     {
         _dbService = dbService;
-        Session = _dbService.GetSession();
-
-        SetClient(_client);
+        _client = client;
+        SetClient(client);
     }
 
-    public SessionModel Session { get; private set; }
-
-    public void SetClient(GridClient client)
+    private void SetClient(GridClient client)
     {
-        if (_client != null)
-            UnregisterClientEvents(_client);
-
         _client = client;
         RegisterClientEvents(_client);
     }
@@ -55,15 +48,14 @@ public class SessionService
         client.Self.MoneyBalance -= BalanceReceivedHandler;
     }
 
-    private void OnChatFromSimulator(object sender, ChatEventArgs e)
+    private void OnChatFromSimulator(object? sender, ChatEventArgs e)
     {
-        Console.WriteLine($"Chat from {e.FromName}: {e.Message}");
+        Console.WriteLine($@"Chat from {e.FromName}: {e.Message}");
     }
 
-    private void BalanceReceivedHandler(object sender, BalanceEventArgs e)
+    private void BalanceReceivedHandler(object? sender, BalanceEventArgs e)
     {
         Balance = e.Balance;
-        Console.WriteLine($"Balance received: {e.Balance}");
     }
 
     public bool HasSessionChanged(SessionModel currentSession)

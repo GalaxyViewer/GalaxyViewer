@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Avalonia;
@@ -17,12 +16,11 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 {
     private UserControl _currentView;
     private readonly GridClient _client;
-    private readonly LoginViewModel _loginViewModel;
     private readonly WelcomeViewModel _welcomeViewModel;
     private readonly LiteDbService _liteDbService;
     private readonly SessionService _sessionService;
 
-    private PreferencesWindow _preferencesWindow;
+    private PreferencesWindow? _preferencesWindow;
 
     public new event PropertyChangedEventHandler? PropertyChanged;
 
@@ -37,7 +35,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
         }
     }
 
-    private new void OnPropertyChanged([CallerMemberName] string propertyName = null)
+    private new void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
@@ -49,7 +47,6 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
     public ICommand NavToLoginViewCommand { get; }
     public ICommand NavToPreferencesViewCommand { get; }
     public ICommand NavToDevViewCommand { get; }
-    public ICommand OpenSessionDataWindowCommand { get; }
 
 
     public MainViewModel(LiteDbService liteDbService, GridClient client,
@@ -59,7 +56,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
         _client = client;
         _sessionService = sessionService;
 
-        App.StaticPropertyChanged += (sender, args) =>
+        App.StaticPropertyChanged += (_, args) =>
         {
             if (args.PropertyName != nameof(App.IsLoggedIn)) return;
             OnPropertyChanged(nameof(IsLoggedIn));
@@ -69,9 +66,8 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
             }
         };
 
-        _loginViewModel = new LoginViewModel(_liteDbService);
         _welcomeViewModel = new WelcomeViewModel(_liteDbService, _client, _sessionService);
-        _currentView = new LoginView(_liteDbService);
+        _currentView = new LoginView(_liteDbService, _client);
         ExitCommand = ReactiveCommand.Create(LogoutAndExit);
         LogoutCommand = ReactiveCommand.Create(Logout);
         NavToLoginViewCommand = ReactiveCommand.Create(NavigateToLoginView);
@@ -98,7 +94,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 
     private void NavigateToLoginView()
     {
-        CurrentView = new LoginView(_liteDbService);
+        CurrentView = new LoginView(_liteDbService, _client);
     }
 
     private void NavigateToLoggedInView()
@@ -114,18 +110,18 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 #if ANDROID
     CurrentView = new PreferencesView { DataContext = new PreferencesViewModel() };
 #else
-        if (_preferencesWindow == null || !_preferencesWindow.IsVisible)
+        if (_preferencesWindow is { IsVisible: false })
         {
             _preferencesWindow = new PreferencesWindow
             {
                 DataContext = new PreferencesViewModel()
             };
-            _preferencesWindow.Closed += (_, __) => _preferencesWindow = null;
+            _preferencesWindow.Closed += (_, _) => _preferencesWindow = null;
             _preferencesWindow.Show();
         }
         else
         {
-            _preferencesWindow.Activate();
+            _preferencesWindow?.Activate();
         }
 #endif
     }
