@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -43,7 +43,6 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
     private readonly LiteDbService _liteDbService;
     private readonly PreferencesViewModel _preferencesViewModel;
-    private readonly Timer _sessionCheckTimer;
     private string _username;
     private string _password;
     private readonly GridClient _client;
@@ -69,8 +68,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         _preferencesViewModel = new PreferencesViewModel();
         _currentSession = _liteDbService.GetSession() ??
                           throw new InvalidOperationException("Session could not be retrieved.");
-        _sessionCheckTimer =
-            new Timer(CheckSessionChanges, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+        var timer = new Timer(CheckSessionChanges, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
         _username = string.Empty;
         _password = string.Empty;
         LoginLocations = _preferencesViewModel.LoginLocationOptions;
@@ -86,7 +84,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         {
             Log.Error("An error occurred during login: {Error}", ex.Message);
             // Handle the error (e.g., show a dialog to the user)
-            _ = ShowLoginErrorAsync("An error occurred during login. Please try again.");
+            _ = ShowLoginErrorAsync();
         });
 
         // Subscribe to the Network.LoginProgress event
@@ -175,14 +173,14 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         {
             if (_selectedGrid == value) return;
             _selectedGrid = value;
-            _preferencesViewModel.SelectedGridNick = value?.GridName;
+            _preferencesViewModel.SelectedGridNick = value.GridName;
             this.RaisePropertyChanged();
         }
     }
 
     public ReactiveCommand<Unit, Unit> TryLoginCommand { get; }
 
-    private async Task ShowLoginErrorAsync(string errorMessage)
+    private async Task ShowLoginErrorAsync()
     {
         // ToastManager?.Show(
         //     new Toast(
@@ -199,7 +197,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
         {
             Log.Warning("Username or password is empty");
-            await ShowLoginErrorAsync("Username or password is empty");
+            await ShowLoginErrorAsync();
             return;
         }
 
@@ -211,7 +209,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion ?? "Version not found";
 
-        var loginParams = _client?.Network?.DefaultLoginParams(
+        var loginParams = _client.Network?.DefaultLoginParams(
             Username.Split(' ')[0], // firstName
             Username.Contains(' ') ? Username.Split(' ')[1] : "Resident", // lastName
             Password,
@@ -222,7 +220,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         if (loginParams == null)
         {
             Log.Error("Failed to create login parameters");
-            await ShowLoginErrorAsync("Failed to create login parameters");
+            await ShowLoginErrorAsync();
             return;
         }
 
@@ -230,7 +228,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         loginParams.MfaEnabled = true;
         loginParams.Platform = ourPlatform;
         loginParams.PlatformVersion = Environment.OSVersion.VersionString;
-        loginParams.LoginLocation = _preferencesViewModel?.SelectedLoginLocation switch
+        loginParams.Start = _preferencesViewModel?.SelectedLoginLocation switch
         {
             "Home" => "home",
             "Last Location" => "last",
@@ -238,7 +236,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         };
         loginParams.UserAgent = "LibreMetaverse";
 
-        var loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
+        var loginSuccess = await Task.Run(() => _client.Network?.Login(loginParams) ?? false);
 
         if (loginSuccess)
         {
@@ -249,14 +247,14 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
             await HandleSuccessfulLogin();
         }
-        else if (_client?.Network?.LoginMessage.Contains("multifactor") == true)
+        else if (_client.Network?.LoginMessage.Contains("multifactor") == true)
         {
             Log.Information("MFA required for login");
             var mfaCode = await ShowMfaPromptDialogAsync();
             if (string.IsNullOrWhiteSpace(mfaCode))
             {
                 Log.Warning("MFA code is empty");
-                await ShowLoginErrorAsync("MFA code is required");
+                await ShowLoginErrorAsync();
                 return;
             }
 
@@ -267,7 +265,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
                 JsonConvert.SerializeObject(loginParams, Formatting.Indented));
 #endif
 
-            loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
+            loginSuccess = await Task.Run(() => _client.Network?.Login(loginParams) ?? false);
 
             if (loginSuccess)
             {
@@ -275,14 +273,14 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
             }
             else
             {
-                Log.Error("MFA login failed: {Error}", _client?.Network?.LoginMessage);
-                await ShowLoginErrorAsync($"MFA login failed: {_client?.Network?.LoginMessage}");
+                Log.Error("MFA login failed: {Error}", _client.Network?.LoginMessage);
+                await ShowLoginErrorAsync();
             }
         }
         else
         {
-            Log.Error("Login failed: {Error}", _client?.Network?.LoginMessage);
-            await ShowLoginErrorAsync($"Login failed: {_client?.Network?.LoginMessage}");
+            Log.Error("Login failed: {Error}", _client.Network?.LoginMessage);
+            await ShowLoginErrorAsync();
         }
     }
 
@@ -355,10 +353,10 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
     private async Task ProcessCapabilitiesAsync()
     {
-        var loginMessage = await Task.Run(() => _client?.Network?.LoginMessage);
+        var loginMessage = await Task.Run(() => _client.Network?.LoginMessage);
         Log.Information("Login message: {Message}", loginMessage);
 
-        var currentSim = await Task.Run(() => _client?.Network?.CurrentSim);
+        var currentSim = await Task.Run(() => _client.Network?.CurrentSim);
         Log.Information("Current location: {Sim}", currentSim);
 
         await Task.CompletedTask;

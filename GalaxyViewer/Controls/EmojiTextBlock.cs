@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Controls;
@@ -31,7 +31,7 @@ public abstract partial class EmojiTextBlock : TextBlock
 
     protected EmojiTextBlock()
     {
-        this.PropertyChanged += (_, e) =>
+        PropertyChanged += (_, e) =>
         {
             if (e.Property == TextProperty)
             {

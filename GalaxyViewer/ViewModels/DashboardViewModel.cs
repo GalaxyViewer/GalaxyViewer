@@ -12,26 +12,32 @@ using Serilog;
 
 namespace GalaxyViewer.ViewModels;
 
-public sealed class WelcomeViewModel : ViewModelBase, INotifyPropertyChanged
+public sealed class DashboardViewModel : ViewModelBase, INotifyPropertyChanged
 {
     private readonly LiteDbService _liteDbService;
     private readonly SessionService _sessionService;
     private readonly GridClient _client;
     private SessionModel _session;
-    private int _balance;
 
     public int CurrentBalance { get; private set; }
+    public AddressBarViewModel AddressBarViewModel { get; }
+
+    private string CurrencySymbol => GetCurrencySymbol();
+
+    public string FormattedBalance => $"{CurrencySymbol}{CurrentBalance:N0}";
 
     public ReactiveCommand<Unit, Unit> RefreshBalanceCommand { get; }
 
-    public WelcomeViewModel(LiteDbService liteDbService, GridClient client,
-        SessionService sessionService)
+    public DashboardViewModel(LiteDbService liteDbService, GridClient client,
+        SessionService sessionService, ICommand? openPreferencesCommand = null)
     {
         _liteDbService = liteDbService;
         _client = client;
         _sessionService = sessionService;
         _session = _liteDbService.GetSession();
         _liteDbService.PropertyChanged += OnLiteDbServicePropertyChanged;
+
+        AddressBarViewModel = new AddressBarViewModel(_liteDbService, _client, openPreferencesCommand);
 
         _sessionService.BalanceChanged += OnBalanceChanged;
         RefreshBalanceCommand = ReactiveCommand.Create(RequestBalance);
@@ -70,6 +76,7 @@ public sealed class WelcomeViewModel : ViewModelBase, INotifyPropertyChanged
         {
             CurrentBalance = newBalance;
             OnPropertyChanged(nameof(CurrentBalance));
+            OnPropertyChanged(nameof(FormattedBalance));
         });
     }
 
@@ -102,5 +109,19 @@ public sealed class WelcomeViewModel : ViewModelBase, INotifyPropertyChanged
     private new void OnPropertyChanged(string propertyName)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private string GetCurrencySymbol()
+    {
+        if (_client?.Network?.LoginMessage == null && _client?.Network?.Connected != true)
+            return "L$";
+        var gridName = _client?.Network?.CurrentSim?.Name ?? "";
+
+        var loginMessage = _client?.Network?.LoginMessage?.ToLowerInvariant() ?? "";
+
+        if (loginMessage.Contains("second life") || loginMessage.Contains("linden") || gridName.Contains("secondlife"))
+            return "L$";
+
+        return "L$";
     }
 }

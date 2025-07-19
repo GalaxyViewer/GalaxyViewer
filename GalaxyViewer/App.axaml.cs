@@ -28,6 +28,8 @@ public class App : Application, IDisposable
 
     private static bool _isLoggedIn;
 
+    public static event PropertyChangedEventHandler? StaticPropertyChanged;
+
     public static bool IsLoggedIn
     {
         get => _isLoggedIn;
@@ -117,7 +119,6 @@ public class App : Application, IDisposable
         base.OnFrameworkInitializationCompleted();
     }
 
-    public static event PropertyChangedEventHandler? StaticPropertyChanged;
 
     internal static void OnStaticPropertyChanged([CallerMemberName] string propertyName = null)
     {

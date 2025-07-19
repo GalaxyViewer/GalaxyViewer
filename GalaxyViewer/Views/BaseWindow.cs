@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -21,7 +21,6 @@ public class BaseWindow : ReactiveUrsaWindow<PreferencesModel>, IStyleable
         if (App.PreferencesManager != null)
             App.PreferencesManager.PreferencesChanged += OnPreferencesChanged;
 
-        // Load preferences asynchronously without blocking the UI thread
         _ = LoadPreferencesAsync();
     }
 

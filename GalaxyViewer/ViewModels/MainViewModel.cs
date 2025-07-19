@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Avalonia;
@@ -9,6 +10,7 @@ using GalaxyViewer.Views;
 using GalaxyViewer.Services;
 using OpenMetaverse;
 using ReactiveUI;
+using Serilog;
 
 namespace GalaxyViewer.ViewModels;
 
@@ -16,7 +18,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
 {
     private UserControl _currentView;
     private readonly GridClient _client;
-    private readonly WelcomeViewModel _welcomeViewModel;
+    private readonly DashboardViewModel _dashboardViewModel;
     private readonly LiteDbService _liteDbService;
     private readonly SessionService _sessionService;
 
@@ -47,6 +49,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
     public ICommand NavToLoginViewCommand { get; }
     public ICommand NavToPreferencesViewCommand { get; }
     public ICommand NavToDevViewCommand { get; }
+    public ICommand BackToDashboardViewCommand { get; }
 
 
     public MainViewModel(LiteDbService liteDbService, GridClient client,
@@ -62,17 +65,18 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
             OnPropertyChanged(nameof(IsLoggedIn));
             if (IsLoggedIn)
             {
-                Dispatcher.UIThread.Post(NavigateToLoggedInView);
+                Dispatcher.UIThread.Post(NavigateToDashboardView);
             }
         };
 
-        _welcomeViewModel = new WelcomeViewModel(_liteDbService, _client, _sessionService);
+        _dashboardViewModel = new DashboardViewModel(_liteDbService, _client, _sessionService);
         _currentView = new LoginView(_liteDbService, _client);
         ExitCommand = ReactiveCommand.Create(LogoutAndExit);
         LogoutCommand = ReactiveCommand.Create(Logout);
         NavToLoginViewCommand = ReactiveCommand.Create(NavigateToLoginView);
         NavToPreferencesViewCommand = ReactiveCommand.Create(NavigateToPreferencesView);
         NavToDevViewCommand = ReactiveCommand.Create(NavigateToDevView);
+        BackToDashboardViewCommand = ReactiveCommand.Create(NavigateBackToDashboardView);
     }
 
     private void LogoutAndExit()
@@ -97,21 +101,19 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
         CurrentView = new LoginView(_liteDbService, _client);
     }
 
-    private void NavigateToLoggedInView()
+    private void NavigateToDashboardView()
     {
-        CurrentView = new WelcomeView(_liteDbService, _client, _sessionService)
-        {
-            DataContext = _welcomeViewModel
-        };
+        CurrentView = new DashboardView(_liteDbService, _client, _sessionService, NavToPreferencesViewCommand);
     }
 
     private void NavigateToPreferencesView()
     {
 #if ANDROID
-    CurrentView = new PreferencesView { DataContext = new PreferencesViewModel() };
+        CurrentView = new PreferencesView { DataContext = new PreferencesViewModel(BackToDashboardViewCommand) };
 #else
-        if (_preferencesWindow is { IsVisible: false })
+        if (_preferencesWindow == null || !_preferencesWindow.IsVisible)
         {
+            _preferencesWindow?.Close();
             _preferencesWindow = new PreferencesWindow
             {
                 DataContext = new PreferencesViewModel()
@@ -124,6 +126,18 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged
             _preferencesWindow?.Activate();
         }
 #endif
+    }
+
+    private void NavigateBackToDashboardView()
+    {
+        if (App.IsLoggedIn)
+        {
+            NavigateToDashboardView();
+        }
+        else
+        {
+            NavigateToLoginView();
+        }
     }
 
     private void NavigateToDevView()

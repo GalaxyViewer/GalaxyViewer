@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:GalaxyViewer.ViewModels"
+             xmlns:controls="clr-namespace:GalaxyViewer.Controls"
+             x:DataType="vm:DashboardViewModel"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="GalaxyViewer.Views.DashboardView">
+
+    <!-- Main Content -->
+    <StackPanel Spacing="10" Margin="10">
+        <!-- Top Bar -->
+        <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Background="Transparent" Padding="5">
+            <DockPanel LastChildFill="True">
+                <!-- Balance Button -->
+                <Button DockPanel.Dock="Right"
+                        Command="{Binding RefreshBalanceCommand}"
+                        Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                        BorderThickness="1"
+                        CornerRadius="15"
+                        Padding="12,6"
+                        Margin="8,0,0,0"
+                        Cursor="Hand"
+                        ToolTip.Tip="Click to refresh balance">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <!-- Wallet Icon -->
+                        <PathIcon Data="M17,6H3A1,1 0 0,0 2,7V17A1,1 0 0,0 3,18H17A1,1 0 0,0 18,17V7A1,1 0 0,0 17,6M17,16H3V12H17V16M17,10H3V8H17V10M7,14H9V15H7V14Z"
+                                  Width="16"
+                                  Height="16"
+                                  Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                  VerticalAlignment="Center"/>
+
+                        <!-- Balance Text -->
+                        <TextBlock Text="{Binding FormattedBalance}"
+                                   FontSize="14"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                   VerticalAlignment="Center"/>
+
+                        <!-- Refresh Icon -->
+                        <PathIcon Data="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"
+                                  Width="12"
+                                  Height="12"
+                                  Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                  VerticalAlignment="Center"
+                                  Opacity="0.7"/>
+                    </StackPanel>
+                </Button>
+
+                <controls:AddressBar DockPanel.Dock="Left" HorizontalAlignment="Stretch" />
+            </DockPanel>
+        </Border>
+
+        <!-- Main Content -->
+        <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Padding="10" Margin="10">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                <TextBlock Text="Welcome to Galaxy Viewer"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           FontSize="20"
+                           FontWeight="Bold" />
+                <TextBlock Text="{Binding LoginWelcomeMessage}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Top"
+                           Width="300"
+                           FontSize="16"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -18,7 +18,7 @@ public sealed class PreferencesManager
     public PreferencesManager(LiteDbService? liteDbService)
     {
         Debug.Assert(liteDbService != null, nameof(liteDbService) + " != null");
-        var database = liteDbService?.Database;
+        var database = liteDbService.Database;
         Debug.Assert(database != null, nameof(database) + " != null");
         _preferencesCollection = database.GetCollection<PreferencesModel>("preferences");
         _gridsCollection = database.GetCollection<GridModel>("grids");

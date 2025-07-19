@@ -14,8 +14,12 @@ public class PreferencesViewModel : ViewModelBase
     private PreferencesModel _preferences;
     private bool _isLoadingPreferences;
 
-    public PreferencesViewModel()
+    public ICommand? BackCommand { get; }
+
+    public PreferencesViewModel(ICommand? backCommand = null)
     {
+        BackCommand = backCommand;
+
         if (App.PreferencesManager != null) _preferencesManager = App.PreferencesManager;
         _preferences = App.PreferencesManager?.CurrentPreferences ?? new PreferencesModel();
         var preferencesOptions = _preferencesManager?.GetCurrentPreferencesOptions();

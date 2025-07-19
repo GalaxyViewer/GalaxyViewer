@@ -2,7 +2,7 @@
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
         <LangVersion>latest</LangVersion>
-        <Version>2025.06.30-test</Version>
+        <Version>2025.07.19-test</Version>
         <AssemblyInformationalVersion>$(Version)</AssemblyInformationalVersion>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     </PropertyGroup>
