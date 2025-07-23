@@ -1,16 +1,15 @@
-using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using GalaxyViewer.Services;
 using GalaxyViewer.ViewModels;
 
 namespace GalaxyViewer.Views;
 
-public partial class LoggedInView : UserControl
+public partial class ChatWindow : BaseWindow
 {
-    public LoggedInView(LiteDbService liteDbService)
+    public ChatWindow(ChatViewModel viewModel)
     {
-        DataContext = new LoggedInViewModel(liteDbService);
         InitializeComponent();
+        DataContext = viewModel;
+        Closed += (_, __) => viewModel.IsInChatWindow = false;
     }
 
     private void InitializeComponent()

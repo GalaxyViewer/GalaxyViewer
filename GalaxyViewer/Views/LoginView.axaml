@@ -4,51 +4,98 @@
              x:Class="GalaxyViewer.Views.LoginView"
              xmlns:viewModels="clr-namespace:GalaxyViewer.ViewModels"
              x:DataType="viewModels:LoginViewModel">
+
+    <!-- Add styles to use accent color for login buttons -->
+    <UserControl.Styles>
+        <!-- Login Button styling using accent color -->
+        <Style Selector="Button.login-button">
+            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontWeight" Value="Medium" />
+        </Style>
+        <Style Selector="Button.login-button:pointerover">
+            <Setter Property="Opacity" Value="0.9" />
+        </Style>
+        <Style Selector="Button.login-button:pressed">
+            <Setter Property="Opacity" Value="0.8" />
+        </Style>
+
+        <!-- Focus styling for input controls -->
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}" />
+        </Style>
+        <Style Selector="ComboBox:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}" />
+        </Style>
+    </UserControl.Styles>
+
     <Grid>
         <OnPlatform>
             <!-- On platform Windows or Linux -->
             <On Options="Windows, Linux">
-                <Grid RowDefinitions="*,Auto,Auto,Auto">
-                    <Grid>
-                        <Image Source="/Assets/Images/banner.jpg" Stretch="UniformToFill" />
-                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Image Source="/Assets/GalaxyViewerLogo.ico" Width="150" Height="150" />
-                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24"
-                                       FontWeight="Bold">
-                                <Run
-                                    Text="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=WelcomeMessage}" />
-                            </TextBlock>
-                        </StackPanel>
-                    </Grid>
-                    <TextBlock Grid.Row="1" Text="{Binding LoginStatusMessage}" Margin="20,20,0,0"
-                               VerticalAlignment="Center" HorizontalAlignment="Center" />
-                    <ContentControl Grid.Row="0" Content="{Binding MfaPromptContainer}" />
-                    <Grid Grid.Row="2" Margin="20" ColumnDefinitions="Auto,240,Auto,240,Auto,Auto,*">
+                <!-- Notice for Pre-Alpha Build -->
+                <Grid RowDefinitions="*,Auto,Auto,Auto,Auto">
+                    <Border
+                        Grid.Row="0"
+                        Margin="10,10,10,0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Live="Assertive"
+                        AutomationProperties.Name="Warning: Pre-Alpha Build. This software is barely functioning and not ready for external testing. Use at your own risk.">
+                        <TextBlock
+                            Text="⚠️ WARNING: PRE-ALPHA BUILD ⚠️"
+                            FontSize="18"
+                            FontWeight="Bold"
+                            TextWrapping="Wrap" />
+                    </Border>
+                    <TextBlock
+                        Text="This software is barely functioning and not ready for external testing. Use at your own risk!"
+                        FontSize="14"
+                        Grid.Row="1"
+                        Margin="10,0,10,20"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="2" Text="{Binding LoginStatusMessage}" Margin="20,20,0,0"
+                               VerticalAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap" />
+                    <Grid Grid.Row="3" Margin="20" ColumnDefinitions="Auto,240,Auto,240,Auto,Auto,*">
                         <Label Grid.Column="0"
-                               Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
+                               Content="{StaticResource Login_Username}"
+                               ToolTip.Tip="{StaticResource Login_Username_Tooltip}"
+                               AutomationProperties.Name="{StaticResource Login_Username_A11y}"
                                VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" Name="UsernameBoxWindows"
-                                 Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
+                        <TextBox Grid.Column="1" Name="UsernameBoxDesktop"
+                                 Watermark="{StaticResource Login_Username_Watermark}"
+                                 ToolTip.Tip="{StaticResource Login_Username_Tooltip}"
+                                 AutomationProperties.Name="{StaticResource Login_Username_A11y}"
                                  Text="{Binding Username}"
                                  Margin="5,0" />
                         <Label Grid.Column="2"
-                               Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
+                               Content="{StaticResource Login_Password}"
+                               ToolTip.Tip="{StaticResource Login_Password_Tooltip}"
+                               AutomationProperties.Name="{StaticResource Login_Password_A11y}"
                                VerticalAlignment="Center" Margin="5,0" />
-                        <TextBox Grid.Column="3" Name="PasswordBoxWindows"
-                                 Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
+                        <TextBox Grid.Column="3" Name="PasswordBoxDesktop"
+                                 Watermark="{StaticResource Login_Password_Watermark}"
+                                 ToolTip.Tip="{StaticResource Login_Password_Tooltip}"
+                                 AutomationProperties.Name="{StaticResource Login_Password_A11y}"
                                  PasswordChar="*"
                                  Text="{Binding Password}"
                                  Margin="5,0" />
-                        <ComboBox Grid.Column="4" Name="LoginLocationWindows"
+                        <ComboBox Grid.Column="4" Name="LoginLocationDesktop"
                                   ItemsSource="{Binding LoginLocations}"
                                   SelectedItem="{Binding SelectedLoginLocation}"
                                   Margin="5,0" />
-                        <ComboBox Grid.Column="5" Name="GridSelectionWindows"
+                        <ComboBox Grid.Column="5" Name="GridSelectionDesktop"
                                   ItemsSource="{Binding Grids}"
                                   SelectedItem="{Binding SelectedGrid}"
                                   Margin="5,0" />
-                        <Button Grid.Column="6" Name="ButtonLoginWindows"
-                                Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenLoginButton}"
+                        <Button Grid.Column="6" Name="ButtonLoginDesktop"
+                                Classes="login-button"
+                                Content="{StaticResource Login_Button}"
+                                ToolTip.Tip="{StaticResource Login_Button_Tooltip}"
+                                AutomationProperties.Name="{StaticResource Login_Button_A11y}"
                                 Command="{Binding TryLoginCommand}"
                                 Margin="5,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
                     </Grid>
@@ -57,18 +104,29 @@
             <!-- On platform Android -->
             <On Options="Android">
                 <StackPanel>
-                    <Image Source="/Assets/Images/banner.jpg" Stretch="UniformToFill" Height="100" />
-                    <Image Source="/Assets/GalaxyViewerLogo.ico" Width="100" Height="100" HorizontalAlignment="Center" />
-                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="Bold">
-                        <Run
-                            Text="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=WelcomeMessage}" />
-                    </TextBlock>
+                    <!-- Notice for Pre-Alpha Build -->
+                    <TextBlock Text="⚠️ WARNING: PRE-ALPHA BUILD ⚠️"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Margin="10,10,10,0"
+                               HorizontalAlignment="Center"
+                               TextWrapping="Wrap" />
+                    <TextBlock
+                        Text="This software is barely functioning and not ready for external testing. Use at your own risk!"
+                        FontSize="14"
+                        Margin="10,0,10,20"
+                        HorizontalAlignment="Center"
+                        TextWrapping="Wrap" />
                     <TextBox Name="UsernameBoxAndroid"
-                             Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenUsername}"
+                             Watermark="{StaticResource Login_Username_Watermark}"
+                             ToolTip.Tip="{StaticResource Login_Username_Tooltip}"
+                             AutomationProperties.Name="{StaticResource Login_Username_A11y}"
                              Text="{Binding Username}"
                              Margin="5" />
                     <TextBox Name="PasswordBoxAndroid"
-                             Watermark="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenPassword}"
+                             Watermark="{StaticResource Login_Password_Watermark}"
+                             ToolTip.Tip="{StaticResource Login_Password_Tooltip}"
+                             AutomationProperties.Name="{StaticResource Login_Password_A11y}"
                              PasswordChar="*"
                              Text="{Binding Password}"
                              Margin="5" />
@@ -81,13 +139,32 @@
                               SelectedItem="{Binding SelectedGrid}"
                               Margin="5" />
                     <Button Name="ButtonLoginAndroid"
-                            Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=LoginScreenLoginButton}"
+                            Classes="login-button"
+                            Content="{StaticResource Login_Button}"
+                            ToolTip.Tip="{StaticResource Login_Button_Tooltip}"
+                            AutomationProperties.Name="{StaticResource Login_Button_A11y}"
                             Command="{Binding TryLoginCommand}"
                             Margin="5" VerticalAlignment="Center" HorizontalAlignment="Center" />
                     <ContentControl Content="{Binding MfaPromptContainer}" />
-                    <TextBlock Text="{Binding LoginStatusMessage}" Margin="5" />
+                    <TextBlock Text="{Binding LoginStatusMessage}" Margin="5" TextWrapping="Wrap" />
                 </StackPanel>
             </On>
         </OnPlatform>
+        <!-- MFA Overlay -->
+        <Border
+            Background="#CC000000"
+            IsVisible="{Binding IsMfaPromptVisible}"
+            ZIndex="100"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+            <ContentControl
+                Content="{Binding MfaPromptContainer}"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="400"
+                Height="300"
+                CornerRadius="12"
+                Padding="32" />
+        </Border>
     </Grid>
 </UserControl>

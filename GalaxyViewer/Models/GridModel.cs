@@ -16,4 +16,15 @@ public class GridModel
     public string Register { get; set; }
     public string Password { get; set; }
     public string Version { get; set; }
+    public object IsDefault { get; set; }
+
+    public override bool Equals(object? obj) =>
+        obj is GridModel other && GridName == other.GridName;
+
+    public override int GetHashCode() => GridName?.GetHashCode() ?? 0;
+
+    public override string ToString()
+    {
+        return GridName;
+    }
 }

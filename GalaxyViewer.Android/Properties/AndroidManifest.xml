@@ -1,14 +1,38 @@
-﻿<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:installLocation="auto"
-          package="com.GalaxyViewer.GalaxyViewer">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          package="com.galaxyviewer.android">
     <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34"/>
+    <!-- For Android 11+ broad storage access (use only if really needed) -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage"/>
+    <uses-permission android:name="android.permission.ACCESS_SURFACE_FLINGER"/>
+    <uses-permission android:name="android.permission.ROTATE_SURFACE_FLINGER"/>
+    <uses-permission android:name="android.permission.INTERNAL_SYSTEM_WINDOW"/>
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="35"/>
     <application
         android:label="GalaxyViewer"
         android:icon="@drawable/icon"
         android:allowBackup="true"
         android:supportsRtl="true">
-        <!-- Your activities and other components -->
+        <activity
+            android:name="GalaxyViewer"
+            android:label="GalaxyViewer.Android"
+            android:theme="@style/MyTheme.NoActionBar"
+            android:icon="@drawable/icon"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|uiMode">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="http" android:host="maps.secondlife.com"/>
+                <data android:scheme="https" android:host="maps.secondlife.com"/>
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

@@ -5,9 +5,19 @@
              x:DataType="viewModels:MfaPromptDialogViewModel">
     <Grid Background="#000000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <StackPanel Margin="20" MaxWidth="200" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock Text="Enter MFA Code:" Margin="0,0,0,10" />
-            <TextBox Text="{Binding MfaCode, Mode=TwoWay}" Name="TokenBox" Margin="0,0,0,10" MaxLength="6" />
-            <Button Content="Submit" Command="{Binding SubmitMfaCodeCommand}" Name="BtnSubmit" />
+            <TextBlock Text="{StaticResource MfaPrompt_EnterCode}" Margin="0,0,0,10" />
+            <TextBox Text="{Binding MfaCode, Mode=TwoWay}"
+                     Name="TokenBox"
+                     Margin="0,0,0,10"
+                     MaxLength="6"
+                     Watermark="{StaticResource MfaPrompt_Code_Watermark}"
+                     ToolTip.Tip="{StaticResource MfaPrompt_Code_Tooltip}"
+                     AutomationProperties.Name="{StaticResource MfaPrompt_Code_A11y}" />
+            <Button Content="{StaticResource MfaPrompt_Submit}"
+                    Command="{Binding SubmitMfaCodeCommand}"
+                    Name="BtnSubmit"
+                    ToolTip.Tip="{StaticResource MfaPrompt_Submit_Tooltip}"
+                    AutomationProperties.Name="{StaticResource MfaPrompt_Submit_A11y}" />
         </StackPanel>
     </Grid>
 </UserControl>

@@ -3,56 +3,92 @@
              xmlns:vm="clr-namespace:GalaxyViewer.ViewModels"
              x:Class="GalaxyViewer.Views.MenuDesktopView"
              x:DataType="vm:MainViewModel">
-    <Menu DockPanel.Dock="Top">
-        <MenuItem Header="File">
-            <MenuItem Header="New Window" />
+
+    <!-- Desktop menu bar -->
+    <Menu Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+          BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+          BorderThickness="0,0,0,1"
+          Height="28">
+
+        <!-- File Menu -->
+        <MenuItem Header="{StaticResource DesktopMenu_File}">
+            <MenuItem Header="{StaticResource DesktopMenu_NewWindow}"
+                      InputGesture="Ctrl+N" />
             <Separator />
-            <MenuItem Header="Upload Blinn-Phong Texture" IsEnabled="{Binding IsLoggedIn}" />
-            <MenuItem Header="Upload PBR Material" IsEnabled="{Binding IsLoggedIn}" />
-            <MenuItem Header="Upload Mesh" IsEnabled="{Binding IsLoggedIn}" />
-            <MenuItem Header="Import Object" IsEnabled="{Binding IsLoggedIn}" />
-            <MenuItem Header="Script Editor" IsEnabled="{Binding IsLoggedIn}" />
+            <MenuItem Header="{StaticResource DesktopMenu_UploadBlinnPhong}"
+                      IsEnabled="{Binding IsLoggedIn}" />
+            <MenuItem Header="{StaticResource DesktopMenu_UploadPBR}"
+                      IsEnabled="{Binding IsLoggedIn}" />
+            <MenuItem Header="{StaticResource DesktopMenu_UploadMesh}"
+                      IsEnabled="{Binding IsLoggedIn}" />
+            <MenuItem Header="{StaticResource DesktopMenu_ImportObject}"
+                      IsEnabled="{Binding IsLoggedIn}" />
+            <MenuItem Header="{StaticResource DesktopMenu_ScriptEditor}"
+                      IsEnabled="{Binding IsLoggedIn}" />
             <Separator />
-            <MenuItem Header="Login" Command="{Binding NavToLoginViewCommand}" IsEnabled="{Binding !IsLoggedIn}" />
-            <MenuItem Header="Logout" Command="{Binding LogoutCommand}" IsEnabled="{Binding IsLoggedIn}" />
-            <MenuItem Header="Relog" IsEnabled="{Binding !IsLoggedIn}" />
-            <MenuItem Header="Preferences" Command="{Binding NavToPreferencesViewCommand}" />
+            <MenuItem Header="{StaticResource DesktopMenu_Login}"
+                      Command="{Binding NavToLoginViewCommand}"
+                      IsEnabled="{Binding !IsLoggedIn}"
+                      InputGesture="Ctrl+L" />
+            <MenuItem Header="{StaticResource DesktopMenu_Logout}"
+                      Command="{Binding LogoutCommand}"
+                      IsEnabled="{Binding IsLoggedIn}"
+                      InputGesture="Ctrl+Shift+L" />
+            <MenuItem Header="{StaticResource DesktopMenu_Relog}"
+                      IsEnabled="{Binding !IsLoggedIn}" />
             <Separator />
-            <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
-        </MenuItem>
-        <MenuItem Header="World" IsEnabled="{Binding IsLoggedIn}">
-            <MenuItem Header="Create new Landmark Here" />
-            <MenuItem Header="Landmarks" />
-            <MenuItem Header="Teleport History" />
-            <MenuItem Header="Favorites" />
-            <MenuItem Header="Set Home to Here" />
-            <MenuItem Header="Teleport Home" />
+            <MenuItem Header="{StaticResource DesktopMenu_Preferences}"
+                      Command="{Binding NavToPreferencesViewCommand}"
+                      InputGesture="Ctrl+," />
             <Separator />
-            <MenuItem Header="About Land" />
-            <MenuItem Header="About Region" />
-            <MenuItem Header="World Map" />
-            <MenuItem Header="Mini-Map" />
-            <MenuItem Header="People Nearby" />
-            <MenuItem Header="Objects Nearby" />
+            <MenuItem Header="{StaticResource DesktopMenu_Exit}"
+                      Command="{Binding ExitCommand}"
+                      InputGesture="Alt+F4" />
         </MenuItem>
-        <MenuItem Header="Communicate" IsEnabled="{Binding IsLoggedIn}">
-            <MenuItem Header="Chat" />
-            <MenuItem Header="Friends List" />
-            <MenuItem Header="Nearby People" />
-            <MenuItem Header="Voice" />
-            <MenuItem Header="Nearby Media" />
-            <MenuItem Header="Nearby Objects" />
+
+        <!-- World Menu -->
+        <MenuItem Header="{StaticResource DesktopMenu_World}" IsEnabled="{Binding IsLoggedIn}">
+            <MenuItem Header="{StaticResource DesktopMenu_CreateLandmark}" />
+            <MenuItem Header="{StaticResource DesktopMenu_Landmarks}" InputGesture="Ctrl+Shift+L" />
+            <MenuItem Header="{StaticResource DesktopMenu_TeleportHistory}" />
+            <MenuItem Header="{StaticResource DesktopMenu_Favorites}" />
+            <MenuItem Header="{StaticResource DesktopMenu_SetHome}" />
+            <MenuItem Header="{StaticResource DesktopMenu_TeleportHome}" InputGesture="Ctrl+Shift+H" />
+            <Separator />
+            <MenuItem Header="{StaticResource DesktopMenu_AboutLand}" />
+            <MenuItem Header="{StaticResource DesktopMenu_AboutRegion}" />
+            <MenuItem Header="{StaticResource DesktopMenu_WorldMap}" InputGesture="Ctrl+M" />
+            <MenuItem Header="{StaticResource DesktopMenu_MiniMap}" />
+            <MenuItem Header="{StaticResource DesktopMenu_PeopleNearby}" />
+            <MenuItem Header="{StaticResource DesktopMenu_ObjectsNearby}" />
         </MenuItem>
-        <MenuItem Header="Community" IsEnabled="{Binding IsLoggedIn}">
-            <MenuItem Header="Friends" />
-            <MenuItem Header="Groups" />
-            <MenuItem Header="Events" />
-            <MenuItem Header="Classifieds" />
-            <MenuItem Header="Marketplace" />
-            <MenuItem Header="Search" />
+
+        <!-- Communicate Menu -->
+        <MenuItem Header="{StaticResource DesktopMenu_Communicate}" IsEnabled="{Binding IsLoggedIn}">
+            <MenuItem Header="{StaticResource DesktopMenu_Chat}"
+                      Command="{Binding BackToDashboardViewCommand}"
+                      InputGesture="Ctrl+T" />
+            <MenuItem Header="{StaticResource DesktopMenu_FriendsList}" InputGesture="Ctrl+Shift+F" />
+            <MenuItem Header="{StaticResource DesktopMenu_NearbyPeople}" />
+            <MenuItem Header="{StaticResource DesktopMenu_Voice}" />
+            <MenuItem Header="{StaticResource DesktopMenu_NearbyMedia}" />
+            <MenuItem Header="{StaticResource DesktopMenu_NearbyObjects}" />
         </MenuItem>
-        <MenuItem Header="Dev">
-            <MenuItem Header="Dev View" Command="{Binding NavToDevViewCommand}" />
+
+        <!-- Community Menu -->
+        <MenuItem Header="{StaticResource DesktopMenu_Community}" IsEnabled="{Binding IsLoggedIn}">
+            <MenuItem Header="{StaticResource DesktopMenu_Friends}" />
+            <MenuItem Header="{StaticResource DesktopMenu_Groups}" InputGesture="Ctrl+G" />
+            <MenuItem Header="{StaticResource DesktopMenu_Events}" />
+            <MenuItem Header="{StaticResource DesktopMenu_Classifieds}" />
+            <MenuItem Header="{StaticResource DesktopMenu_Marketplace}" />
         </MenuItem>
+
+        <!-- Dev Menu -->
+        <MenuItem Header="{StaticResource DesktopMenu_Dev}">
+            <MenuItem Header="{StaticResource DesktopMenu_DevTools}"
+                      Command="{Binding NavToDevViewCommand}" />
+        </MenuItem>
+
     </Menu>
 </UserControl>

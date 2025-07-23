@@ -1,23 +1,20 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:GalaxyViewer.ViewModels"
              xmlns:views="clr-namespace:GalaxyViewer.Views"
-             mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="400"
              x:Class="GalaxyViewer.Views.MainView"
              x:DataType="vm:MainViewModel">
     <Design.DataContext>
         <vm:MainViewModel />
     </Design.DataContext>
 
+    <!-- Platform-specific menu handling -->
     <DockPanel LastChildFill="True">
+        <!-- Show traditional menu bar on desktop, hamburger menu on mobile -->
         <OnPlatform>
-            <!-- On platform Windows or Linux -->
-            <On Options="Windows, Linux">
+            <On Options="Windows, Linux, macOS">
                 <views:MenuDesktopView DockPanel.Dock="Top" />
             </On>
-            <!-- On platform Android -->
             <On Options="Android">
                 <views:MenuAndroidView DockPanel.Dock="Top" />
             </On>

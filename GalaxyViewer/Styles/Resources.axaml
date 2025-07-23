@@ -1,9 +1,12 @@
 ﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:drawing="clr-namespace:System.Drawing;assembly=System.Drawing.Primitives">
 
     <!-- Define Colors -->
 
     <!-- Define Brushes -->
+    <SolidColorBrush x:Key="AddressBarTextBrush" Color="{DynamicResource LightTextColor}"/>
+    <SolidColorBrush x:Key="AddressBarWatermarkBrush" Color="{DynamicResource LightMediumTextColor}"/>
 
     <!-- Define Fonts -->
     <FontFamily x:Key="DefaultFontFamily">avares://GalaxyViewer/Assets/Fonts/#Atkinson Hyperlegible</FontFamily>

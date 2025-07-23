@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -13,10 +13,10 @@ using GalaxyViewer.Models;
 using GalaxyViewer.Services;
 using GalaxyViewer.Views;
 using Newtonsoft.Json;
+using OpenMetaverse;
 using ReactiveUI;
 using Ursa.Controls;
 using Serilog;
-using OpenMetaverse;
 
 namespace GalaxyViewer.ViewModels;
 
@@ -33,14 +33,6 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         }
     }
 
-    private bool _isLoggedIn;
-
-    public bool IsLoggedIn
-    {
-        get => App.IsLoggedIn;
-        set => App.IsLoggedIn = value;
-    }
-
     private string _loginStatusMessage;
 
     public string LoginStatusMessage
@@ -49,38 +41,60 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         set => this.RaiseAndSetIfChanged(ref _loginStatusMessage, value);
     }
 
+    /*
+    public static string SplashScreenUrl
+    {
+        get
+        {
+            var version = VersionHelper.GetInformationalVersion();
+            var platform = GetFullPlatformString().ToLowerInvariant();
+            return $"https://galaxyviewer-splash.pages.dev?version={version}&platform={platform}";
+        }
+    }
+
+#if DEBUG
+    public bool ShowSplashScreen => false;
+    // Hide in debug builds because you need a bunch of dependencies for Linux and why would I do all that for a tiny thing?
+    // The built one has all the dependencies included so leave it in there
+#else
+    public bool ShowSplashScreen => true;  // Show in release builds
+#endif
+*/
+
     private readonly LiteDbService _liteDbService;
     private readonly PreferencesViewModel _preferencesViewModel;
-    private readonly Timer _sessionCheckTimer;
-    private SessionModel _currentSession;
     private string _username;
     private string _password;
-    private readonly GridClient _client = new();
+    private readonly GridClient _client;
     private IRoutableViewModel? _routableViewModelImplementation;
     private readonly GridService _gridService;
-    private ObservableCollection<GridModel?> _grids;
+    private ObservableCollection<GridModel> _grids;
     private GridModel _selectedGrid;
-
-    private const string DefaultGridUri =
-        "https://login.agni.lindenlab.com/cgi-bin/login.cgi";
 
     public WindowToastManager? ToastManager { get; set; }
 
-    public LoginViewModel(LiteDbService liteDbService)
+    private SessionModel _currentSession;
+
+    public SessionModel CurrentSession
+    {
+        get => _currentSession;
+        set => this.RaiseAndSetIfChanged(ref _currentSession, value);
+    }
+
+    public LoginViewModel(LiteDbService liteDbService, GridClient client)
     {
         _liteDbService = liteDbService ?? throw new ArgumentNullException(nameof(liteDbService));
+        _client = client ?? throw new ArgumentNullException(nameof(client));
         _preferencesViewModel = new PreferencesViewModel();
         _currentSession = _liteDbService.GetSession() ??
                           throw new InvalidOperationException("Session could not be retrieved.");
-        _sessionCheckTimer =
-            new Timer(CheckSessionChanges, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
         _username = string.Empty;
         _password = string.Empty;
         LoginLocations = _preferencesViewModel.LoginLocationOptions;
         SelectedLoginLocation = _preferencesViewModel.SelectedLoginLocation;
         TryLoginCommand = ReactiveCommand.CreateFromTask(TryLoginAsync);
         _gridService = new GridService();
-        _grids = new ObservableCollection<GridModel?>();
+        _grids = [];
 
         LoadGrids();
 
@@ -89,30 +103,16 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         {
             Log.Error("An error occurred during login: {Error}", ex.Message);
             // Handle the error (e.g., show a dialog to the user)
-            _ = ShowLoginErrorAsync("An error occurred during login. Please try again.");
+            _ = ShowLoginErrorAsync();
         });
 
         // Subscribe to the Network.LoginProgress event
         _client.Network.LoginProgress += OnLoginProgress;
     }
 
-    private void CheckSessionChanges(object? state)
-    {
-        if (_currentSession == null)
-        {
-            Log.Error("LiteDbService or current session is null.");
-            return;
-        }
-
-        if (!_liteDbService.HasSessionChanged(_currentSession)) return;
-        _currentSession = _liteDbService.GetSession();
-        UpdateViewBindings();
-    }
-
     private void UpdateViewBindings()
     {
-        // Update the properties bound to the view
-        this.RaisePropertyChanged(nameof(IsLoggedIn));
+        // Update the properties bound to the view\
         this.RaisePropertyChanged(nameof(LoginStatusMessage));
     }
 
@@ -140,48 +140,59 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         }
     }
 
-    private UserControl _mfaPromptContainer;
+    private UserControl? _mfaPromptContainer;
 
-    public UserControl MfaPromptContainer
+    public UserControl? MfaPromptContainer
     {
         get => _mfaPromptContainer;
         set => this.RaiseAndSetIfChanged(ref _mfaPromptContainer, value);
     }
 
-    public ObservableCollection<GridModel> Grids { get; set; }
-
-    public GridModel? SelectedGrid
+    public ObservableCollection<GridModel> Grids
     {
-        get
-        {
-            var selectedGrid = _grids.FirstOrDefault(g =>
-                g.GridNick == _preferencesViewModel.SelectedGridNick) ?? new GridModel
-            {
-                GridNick = "Second Life",
-                LoginUri = DefaultGridUri
-            };
-
-            return selectedGrid;
-        }
-        set
-        {
-            if (value == null) return;
-            _preferencesViewModel.SelectedGridNick = value.GridNick;
-            this.RaiseAndSetIfChanged(ref _selectedGrid, value);
-        }
+        get => _grids;
+        set => this.RaiseAndSetIfChanged(ref _grids, value);
     }
 
     private void LoadGrids()
     {
         var grids = _gridService.GetAllGrids();
-        _grids = new ObservableCollection<GridModel?>(grids);
-        SelectedGrid = _grids.FirstOrDefault(g =>
-            g.GridNick == _preferencesViewModel.SelectedGridNick);
+        Grids = new ObservableCollection<GridModel>(grids);
+
+        // If no selection, default to the Second Life grid
+        if (Grids.Count > 0)
+        {
+            if (string.IsNullOrEmpty(_preferencesViewModel.SelectedGridNick))
+                _preferencesViewModel.SelectedGridNick = Grids[0].GridName;
+
+            var selected =
+                Grids.FirstOrDefault(g => g.GridName == _preferencesViewModel.SelectedGridNick)
+                ?? Grids[0];
+
+            if (SelectedGrid != selected)
+                SelectedGrid = selected;
+        }
+        else
+        {
+            SelectedGrid = null;
+        }
+    }
+
+    public GridModel? SelectedGrid
+    {
+        get => _selectedGrid;
+        set
+        {
+            if (_selectedGrid == value) return;
+            _selectedGrid = value;
+            if (value != null) _preferencesViewModel.SelectedGridNick = value.GridName;
+            this.RaisePropertyChanged();
+        }
     }
 
     public ReactiveCommand<Unit, Unit> TryLoginCommand { get; }
 
-    private async Task ShowLoginErrorAsync(string errorMessage)
+    private async Task ShowLoginErrorAsync()
     {
         // ToastManager?.Show(
         //     new Toast(
@@ -198,7 +209,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
         {
             Log.Warning("Username or password is empty");
-            await ShowLoginErrorAsync("Username or password is empty");
+            await ShowLoginErrorAsync();
             return;
         }
 
@@ -210,7 +221,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion ?? "Version not found";
 
-        var loginParams = _client?.Network?.DefaultLoginParams(
+        var loginParams = _client.Network?.DefaultLoginParams(
             Username.Split(' ')[0], // firstName
             Username.Contains(' ') ? Username.Split(' ')[1] : "Resident", // lastName
             Password,
@@ -221,7 +232,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         if (loginParams == null)
         {
             Log.Error("Failed to create login parameters");
-            await ShowLoginErrorAsync("Failed to create login parameters");
+            await ShowLoginErrorAsync();
             return;
         }
 
@@ -229,7 +240,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         loginParams.MfaEnabled = true;
         loginParams.Platform = ourPlatform;
         loginParams.PlatformVersion = Environment.OSVersion.VersionString;
-        loginParams.LoginLocation = _preferencesViewModel?.SelectedLoginLocation switch
+        loginParams.Start = _preferencesViewModel.SelectedLoginLocation switch
         {
             "Home" => "home",
             "Last Location" => "last",
@@ -237,25 +248,25 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         };
         loginParams.UserAgent = "LibreMetaverse";
 
-#if DEBUG
-        Log.Information("Login parameters: {LoginParams}",
-            JsonConvert.SerializeObject(loginParams, Formatting.Indented));
-#endif
-
-        var loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
+        var loginSuccess = await Task.Run(() => _client.Network?.Login(loginParams) ?? false);
 
         if (loginSuccess)
         {
+#if DEBUG
+            Log.Information("Login parameters: {LoginParams}",
+                JsonConvert.SerializeObject(loginParams, Formatting.Indented));
+#endif
+
             await HandleSuccessfulLogin();
         }
-        else if (_client?.Network?.LoginMessage.Contains("multifactor") == true)
+        else if (_client.Network?.LoginMessage.Contains("multifactor") == true)
         {
             Log.Information("MFA required for login");
             var mfaCode = await ShowMfaPromptDialogAsync();
             if (string.IsNullOrWhiteSpace(mfaCode))
             {
                 Log.Warning("MFA code is empty");
-                await ShowLoginErrorAsync("MFA code is required");
+                await ShowLoginErrorAsync();
                 return;
             }
 
@@ -266,7 +277,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
                 JsonConvert.SerializeObject(loginParams, Formatting.Indented));
 #endif
 
-            loginSuccess = await Task.Run(() => _client?.Network?.Login(loginParams) ?? false);
+            loginSuccess = await Task.Run(() => _client.Network?.Login(loginParams) ?? false);
 
             if (loginSuccess)
             {
@@ -274,17 +285,22 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
             }
             else
             {
-                Log.Error("MFA login failed: {Error}", _client?.Network?.LoginMessage);
-                IsLoggedIn = false;
-                await ShowLoginErrorAsync($"MFA login failed: {_client?.Network?.LoginMessage}");
+                Log.Error("MFA login failed: {Error}", _client.Network?.LoginMessage);
+                await ShowLoginErrorAsync();
             }
         }
         else
         {
-            Log.Error("Login failed: {Error}", _client?.Network?.LoginMessage);
-            IsLoggedIn = false;
-            await ShowLoginErrorAsync($"Login failed: {_client?.Network?.LoginMessage}");
+            Log.Error("Login failed: {Error}", _client.Network?.LoginMessage);
+            await ShowLoginErrorAsync();
         }
+    }
+
+    private bool _isMfaPromptVisible;
+    public bool IsMfaPromptVisible
+    {
+        get => _isMfaPromptVisible;
+        set => this.RaiseAndSetIfChanged(ref _isMfaPromptVisible, value);
     }
 
     private async Task<string> ShowMfaPromptDialogAsync()
@@ -297,11 +313,12 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         };
 
         MfaPromptContainer = mfaPromptDialog;
+        IsMfaPromptVisible = true;
 
         var mfaCode = await tcs.Task;
 
-        // Clear the MFA prompt container after getting the code
         MfaPromptContainer = null;
+        IsMfaPromptVisible = false;
 
         return mfaCode;
     }
@@ -322,34 +339,62 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
                "Unk";
     }
 
+    private static string GetFullPlatformString()
+    {
+        var platformMap = new Dictionary<OSPlatform, string>
+        {
+            { OSPlatform.Windows, "Windows" },
+            { OSPlatform.Linux, "Linux" },
+            { OSPlatform.OSX, "MacOS" },
+            { OSPlatform.Create("BROWSER"), "Browser" },
+            { OSPlatform.Create("ANDROID"), "Android" },
+            { OSPlatform.Create("IOS"), "iOS" }
+        };
+
+        return platformMap.FirstOrDefault(kv => RuntimeInformation.IsOSPlatform(kv.Key)).Value ??
+               "Unknown";
+    }
+
+
     private async Task HandleSuccessfulLogin()
     {
         Log.Information("Login successful as {Name}", _client.Self.Name);
-        IsLoggedIn = true;
+        App.IsLoggedIn = true;
 
         var session = new SessionModel
         {
-            Id = 1, // Assuming a single session record
-            IsLoggedIn = true,
+            Id = 1,
             AvatarName = _client.Self.Name,
             AvatarKey = _client.Self.AgentID,
-            Balance = _client.Self.Balance,
             CurrentLocation = _client.Network.CurrentSim.Name,
             LoginWelcomeMessage = _client.Network.LoginMessage
         };
 
         _liteDbService.SaveSession(session);
+        CurrentSession = session;
+        UpdateViewBindings();
+
         Log.Information("Session updated on successful login");
+
+        try
+        {
+            _client.Self.RequestBalance();
+            Log.Information("Balance request sent after successful login");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to request balance after login");
+        }
 
         await ProcessCapabilitiesAsync();
     }
 
     private async Task ProcessCapabilitiesAsync()
     {
-        var loginMessage = await Task.Run(() => _client?.Network?.LoginMessage);
+        var loginMessage = await Task.Run(() => _client.Network?.LoginMessage);
         Log.Information("Login message: {Message}", loginMessage);
 
-        var currentSim = await Task.Run(() => _client?.Network?.CurrentSim);
+        var currentSim = await Task.Run(() => _client.Network?.CurrentSim);
         Log.Information("Current location: {Sim}", currentSim);
 
         await Task.CompletedTask;
@@ -375,7 +420,6 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
             case LoginStatus.Success:
                 LoginStatusMessage =
                     $"Logged in as {_client.Self.Name}, welcome to {_client.Network.CurrentSim?.Name}";
-                IsLoggedIn = true;
                 break;
             case LoginStatus.Failed:
                 LoginStatusMessage = $"Login failed: {e.Message}";
