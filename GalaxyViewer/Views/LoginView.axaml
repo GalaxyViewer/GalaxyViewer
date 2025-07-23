@@ -41,7 +41,6 @@
                         Margin="10,10,10,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        AutomationProperties.Live="Assertive"
                         AutomationProperties.Name="Warning: Pre-Alpha Build. This software is barely functioning and not ready for external testing. Use at your own risk.">
                         <TextBlock
                             Text="⚠️ WARNING: PRE-ALPHA BUILD ⚠️"
