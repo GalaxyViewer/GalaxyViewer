@@ -3,19 +3,8 @@
                     xmlns:drawing="clr-namespace:System.Drawing;assembly=System.Drawing.Primitives">
 
     <!-- Define Colors -->
-    <Color x:Key="LightTextColor">#000000</Color>
-    <Color x:Key="DarkTextColor">#FFFFFF</Color>
-    <Color x:Key="LightMediumTextColor">#666666</Color>
-    <Color x:Key="DarkMediumTextColor">#CCCCCC</Color>
 
     <!-- Define Brushes -->
-    <SolidColorBrush x:Key="LightTextBrush" Color="{DynamicResource LightTextColor}"/>
-    <SolidColorBrush x:Key="DarkTextBrush" Color="{DynamicResource DarkTextColor}"/>
-
-    <SolidColorBrush x:Key="LightMediumTextBrush" Color="{DynamicResource LightMediumTextColor}"/>
-    <SolidColorBrush x:Key="DarkMediumTextBrush" Color="{DynamicResource DarkMediumTextColor}"/>
-
-    <!-- AddressBar specific brushes -->
     <SolidColorBrush x:Key="AddressBarTextBrush" Color="{DynamicResource LightTextColor}"/>
     <SolidColorBrush x:Key="AddressBarWatermarkBrush" Color="{DynamicResource LightMediumTextColor}"/>
 

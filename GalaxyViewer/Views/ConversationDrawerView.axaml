@@ -1,0 +1,70 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GalaxyViewer.ViewModels"
+             xmlns:models="using:GalaxyViewer.Models"
+             xmlns:u="https://irihi.tech/ursa"
+             x:DataType="vm:ConversationDrawerViewModel"
+             x:Class="GalaxyViewer.Views.ConversationDrawerView">
+
+    <Border Width="280"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+            BorderThickness="0,0,1,0">
+
+        <ScrollViewer>
+            <StackPanel Spacing="1" Margin="8">
+                <TextBlock Text="{StaticResource ConversationDrawer_Title}"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Margin="0,0,0,8" />
+                <ItemsControl ItemsSource="{Binding Conversations}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="models:ChatConversation">
+                            <Button Padding="15,12"
+                                    CornerRadius="8"
+                                    Margin="0,2"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Command="{Binding $parent[UserControl].((vm:ConversationDrawerViewModel)DataContext).SelectConversationCommand}"
+                                    CommandParameter="{Binding}">
+                                <Button.Styles>
+                                    <Style Selector="Button:pointerover">
+                                        <Setter Property="Background"
+                                                Value="{DynamicResource SystemControlBackgroundChromeLowBrush}" />
+                                    </Style>
+                                </Button.Styles>
+
+                                <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center" ColumnSpacing="8">
+                                    <!-- Avatar Image -->
+                                    <u:Avatar Grid.Column="0"
+                                              Width="36"
+                                              Height="36"
+                                              CornerRadius="18"
+                                              Margin="0,0,8,0">
+                                        <Image Source="{Binding AvatarImage}" />
+                                    </u:Avatar>
+
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontSize="16"
+                                                   Foreground="{StaticResource SystemAccentColor}"
+                                                   FontWeight="{Binding IsActive, Converter={StaticResource BoolToFontWeightConverter}}" />
+                                    </StackPanel>
+
+                                    <!-- Notification Badge -->
+                                    <u:Badge Grid.Column="2"
+                                             Header="{Binding UnreadCount}"
+                                             IsVisible="{Binding HasUnreadMessages}"
+                                             Background="{StaticResource SystemAccentColor}"
+                                             Foreground="White" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</UserControl>

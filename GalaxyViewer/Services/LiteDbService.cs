@@ -40,7 +40,7 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
         }
     }
 
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     private static string GetDatabasePath()
     {
@@ -56,9 +56,9 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_databasePath) ??
                                       throw new InvalidOperationException());
+
             _database = new LiteDatabase(_databasePath);
-            Log.Information("LiteDbService initialized with database path: {DbPath}",
-                _databasePath);
+            Log.Information("LiteDbService initialized with database path: {DbPath}", _databasePath);
 
             var gridsCollection = _database.GetCollection<GridModel>("grids");
             if (gridsCollection.Count() == 0)
@@ -69,11 +69,6 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
             ClearSessionData();
             SeedDatabase();
         }
-        catch (LiteException ex)
-        {
-            Log.Error(ex, "LiteDB exception occurred. Attempting to recreate the database.");
-            HandleDatabaseCorruption();
-        }
         catch (Exception ex)
         {
             Log.Error(ex, "Failed to initialize LiteDbService");
@@ -81,25 +76,6 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
         }
     }
 
-    private void HandleDatabaseCorruption()
-    {
-        try
-        {
-            if (File.Exists(_databasePath))
-            {
-                File.Move(_databasePath, _databasePath + ".bak");
-            }
-
-            _database = new LiteDatabase(_databasePath);
-            SeedDatabase();
-            Log.Information("Database recreated successfully.");
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Failed to recreate the database.");
-            throw;
-        }
-    }
 
     private void SeedDatabase()
     {
@@ -109,25 +85,17 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
 
     private void SeedPreferences()
     {
-        var preferencesCollection = _database.GetCollection<PreferencesModel>("preferences");
-        if (preferencesCollection.Count() != 0) return;
-        var defaultPreferences = new PreferencesModel
-        {
-            Theme = "Default",
-            LoginLocation = "Home",
-            Font = "Atkinson Hyperlegible",
-            Language = "en-US",
-            SelectedGridNick = "agni",
-            LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-        };
-        preferencesCollection.Insert(defaultPreferences);
-        Log.Information("Database seeded with default preferences");
+        var preferencesCollection = _database?.GetCollection<PreferencesModel>("preferences");
+        if (preferencesCollection != null && preferencesCollection.Count() != 0) return;
+        var defaultPreferences = PreferencesManager.CreateDefaultPreferences();
+        preferencesCollection?.Insert(defaultPreferences);
+        // Log.Debug("Database seeded with default preferences");
     }
 
     private void SeedGrids()
     {
-        var gridsCollection = _database.GetCollection<GridModel>("grids");
-        if (gridsCollection.Count() != 0) return;
+        var gridsCollection = _database?.GetCollection<GridModel>("grids");
+        if (gridsCollection != null && gridsCollection.Count() != 0) return;
         var grids = new[]
         {
             new GridModel
@@ -159,22 +127,22 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
                 Version = "1"
             }
         };
-        gridsCollection.InsertBulk(grids);
-        Log.Information("Database seeded with default grids");
+        gridsCollection?.InsertBulk(grids);
+        // Log.Debug("Database seeded with default grids");
     }
 
     private void ClearSessionData()
     {
-        var sessionCollection = _database.GetCollection<SessionModel>("session");
-        if (sessionCollection.Count() > 0)
+        var sessionCollection = _database?.GetCollection<SessionModel>("session");
+        if (sessionCollection != null && sessionCollection.Count() > 0)
         {
             sessionCollection.DeleteAll();
-            Log.Information("Session data cleared");
+            // Log.Debug("Session data cleared");
         }
 
-        if (sessionCollection.Count() != 0) return;
-        sessionCollection.Insert(new SessionModel());
-        Log.Information("Session data created");
+        if (sessionCollection != null && sessionCollection.Count() != 0) return;
+        sessionCollection?.Insert(new SessionModel());
+        // Log.Debug("Session data created");
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -186,8 +154,8 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
 
     public SessionModel GetSession()
     {
-        var collection = _database.GetCollection<SessionModel>("session");
-        return collection.FindOne(Query.All()) ?? new SessionModel();
+        var collection = _database?.GetCollection<SessionModel>("session");
+        return collection?.FindOne(Query.All()) ?? new SessionModel();
     }
 
     public bool HasSessionChanged(SessionModel currentSession)
@@ -198,9 +166,9 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
 
     public void SaveSession(SessionModel session)
     {
-        var collection = _database.GetCollection<SessionModel>("session");
-        collection.Upsert(session);
-        Log.Information("Session data saved");
+        var collection = _database?.GetCollection<SessionModel>("session");
+        collection?.Upsert(session);
+        // Log.Debug("Session data saved");
 
         Session = session;
         SessionChanged?.Invoke(this, EventArgs.Empty);
@@ -209,6 +177,5 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
     void IDisposable.Dispose()
     {
         _database?.Dispose();
-        Log.Information("LiteDbService disposed");
     }
 }

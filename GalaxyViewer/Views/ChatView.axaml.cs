@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace GalaxyViewer.Views;
 
-public partial class DashboardView : UserControl
+public partial class ChatView : UserControl
 {
-    public DashboardView()
+    public ChatView()
     {
         InitializeComponent();
     }

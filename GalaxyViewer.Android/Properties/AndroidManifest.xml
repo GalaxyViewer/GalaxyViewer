@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.ACCESS_SURFACE_FLINGER"/>
     <uses-permission android:name="android.permission.ROTATE_SURFACE_FLINGER"/>
     <uses-permission android:name="android.permission.INTERNAL_SYSTEM_WINDOW"/>
-    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34"/>
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="35"/>
     <application
         android:label="GalaxyViewer"
         android:icon="@drawable/icon"

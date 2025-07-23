@@ -1,6 +1,58 @@
 <Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:GalaxyViewer.Controls">
+
+    <!-- Global font for emoji and accessibility -->
     <Style Selector="TextBlock">
-        <Setter Property="FontFamily" Value="avares://GalaxyViewer/Assets/Fonts/#Noto Emoji, avar://GalaxyViewer/Assets/Fonts/#Atkinson Hyperlegible" />
+        <Setter Property="FontFamily"
+                Value="avares://GalaxyViewer/Assets/Fonts/#Noto Emoji, avar://GalaxyViewer/Assets/Fonts/#Atkinson Hyperlegible" />
     </Style>
+
+    <!-- Chat bubble base style -->
+    <Style Selector="Border.chat-message-bubble">
+        <Setter Property="Background">
+            <Setter.Value>
+                <SolidColorBrush Color="{DynamicResource SystemAccentColor}" Opacity="0.15" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Margin" Value="0,6" />
+        <Setter Property="Padding" Value="8" />
+    </Style>
+
+    <!-- Self messages: accent color background, right aligned -->
+    <Style Selector="Border.chat-message-bubble.from-self">
+        <Setter Property="HorizontalAlignment" Value="Right" />
+    </Style>
+
+    <!-- Other messages: subtle accent color background, left aligned -->
+    <Style Selector="Border.chat-message-bubble.from-other">
+        <Setter Property="HorizontalAlignment" Value="Left" />
+    </Style>
+
+    <!-- System messages: even more subtle accent color background, left aligned -->
+    <Style Selector="Border.chat-message-bubble.system-message">
+        <Setter Property="HorizontalAlignment" Value="Left" />
+    </Style>
+
+    <!-- System message text: semi-bold, smaller -->
+    <Style Selector="Border.chat-message-bubble.system-message TextBlock">
+        <Setter Property="FontStyle" Value="Oblique" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <!-- Chat bubble text: padding and wrapping for all bubbles -->
+    <Style Selector="Border.chat-message-bubble TextBlock">
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <!-- Links use accent color -->
+    <!-- TODO: Add this functionality
+    <Style Selector="controls|ClickableTextBlock">
+        <Setter Property="LinkBrush" Value="{DynamicResource SystemAccentColorBrush}" />
+    </Style>
+    -->
+
 </Styles>

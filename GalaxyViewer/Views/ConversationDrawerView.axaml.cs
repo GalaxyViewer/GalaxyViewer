@@ -3,9 +3,9 @@ using Avalonia.Markup.Xaml;
 
 namespace GalaxyViewer.Views;
 
-public partial class DevView : UserControl
+public partial class ConversationDrawerView : UserControl
 {
-    public DevView()
+    public ConversationDrawerView()
     {
         InitializeComponent();
     }

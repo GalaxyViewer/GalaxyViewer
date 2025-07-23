@@ -1,0 +1,121 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:GalaxyViewer.ViewModels"
+             xmlns:views="using:GalaxyViewer.Views"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:models="clr-namespace:GalaxyViewer.Models"
+             x:DataType="vm:ChatViewModel"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="GalaxyViewer.Views.ChatView">
+
+    <DockPanel>
+        <!-- Desktop Toolbar -->
+        <Border x:Name="DesktopToolbar"
+                DockPanel.Dock="Top"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="12,8"
+                IsVisible="{OnPlatform Default=True, iOS=False, Android=False}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                            IsVisible="{Binding IsInChatWindow, Converter={StaticResource InverseBoolConverter}}">
+                    <Button Command="{Binding PopOutChatCommand}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="8,6"
+                            CornerRadius="4"
+                            ToolTip.Tip="{StaticResource Chat_PopOutTooltip}"
+                            AutomationProperties.Name="{StaticResource Chat_PopOutA11y}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <PathIcon
+                                Data="M 9 4 V 8 H 21 V 20 H 11 V 16 H 7 V 4 H 9 Z M 11 6 H 19 V 10 H 11 V 6 Z M 15 12 V 14 H 17 V 12 H 15 Z"
+                                Width="16"
+                                Height="16"
+                                Foreground="{DynamicResource SystemAccentColorBrush}" />
+                            <TextBlock Text="{StaticResource Chat_PopOut}"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource SystemAccentColorBrush}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Desktop Sidebar -->
+        <Grid ColumnDefinitions="300,*"
+              IsVisible="{OnPlatform Default=True, iOS=False, Android=False}">
+            <ItemsControl ItemsSource="{Binding Conversations}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="models:ChatConversation">
+                        <Button
+                            Command="{Binding $parent[UserControl].((vm:ChatViewModel)DataContext).SelectConversationCommand}"
+                            CommandParameter="{Binding}"
+                            Padding="15,12"
+                            CornerRadius="8"
+                            Margin="0,2"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left">
+                            <Button.Styles>
+                                <Style Selector="Button:pointerover">
+                                    <Setter Property="Background"
+                                            Value="{DynamicResource SystemControlBackgroundChromeLowBrush}" />
+                                </Style>
+                            </Button.Styles>
+
+                            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center" ColumnSpacing="8">
+                                <!-- Avatar Image -->
+                                <u:Avatar Grid.Column="0"
+                                          Width="36"
+                                          Height="36"
+                                          CornerRadius="18"
+                                          Margin="0,0,8,0">
+                                    <Image Source="{Binding AvatarImage}" />
+                                </u:Avatar>
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding Name}"
+                                               FontSize="16"
+                                               Foreground="{StaticResource SystemAccentColor}"
+                                               FontWeight="{Binding IsActive, Converter={StaticResource BoolToFontWeightConverter}}" />
+                                    <TextBlock
+                                        Text="{Binding LastMessage}"
+                                        FontSize="12"
+                                        Opacity="0.7"
+                                        TextTrimming="CharacterEllipsis"
+                                        MaxLines="1"
+                                        Margin="0,2,0,0"
+                                        IsVisible="{Binding LastMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                        Foreground="{DynamicResource TextColor}" />
+                                </StackPanel>
+
+                                <!-- Notification Badge -->
+                                <u:Badge Grid.Column="2"
+                                         Header="{Binding UnreadCount}"
+                                         IsVisible="{Binding HasUnreadMessages}"
+                                         Background="{StaticResource SystemAccentColor}" />
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+
+        <!-- Mobile Drawer -->
+        <u:OverlayDialogHost Name="ConversationDrawerHost" HostId="ChatDrawer"
+                             IsVisible="{OnPlatform Default=False, iOS=True, Android=True}" />
+
+        <!-- Shared Chat Area -->
+        <Border x:Name="ChatContainer" Background="{DynamicResource CardBackground}">
+            <views:ChatArea DataContext="{Binding}" />
+        </Border>
+    </DockPanel>
+</UserControl>

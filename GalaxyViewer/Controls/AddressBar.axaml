@@ -3,134 +3,173 @@
              xmlns:viewModels="clr-namespace:GalaxyViewer.ViewModels"
              xmlns:converters="clr-namespace:GalaxyViewer.Converters"
              x:Class="GalaxyViewer.Controls.AddressBar"
-             x:DataType="viewModels:DashboardViewModel">
+             x:DataType="viewModels:AddressBarViewModel">
 
     <UserControl.Resources>
         <converters:BoolToDoubleConverter x:Key="BoolToDoubleConverter" />
     </UserControl.Resources>
 
+    <!-- Custom Styles for AddressBar using accent color -->
+    <UserControl.Styles>
+        <!-- Address bar button styling -->
+        <Style Selector="Button.address-bar-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style Selector="Button.address-bar-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+        </Style>
+        <Style Selector="Button.address-bar-button:pressed">
+            <Setter Property="Background" Value="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+        </Style>
+
+        <!-- Address display styling -->
+        <Style Selector="Border.address-display">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Margin" Value="8,0" />
+        </Style>
+        <Style Selector="Border.address-display:focus-within">
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+
+        <!-- Address bar container styling -->
+        <Style Selector="Border.address-bar-container">
+            <Setter Property="Background" Value="{DynamicResource CardBackground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="4" />
+        </Style>
+
+        <!-- Icon styling -->
+        <Style Selector="PathIcon.address-bar-icon">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}" />
+        </Style>
+        <Style Selector="Button.address-bar-button:pointerover PathIcon.address-bar-icon">
+            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}" />
+        </Style>
+        <Style Selector="Button.address-bar-button:pressed PathIcon.address-bar-icon">
+            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}" />
+        </Style>
+    </UserControl.Styles>
+
     <UserControl.KeyBindings>
-        <KeyBinding Gesture="Enter" Command="{Binding AddressBarViewModel.CommitEditCommand}" />
+        <KeyBinding Gesture="Enter" Command="{Binding CommitEditCommand}" />
     </UserControl.KeyBindings>
 
-    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-            BorderThickness="1"
-            CornerRadius="5"
-            Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-            MinHeight="40">
+    <Border Classes="address-bar-container">
         <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto">
+
             <!-- Home Button -->
             <Button Grid.Column="0"
-                    Command="{Binding AddressBarViewModel.HomeCommand}"
-                    ToolTip.Tip="Go Home"
-                    Width="32" Height="32"
+                    Classes="address-bar-button"
+                    Command="{Binding HomeCommand}"
+                    ToolTip.Tip="{StaticResource AddressBar_Home_Tooltip}"
                     Margin="4"
-                    Background="Transparent"
-                    BorderThickness="0">
-                <PathIcon Data="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"
-                          Width="16" Height="16"
-                          Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    AutomationProperties.Name="{StaticResource AddressBar_Home_A11y}">
+                <PathIcon Classes="address-bar-icon"
+                          Data="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
             </Button>
 
-            <!-- Back Button -->
-            <Button Grid.Column="1"
-                    Command="{Binding AddressBarViewModel.BackCommand}"
-                    IsEnabled="{Binding AddressBarViewModel.CanGoBack}"
-                    ToolTip.Tip="Go Back"
-                    Width="32" Height="32"
-                    Margin="2,4"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Opacity="{Binding AddressBarViewModel.CanGoBack, Converter={StaticResource BoolToDoubleConverter}, ConverterParameter='1.0 0.4'}">
-                <PathIcon Data="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"
-                          Width="16" Height="16"
-                          Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-            </Button>
+            <!-- Navigation Button Group -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="0">
+                <!-- Back Button -->
+                <Button Classes="address-bar-button"
+                        Command="{Binding BackCommand}"
+                        IsEnabled="{Binding CanGoBack}"
+                        ToolTip.Tip="{StaticResource AddressBar_Back_Tooltip}"
+                        Margin="2,4"
+                        AutomationProperties.Name="{StaticResource AddressBar_Back_A11y}"
+                        Opacity="{Binding CanGoBack, Converter={StaticResource BoolToDoubleConverter}, ConverterParameter='1.0 0.4'}">
+                    <PathIcon Classes="address-bar-icon"
+                              Data="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+                </Button>
 
-            <!-- Forward Button -->
-            <Button Grid.Column="2"
-                    Command="{Binding AddressBarViewModel.ForwardCommand}"
-                    IsEnabled="{Binding AddressBarViewModel.CanGoForward}"
-                    ToolTip.Tip="Go Forward"
-                    Width="32" Height="32"
-                    Margin="2,4"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Opacity="{Binding AddressBarViewModel.CanGoForward, Converter={StaticResource BoolToDoubleConverter}, ConverterParameter='1.0 0.4'}">
-                <PathIcon Data="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"
-                          Width="16" Height="16"
-                          Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-            </Button>
+                <!-- Forward Button -->
+                <Button Classes="address-bar-button"
+                        Command="{Binding ForwardCommand}"
+                        IsEnabled="{Binding CanGoForward}"
+                        ToolTip.Tip="{StaticResource AddressBar_Forward_Tooltip}"
+                        Margin="2,4"
+                        AutomationProperties.Name="{StaticResource AddressBar_Forward_A11y}"
+                        Opacity="{Binding CanGoForward, Converter={StaticResource BoolToDoubleConverter}, ConverterParameter='1.0 0.4'}">
+                    <PathIcon Classes="address-bar-icon"
+                              Data="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
+                </Button>
+            </StackPanel>
 
-            <!-- Address Bar - This will expand to fill available space -->
-            <Border Grid.Column="3"
-                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
-                    CornerRadius="3"
-                    Margin="4,6"
-                    MinHeight="28">
-
-                <!-- Two-state display: Read-only current location + Edit mode -->
+            <!-- Address Display/Editor -->
+            <Border Grid.Column="3" Classes="address-display">
                 <Grid>
                     <!-- Read-only current location display -->
-                    <Button Name="LocationDisplayButton"
-                            Command="{Binding AddressBarViewModel.StartEditCommand}"
+                    <Button Command="{Binding StartEditCommand}"
                             Background="Transparent"
                             BorderThickness="0"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Left"
                             VerticalContentAlignment="Center"
                             Padding="8,4"
-                            IsVisible="{Binding AddressBarViewModel.IsEditing, Converter={x:Static BoolConverters.Not}}">
+                            AutomationProperties.Name="Current location, click to edit"
+                            IsVisible="{Binding IsEditing, Converter={x:Static BoolConverters.Not}}">
 
                         <StackPanel Orientation="Horizontal">
-                            <!-- Maturity Rating -->
+                            <!-- Maturity Rating Badge -->
                             <Border Width="18" Height="18"
                                     CornerRadius="9"
                                     Margin="0,0,8,0"
                                     VerticalAlignment="Center"
-                                    Background="{Binding AddressBarViewModel.MaturityRatingBrush}"
-                                    IsVisible="{Binding AddressBarViewModel.ShowMaturityRating}"
-                                    ToolTip.Tip="{Binding AddressBarViewModel.MaturityRatingTooltip}">
-                                <TextBlock Text="{Binding AddressBarViewModel.MaturityRating}"
+                                    Background="{Binding MaturityRatingBrush}"
+                                    IsVisible="{Binding ShowMaturityRating}"
+                                    ToolTip.Tip="{Binding MaturityRatingTooltip}"
+                                    AutomationProperties.Name="{Binding MaturityRatingTooltip}">
+                                <TextBlock Text="{Binding MaturityRating}"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
                                            FontSize="10"
                                            FontWeight="Bold"
-                                           Foreground="#FFF" />
+                                           Foreground="White" />
                             </Border>
 
-                            <!-- Current Location Display -->
-                            <TextBlock Text="{Binding AddressBarViewModel.CurrentLocationDisplay}"
+                            <!-- Current Location Text -->
+                            <TextBlock Text="{Binding CurrentLocationDisplay}"
                                        VerticalAlignment="Center"
                                        FontSize="14"
-                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                       Foreground="{DynamicResource SystemAccentColorBrush}"
                                        FontWeight="Medium" />
                         </StackPanel>
                     </Button>
 
-                    <!-- Edit mode TextBox -->
-                    <Grid IsVisible="{Binding AddressBarViewModel.IsEditing}">
-                        <!-- Address TextBox for editing - full width -->
-                        <TextBox Name="AddressEditBox"
-                                 Text="{Binding AddressBarViewModel.EditableLocation, Mode=TwoWay}"
+                    <!-- Edit Mode -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                        <TextBox x:Name="EditTextBox"
+                                 Text="{Binding EditableLocation, Mode=TwoWay}"
                                  VerticalAlignment="Center"
-                                 Margin="8,2,8,2"
+                                 Margin="8,2,0,2"
                                  FontSize="14"
                                  Background="Transparent"
                                  BorderThickness="0"
-                                 Watermark="Enter location: Region Name, Region/X/Y/Z, secondlife://URL, or maps.secondlife.com URL"
+                                 Watermark="{StaticResource AddressBar_Edit_Watermark}"
                                  Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                                  SelectionBrush="{DynamicResource SystemControlHighlightAccentBrush}"
-                                 CaretBrush="{DynamicResource SystemControlForegroundBaseHighBrush}">
+                                 CaretBrush="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                 AutomationProperties.Name="{StaticResource AddressBar_Edit_A11y}"
+                                 IsVisible="{Binding IsEditing}"
+                                 HorizontalAlignment="Stretch">
                             <TextBox.KeyBindings>
-                                <KeyBinding Gesture="Enter" Command="{Binding AddressBarViewModel.CommitEditCommand}" />
-                                <KeyBinding Gesture="Escape" Command="{Binding AddressBarViewModel.CancelEditCommand}" />
+                                <KeyBinding Gesture="Enter" Command="{Binding CommitEditCommand}" />
+                                <KeyBinding Gesture="Escape" Command="{Binding CancelEditCommand}" />
                             </TextBox.KeyBindings>
                             <TextBox.Styles>
                                 <Style Selector="TextBox /template/ TextBlock#PART_Watermark">
-                                    <Setter Property="Foreground"
-                                            Value="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-                                    <Setter Property="Opacity" Value="0.8" />
+                                    <Setter Property="Opacity" Value="0.5" />
                                     <Setter Property="FontWeight" Value="Normal" />
                                 </Style>
                                 <Style Selector="TextBox:focus /template/ TextBlock#PART_Watermark">
@@ -138,37 +177,40 @@
                                 </Style>
                             </TextBox.Styles>
                         </TextBox>
-                    </Grid>
+                        <Button Content="✕"
+                                Margin="16,0,0,0"
+                                VerticalAlignment="Center"
+                                IsVisible="{Binding IsEditing}"
+                                Command="{Binding CancelEditCommand}"
+                                ToolTip.Tip="{StaticResource AddressBar_Cancel_Tooltip}"
+                                MinWidth="32"
+                                MinHeight="32" />
+                    </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Search/Go Button -->
-            <Button Grid.Column="4"
-                    Command="{Binding AddressBarViewModel.CommitEditCommand}"
-                    ToolTip.Tip="Search/Go"
-                    Width="32" Height="32"
-                    Margin="2,4"
-                    Background="Transparent"
-                    BorderThickness="0">
-                <PathIcon
-                    Data="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"
-                    Width="16" Height="16"
-                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-            </Button>
+            <!-- Action Buttons Group -->
+            <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="0">
+                <!-- Search/Go Button -->
+                <Button Classes="address-bar-button"
+                        Command="{Binding CommitEditCommand}"
+                        ToolTip.Tip="{StaticResource AddressBar_Go_Tooltip}"
+                        Margin="2,4"
+                        AutomationProperties.Name="{StaticResource AddressBar_Go_A11y}">
+                    <PathIcon Classes="address-bar-icon"
+                              Data="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
+                </Button>
 
-            <!-- Settings Button -->
-            <Button Grid.Column="5"
-                    Command="{Binding AddressBarViewModel.SettingsCommand}"
-                    ToolTip.Tip="Settings"
-                    Width="32" Height="32"
-                    Margin="4"
-                    Background="Transparent"
-                    BorderThickness="0">
-                <PathIcon
-                    Data="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"
-                    Width="16" Height="16"
-                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-            </Button>
+                <!-- Settings Button -->
+                <Button Classes="address-bar-button"
+                        Command="{Binding SettingsCommand}"
+                        ToolTip.Tip="{StaticResource AddressBar_Settings_Tooltip}"
+                        Margin="4"
+                        AutomationProperties.Name="{StaticResource AddressBar_Settings_A11y}">
+                    <PathIcon Classes="address-bar-icon"
+                              Data="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+                </Button>
+            </StackPanel>
         </Grid>
     </Border>
 </UserControl>

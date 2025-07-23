@@ -2,30 +2,27 @@
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
         <LangVersion>latest</LangVersion>
-        <Version>2025.07.19-test</Version>
+        <Version>2025.07.22-test</Version>
         <AssemblyInformationalVersion>$(Version)</AssemblyInformationalVersion>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     </PropertyGroup>
 
     <PropertyGroup>
-      <ApplicationIcon>Assets\GalaxyViewerLogo.ico</ApplicationIcon>
+        <ApplicationIcon>Assets\GalaxyViewerLogo.ico</ApplicationIcon>
     </PropertyGroup>
 
-    <PropertyGroup>
+    <!-- <PropertyGroup>
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-    </PropertyGroup>
+    </PropertyGroup> -->
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**" />
+        <None Remove="Assets\Fonts\*.ttf" />
+        <AvaloniaResource Include="Assets\Fonts\*.ttf" />
         <None Update="Assets\GalaxyViewerLogo.ico">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <Content Include="Assets\Fonts\*.ttf">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
         <AvaloniaResource Include="Styles\**" />
-        <AvaloniaResource Include="Styles\Atkinson Hyperlegible.axaml" />
-        <AvaloniaResource Include="Styles\Inter.axaml" />
     </ItemGroup>
 
     <ItemGroup>
@@ -40,6 +37,7 @@
         <PackageReference Include="Avalonia.ReactiveUI" Version="11.3.2" />
         <!-- Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration. -->
         <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.2" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
         <!-- More things will go here -->
         <PackageReference Include="Irihi.Ursa" Version="1.12.0" />
         <PackageReference Include="Irihi.Ursa.ReactiveUIExtension" Version="1.0.1" />
@@ -55,30 +53,6 @@
         <PackageReference Include="Semi.Avalonia" Version="11.2.1.9" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <EmbeddedResource Update="Assets\Localization\Strings.resx">
-            <Generator>ResXFileCodeGenerator</Generator>
-            <LastGenOutput>Strings.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-        <EmbeddedResource Update="Assets\Localization\Strings.en-US.resx">
-            <Generator>ResXFileCodeGenerator</Generator>
-            <LastGenOutput>Strings.en.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Compile Update="Assets\Localization\Strings.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Strings.resx</DependentUpon>
-        </Compile>
-        <Compile Update="Assets\Localization\Strings.en-US.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Strings.en-US.resx</DependentUpon>
-        </Compile>
     </ItemGroup>
 
     <ItemGroup>

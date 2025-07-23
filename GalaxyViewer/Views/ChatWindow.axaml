@@ -1,0 +1,14 @@
+<views:BaseWindow xmlns="https://github.com/avaloniaui"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:views="clr-namespace:GalaxyViewer.Views"
+                  xmlns:vm="clr-namespace:GalaxyViewer.ViewModels"
+                  x:Class="GalaxyViewer.Views.ChatWindow"
+                  x:DataType="vm:ChatViewModel"
+                  Width="800"
+                  Height="600"
+                  Title="{StaticResource ChatWindow_Title}"
+                  mc:Ignorable="d">
+    <views:ChatView DataContext="{Binding}" />
+</views:BaseWindow>

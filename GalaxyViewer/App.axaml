@@ -10,6 +10,7 @@
     </Application.DataTemplates>
 
     <Application.Styles>
+        <StyleInclude Source="avares://GalaxyViewer/Styles/TextBlockOverride.axaml" />
         <semi:SemiTheme Locale="en-US" />
         <u-Semi:SemiTheme Locale="en-US" />
         <StyleInclude Source="avares://GalaxyViewer/Styles.axaml" />
@@ -18,9 +19,15 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://GalaxyViewer/Styles/Resources.axaml" />
+                <ResourceInclude Source="avares://GalaxyViewer/Resources/Strings.axaml" />
             </ResourceDictionary.MergedDictionaries>
-            <converters:LocalizedStringConverter x:Key="LocalizedStringConverter" />
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+            <converters:BoolToBackgroundConverter x:Key="BoolToBackgroundConverter" />
+            <converters:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter" />
+            <converters:BoolToForegroundConverter x:Key="BoolToForegroundConverter" />
+            <converters:BoolToStatusColorConverter x:Key="BoolToStatusColorConverter" />
+            <converters:BoolToStatusTextConverter x:Key="BoolToStatusTextConverter" />
         </ResourceDictionary>
-        <SolidColorBrush x:Key="SystemControlTransparentBrush" Color="Transparent"/>
+        <SolidColorBrush x:Key="SystemControlTransparentBrush" Color="Transparent" />
     </Application.Resources>
 </Application>

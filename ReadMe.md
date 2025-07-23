@@ -18,7 +18,7 @@ Features unique to this viewer (compared to the stock viewer) will include:
 
 - [ ] Communication
 
-  - [ ] Chat
+  - [x] Chat
   - [ ] Voice Chat (WebRTC)
 
 - [ ] User Interaction
@@ -30,7 +30,7 @@ Features unique to this viewer (compared to the stock viewer) will include:
 
 - [ ] World Interaction
 
-  - [ ] Teleporting
+  - [x] Teleporting
   - [ ] 3D World View
   - [ ] Camera Controls
   - [ ] World Map
@@ -53,7 +53,7 @@ Features unique to this viewer (compared to the stock viewer) will include:
 - [ ] User Interface
 
   - [x] Light and Dark Modes
-  - [ ] Customizable UI
+  - [x] Customizable UI (Accent Color)
   - [ ] Customizable Keybinds
   - [ ] Customizable Notifications
 
@@ -68,7 +68,7 @@ Features unique to this viewer (compared to the stock viewer) will include:
   - [ ] Keyboard Navigation
   - [ ] Voice Commands
   - [ ] Text-to-Speech
-  - [ ] Speech-to-Text
+  - [ ] Speech-to-Text (chat input)
 - [x] Localization
 - [ ] Sending Abuse Reports
 - [ ] Discord Rich Presence (Desktop only)

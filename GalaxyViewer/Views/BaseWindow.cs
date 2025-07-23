@@ -1,28 +1,35 @@
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.Platform;
+using Avalonia.Input;
 using GalaxyViewer.Models;
-using Ursa.ReactiveUIExtension;
+using Serilog;
+using GalaxyViewer.ViewModels;
 
 namespace GalaxyViewer.Views;
 
-public class BaseWindow : ReactiveUrsaWindow<PreferencesModel>, IStyleable
+public class BaseWindow : Window
 {
-    Type IStyleable.StyleKey => typeof(Window);
-
     protected BaseWindow()
     {
         Title = "GalaxyViewer";
         Icon = new WindowIcon("Assets/GalaxyViewerLogo.ico");
         CanResize = true;
+
+        // Use only native window decorations - no custom chrome
+        SystemDecorations = SystemDecorations.Full;
+        ExtendClientAreaToDecorationsHint = false;
+
         if (App.PreferencesManager != null)
             App.PreferencesManager.PreferencesChanged += OnPreferencesChanged;
 
         _ = LoadPreferencesAsync();
     }
+
 
     private async Task LoadPreferencesAsync()
     {
@@ -48,12 +55,39 @@ public class BaseWindow : ReactiveUrsaWindow<PreferencesModel>, IStyleable
     {
         Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
         {
-            RequestedThemeVariant = theme switch
-            {
-                "Light" => ThemeVariant.Light,
-                "Dark" => ThemeVariant.Dark,
-                _ => ThemeVariant.Default
-            };
+            RequestedThemeVariant = GetThemeVariant(theme);
         });
+    }
+
+    private ThemeVariant GetThemeVariant(string themePreference)
+    {
+        return themePreference switch
+        {
+            "Light" => ThemeVariant.Light,
+            "Dark" => ThemeVariant.Dark,
+            "System" => DetectSystemTheme(),
+            _ => ThemeVariant.Default
+        };
+    }
+
+    private ThemeVariant DetectSystemTheme()
+    {
+        try
+        {
+            var platformSettings = PlatformSettings;
+            if (platformSettings != null)
+            {
+                var colorValues = platformSettings.GetColorValues();
+                return colorValues.ThemeVariant == PlatformThemeVariant.Dark
+                    ? ThemeVariant.Dark
+                    : ThemeVariant.Light;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to detect system theme in BaseWindow, falling back to default");
+        }
+
+        return ThemeVariant.Default;
     }
 }

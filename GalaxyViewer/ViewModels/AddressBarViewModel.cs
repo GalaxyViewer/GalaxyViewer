@@ -11,6 +11,8 @@ using GalaxyViewer.Models;
 using Serilog;
 using Avalonia.Media;
 using System.Windows.Input;
+using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Threading;
 
 namespace GalaxyViewer.ViewModels
@@ -36,8 +38,8 @@ namespace GalaxyViewer.ViewModels
         private static partial Regex SlurlRegex();
 
         public AddressBarViewModel(LiteDbService liteDbService,
-                                 GridClient client,
-                                 ICommand? openPreferencesCommand = null)
+            GridClient client,
+            ICommand? openPreferencesCommand = null)
         {
             _liteDbService = liteDbService;
             _client = client;
@@ -46,9 +48,8 @@ namespace GalaxyViewer.ViewModels
 
             HomeCommand = ReactiveCommand.Create(GoHome);
             BackCommand = ReactiveCommand.Create(GoBack, this.WhenAnyValue(x => x.CanGoBack));
-            ForwardCommand = ReactiveCommand.Create(GoForward, this.WhenAnyValue(x => x.CanGoForward));
-            EditAddressCommand = ReactiveCommand.Create(EditAddress);
-            SearchCommand = ReactiveCommand.Create(Search);
+            ForwardCommand =
+                ReactiveCommand.Create(GoForward, this.WhenAnyValue(x => x.CanGoForward));
             SettingsCommand = ReactiveCommand.Create(OpenSettings);
 
             StartEditCommand = ReactiveCommand.Create(StartEdit);
@@ -70,14 +71,13 @@ namespace GalaxyViewer.ViewModels
         public ReactiveCommand<Unit, Unit> HomeCommand { get; }
         public ReactiveCommand<Unit, Unit> BackCommand { get; }
         public ReactiveCommand<Unit, Unit> ForwardCommand { get; }
-        public ReactiveCommand<Unit, Unit> EditAddressCommand { get; }
-        public ReactiveCommand<Unit, Unit> SearchCommand { get; }
         public ReactiveCommand<Unit, Unit> SettingsCommand { get; }
         public ReactiveCommand<Unit, Unit> StartEditCommand { get; }
         public ReactiveCommand<Unit, Unit> CommitEditCommand { get; }
         public ReactiveCommand<Unit, Unit> CancelEditCommand { get; }
 
         private string _currentLocationDisplay = string.Empty;
+
         public string CurrentLocationDisplay
         {
             get => _currentLocationDisplay;
@@ -90,6 +90,7 @@ namespace GalaxyViewer.ViewModels
         }
 
         private string _currentCoordinatesDisplay = string.Empty;
+
         public string CurrentCoordinatesDisplay
         {
             get => _currentCoordinatesDisplay;
@@ -102,6 +103,7 @@ namespace GalaxyViewer.ViewModels
         }
 
         private bool _isEditing;
+
         public bool IsEditing
         {
             get => _isEditing;
@@ -117,6 +119,7 @@ namespace GalaxyViewer.ViewModels
         public bool IsDisplaying => !IsEditing;
 
         private string _editableLocation = string.Empty;
+
         public string EditableLocation
         {
             get => _editableLocation;
@@ -129,6 +132,7 @@ namespace GalaxyViewer.ViewModels
         }
 
         private string _maturityRating = "G";
+
         public string MaturityRating
         {
             get => _maturityRating;
@@ -137,8 +141,22 @@ namespace GalaxyViewer.ViewModels
                 if (_maturityRating == value) return;
                 _maturityRating = value;
                 OnPropertyChanged(nameof(MaturityRating));
+                OnPropertyChanged(nameof(MaturityRatingTooltip)); // Don't forget this!
             }
         }
+
+        public string MaturityRatingTooltip =>
+            MaturityRating switch
+            {
+                "G" => Application.Current?.FindResource("AddressBar_Maturity_G") as string ??
+                       "General: Suitable for all ages - family-friendly content",
+                "M" => Application.Current?.FindResource("AddressBar_Maturity_M") as string ??
+                       "Moderate: Suitable for ages 17 and above, may include moderate use of violence and 'sexy' content",
+                "A" => Application.Current?.FindResource("AddressBar_Maturity_A") as string ??
+                       "Adult: Suitable for ages 18 and above, may include heavy use of violence, drugs, or sexual content",
+                _ => Application.Current?.FindResource("AddressBar_Maturity_Default") as string ??
+                     "Content rating information"
+            };
 
         public string MaturityRatingColorHex =>
             MaturityRating switch
@@ -193,11 +211,6 @@ namespace GalaxyViewer.ViewModels
             OnPropertyChanged(nameof(CanGoForward));
         }
 
-        private void EditAddress()
-        {
-            StartEdit();
-        }
-
         private string GetCurrentLocationForEditing()
         {
             if (_client.Network?.Connected != true || _client.Network.CurrentSim == null)
@@ -213,16 +226,6 @@ namespace GalaxyViewer.ViewModels
         public bool ShowMaturityRating => !string.IsNullOrEmpty(MaturityRating);
 
         public string MaturityRatingColor => MaturityRatingColorHex;
-
-        // TODO: Fill these out accurately
-        public string MaturityRatingTooltip =>
-            MaturityRating switch
-            {
-                "G" => "General: Suitable for all ages - family-friendly content",
-                "M" => "Moderate: [To be added]",
-                "A" => "Adult: [To be added]",
-                _ => "Content rating information"
-            };
 
         private void StartEdit()
         {
@@ -243,13 +246,14 @@ namespace GalaxyViewer.ViewModels
             {
                 Log.Warning("EditableLocation is empty or null - no location to navigate to");
             }
+
             IsEditing = false;
         }
 
         private void CancelEdit()
         {
             Log.Information("Cancelling address edit");
-            EditableLocation = "";
+            EditableLocation = GetCurrentLocationForEditing();
             IsEditing = false;
         }
 
@@ -278,9 +282,11 @@ namespace GalaxyViewer.ViewModels
                     return;
                 }
 
-                if (ParseLocationString(location, out var regionName, out var x, out var y, out var z))
+                if (ParseLocationString(location, out var regionName, out var x, out var y,
+                        out var z))
                 {
-                    Log.Information("Teleporting to {RegionName} ({F},{F1},{F2})", regionName, x, y, z);
+                    Log.Information("Teleporting to {RegionName} ({F},{F1},{F2})", regionName, x, y,
+                        z);
 
                     IsTeleporting = true;
                     TeleportStatusMessage = $"Teleporting to {regionName}...";
@@ -319,7 +325,8 @@ namespace GalaxyViewer.ViewModels
             }
         }
 
-        private bool ParseLocationString(string location, out string regionName, out float x, out float y, out float z)
+        private bool ParseLocationString(string location, out string regionName, out float x,
+            out float y, out float z)
         {
             regionName = "";
             x = y = z = 0;
@@ -359,7 +366,8 @@ namespace GalaxyViewer.ViewModels
             return true;
         }
 
-        private bool ParseSecondLifeUrl(string url, out string regionName, out float x, out float y, out float z)
+        private bool ParseSecondLifeUrl(string url, out string regionName, out float x, out float y,
+            out float z)
         {
             regionName = "";
             x = y = z = 0;
@@ -390,13 +398,14 @@ namespace GalaxyViewer.ViewModels
             }
             catch (Exception ex)
             {
-                Log.Error(ex, $"Failed to parse secondlife URL: {url}");
+                Log.Error(ex, "Failed to parse secondlife URL: {Url}", url);
             }
 
             return false;
         }
 
-        private static bool ParseMapsUrl(string url, out string regionName, out float x, out float y, out float z)
+        private static bool ParseMapsUrl(string url, out string regionName, out float x,
+            out float y, out float z)
         {
             regionName = "";
             x = y = z = 0;
@@ -431,7 +440,7 @@ namespace GalaxyViewer.ViewModels
             }
             catch (Exception ex)
             {
-                Log.Error(ex, $"Failed to parse maps URL: {url}");
+                Log.Error(ex, "Failed to parse maps URL: {Url}", url);
             }
 
             return false;
@@ -523,19 +532,18 @@ namespace GalaxyViewer.ViewModels
             var currentPosition = _client.Self.SimPosition;
             var currentRegion = _client.Network.CurrentSim?.Name ?? "";
 
-            if (HasLocationChanged(currentPosition, currentRegion))
-            {
-                _lastLocationUpdate = now;
-                _lastKnownPosition = currentPosition;
-                _lastKnownRegion = currentRegion;
+            if (!HasLocationChanged(currentPosition, currentRegion)) return;
+            _lastLocationUpdate = now;
+            _lastKnownPosition = currentPosition;
+            _lastKnownRegion = currentRegion;
 
-                Dispatcher.UIThread.InvokeAsync(UpdateLocationDisplay, DispatcherPriority.Background);
-            }
+            Dispatcher.UIThread.InvokeAsync(UpdateLocationDisplay, DispatcherPriority.Background);
         }
 
         private void OnSimConnected(object? sender, EventArgs e)
         {
-            Log.Information("Connected to simulator: {Simulator}", _client.Network.CurrentSim?.Name);
+            Log.Information("Connected to simulator: {Simulator}",
+                _client.Network.CurrentSim?.Name);
             UpdateLocationDisplay();
         }
 
@@ -610,6 +618,7 @@ namespace GalaxyViewer.ViewModels
         }
 
         private bool _isTeleporting;
+
         public bool IsTeleporting
         {
             get => _isTeleporting;
@@ -623,6 +632,7 @@ namespace GalaxyViewer.ViewModels
         }
 
         private string _teleportStatusMessage = "";
+
         public string TeleportStatusMessage
         {
             get => _teleportStatusMessage;
@@ -640,12 +650,15 @@ namespace GalaxyViewer.ViewModels
             if (currentRegion != _lastKnownRegion)
                 return true;
 
-            const float minMovementThreshold = 1f; // Minimum distance to consider as movement is 1 meter
+            const float
+                minMovementThreshold =
+                    0.5f; // Minimum distance to consider as movement is 0.5 meters
             var distance = Vector3.Distance(currentPosition, _lastKnownPosition);
             return distance >= minMovementThreshold;
         }
 
-        public bool ShowTeleportStatus => IsTeleporting && !string.IsNullOrEmpty(TeleportStatusMessage);
+        public bool ShowTeleportStatus =>
+            IsTeleporting && !string.IsNullOrEmpty(TeleportStatusMessage);
 
         public void Dispose()
         {

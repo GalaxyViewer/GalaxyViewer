@@ -1,127 +1,211 @@
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Net.Http;
 using System.Reactive;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Linq;
 using ReactiveUI;
-using Avalonia.Threading;
+using Avalonia.Controls;
 using OpenMetaverse;
 using GalaxyViewer.Services;
 using GalaxyViewer.Models;
-using Serilog;
+using GalaxyViewer.Views;
 
 namespace GalaxyViewer.ViewModels;
 
 public sealed class DashboardViewModel : ViewModelBase, INotifyPropertyChanged
 {
+
     private readonly LiteDbService _liteDbService;
     private readonly SessionService _sessionService;
     private readonly GridClient _client;
+    private readonly ChatService? _chatService;
     private SessionModel _session;
+    private TabItem? _activeTab;
+    private int _totalUnreadMessages;
+
+    public ObservableCollection<TabItem> Tabs { get; }
+
+    private TabItem? ActiveTab
+    {
+        get => _activeTab;
+        set
+        {
+            if (_activeTab != null)
+                _activeTab.IsActive = false;
+
+            this.RaiseAndSetIfChanged(ref _activeTab, value);
+
+            if (_activeTab != null)
+                _activeTab.IsActive = true;
+        }
+    }
+
+    public object? ActiveTabContent => ActiveTab?.Content;
 
     public int CurrentBalance { get; private set; }
+    public string FormattedBalance => $"{CurrencySymbol}{CurrentBalance:N0}";
+    private string CurrencySymbol => "L$";
+
     public AddressBarViewModel AddressBarViewModel { get; }
 
-    private string CurrencySymbol => GetCurrencySymbol();
+    private int TotalUnreadMessages
+    {
+        get => _totalUnreadMessages;
+        set
+        {
+            if (_totalUnreadMessages == value) return;
 
-    public string FormattedBalance => $"{CurrencySymbol}{CurrentBalance:N0}";
+            _totalUnreadMessages = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasUnreadMessages));
+            OnPropertyChanged(nameof(UnreadMessagesText));
+        }
+    }
+
+    public bool HasUnreadMessages => TotalUnreadMessages > 0;
+    public string UnreadMessagesText => TotalUnreadMessages > 99 ? "99+" : TotalUnreadMessages.ToString();
 
     public ReactiveCommand<Unit, Unit> RefreshBalanceCommand { get; }
 
-    public DashboardViewModel(LiteDbService liteDbService, GridClient client,
-        SessionService sessionService, ICommand? openPreferencesCommand = null)
+    public ICommand ActivateTabCommand { get; }
+    public ICommand CloseTabCommand { get; }
+
+    public DashboardViewModel(
+        LiteDbService liteDbService,
+        GridClient client,
+        SessionService sessionService,
+        ICommand? openPreferencesCommand = null,
+        ChatService? chatService = null)
     {
-        _liteDbService = liteDbService;
-        _client = client;
-        _sessionService = sessionService;
+        _liteDbService = liteDbService ?? throw new ArgumentNullException(nameof(liteDbService));
+        _client = client ?? throw new ArgumentNullException(nameof(client));
+        _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
+        _chatService = chatService;
         _session = _liteDbService.GetSession();
-        _liteDbService.PropertyChanged += OnLiteDbServicePropertyChanged;
+
+        Tabs = [];
 
         AddressBarViewModel = new AddressBarViewModel(_liteDbService, _client, openPreferencesCommand);
 
-        _sessionService.BalanceChanged += OnBalanceChanged;
         RefreshBalanceCommand = ReactiveCommand.Create(RequestBalance);
+        ActivateTabCommand = ReactiveCommand.Create<TabItem>(ActivateTab);
+        CloseTabCommand = ReactiveCommand.Create<TabItem>(CloseTab);
+
+        InitializeTabs();
+        SubscribeToEvents();
 
         CurrentBalance = _sessionService.Balance;
         OnPropertyChanged(nameof(CurrentBalance));
-    }
 
-    public string CurrentLocation
-    {
-        get => _session.CurrentLocation;
-        set
+        if (_chatService != null)
         {
-            if (_session.CurrentLocation == value) return;
-            _session.CurrentLocation = value;
-            _liteDbService.SaveSession(_session);
-            OnPropertyChanged(nameof(CurrentLocation));
+            UpdateUnreadMessageCount();
         }
     }
 
-    public string LoginWelcomeMessage
+
+    private void InitializeTabs()
     {
-        get => _session.LoginWelcomeMessage;
-        set
+        if (_chatService == null) return;
+
+        // Main Chat/Local Chat tab (non-closeable for now)
+        var chatViewModel = new ChatViewModel(_chatService);
+        var mainChatTab = new TabItem("main_chat", "Local Chat",
+            new ChatView { DataContext = chatViewModel }, false);
+        Tabs.Add(mainChatTab);
+
+        // World/Map tab (placeholder)
+        // TODO: Implement actual world/map functionality
+        var worldTab = new TabItem("world", "World",
+            new TextBlock { Text = "World/Map view - Coming Soon" }, false);
+        Tabs.Add(worldTab);
+
+        // Inventory tab (placeholder)
+        // TODO: Implement actual inventory functionality
+        var inventoryTab = new TabItem("inventory", "Inventory",
+            new TextBlock { Text = "Inventory view - Coming Soon" }, false);
+        Tabs.Add(inventoryTab);
+
+        // People/Friends tab (placeholder)
+        // TODO: Implement actual people/friends functionality
+        var peopleTab = new TabItem("people", "People",
+            new TextBlock { Text = "People/Friends view - Coming Soon" }, false);
+        Tabs.Add(peopleTab);
+
+        if (Tabs.Count > 0)
+            ActiveTab = Tabs[0];
+    }
+
+    private void ActivateTab(TabItem tab)
+    {
+        ActiveTab = tab;
+        tab.NotificationCount = 0;
+        this.RaisePropertyChanged(nameof(ActiveTabContent));
+        UpdateUnreadMessageCount();
+    }
+
+    private void CloseTab(TabItem tab)
+    {
+        if (!tab.IsCloseable) return;
+
+        var index = Tabs.IndexOf(tab);
+        Tabs.Remove(tab);
+
+        if (tab == ActiveTab && Tabs.Count > 0)
         {
-            if (_session.LoginWelcomeMessage == value) return;
-            _session.LoginWelcomeMessage = value;
-            _liteDbService.SaveSession(_session);
-            OnPropertyChanged(nameof(LoginWelcomeMessage));
+            var newActiveIndex = Math.Min(index, Tabs.Count - 1);
+            ActiveTab = Tabs[newActiveIndex];
         }
+
+        UpdateUnreadMessageCount();
+    }
+
+    private void SubscribeToEvents()
+    {
+        _client.Network.LoginProgress += OnLoginProgress;
+        _client.Network.Disconnected += OnDisconnected;
+        _sessionService.BalanceChanged += OnBalanceChanged;
+    }
+
+    private void UpdateUnreadMessageCount()
+    {
+        var totalUnread = Tabs.Sum(tab => tab.NotificationCount);
+        TotalUnreadMessages = totalUnread;
+    }
+
+    private void OnLoginProgress(object? sender, LoginProgressEventArgs e)
+    {
+        if (e.Status != LoginStatus.Success) return;
+        CurrentBalance = _sessionService.Balance;
+        OnPropertyChanged(nameof(CurrentBalance));
+        OnPropertyChanged(nameof(FormattedBalance));
+    }
+
+    private void OnDisconnected(object? sender, DisconnectedEventArgs e)
+    {
+        CurrentBalance = 0;
+        OnPropertyChanged(nameof(CurrentBalance));
+        OnPropertyChanged(nameof(FormattedBalance));
     }
 
     private void OnBalanceChanged(object? sender, int newBalance)
     {
-        Dispatcher.UIThread.Post(() =>
-        {
-            CurrentBalance = newBalance;
-            OnPropertyChanged(nameof(CurrentBalance));
-            OnPropertyChanged(nameof(FormattedBalance));
-        });
+        CurrentBalance = newBalance;
+        OnPropertyChanged(nameof(CurrentBalance));
+        OnPropertyChanged(nameof(FormattedBalance));
     }
 
     private void RequestBalance()
     {
-        try
-        {
-            _client.Self.RequestBalance();
-            Log.Information("Balance request sent to the server.");
-        }
-        catch (HttpRequestException ex)
-        {
-            Log.Error(ex, "Failed to request balance from the server.");
-        }
-    }
-
-    private void OnLiteDbServicePropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName != nameof(LiteDbService.Session)) return;
-        Dispatcher.UIThread.Post(() =>
-        {
-            _session = _liteDbService.GetSession();
-            OnPropertyChanged(nameof(CurrentLocation));
-            OnPropertyChanged(nameof(LoginWelcomeMessage));
-        });
+        Task.Run(() => _client.Self.RequestBalance());
     }
 
     public new event PropertyChangedEventHandler? PropertyChanged;
 
-    private new void OnPropertyChanged(string propertyName)
+    private new void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
-    private string GetCurrencySymbol()
-    {
-        if (_client?.Network?.LoginMessage == null && _client?.Network?.Connected != true)
-            return "L$";
-        var gridName = _client?.Network?.CurrentSim?.Name ?? "";
-
-        var loginMessage = _client?.Network?.LoginMessage?.ToLowerInvariant() ?? "";
-
-        if (loginMessage.Contains("second life") || loginMessage.Contains("linden") || gridName.Contains("secondlife"))
-            return "L$";
-
-        return "L$";
     }
 }

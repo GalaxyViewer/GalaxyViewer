@@ -3,30 +3,174 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:GalaxyViewer.ViewModels"
-             mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="400"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:converters="clr-namespace:GalaxyViewer.Converters"
+             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="500"
              x:Class="GalaxyViewer.Views.PreferencesView"
              x:DataType="vm:PreferencesViewModel">
-    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-        <Label Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesTitle}"
-               VerticalAlignment="Center" />
-        <Label Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesTheme}"
-               VerticalAlignment="Center" />
-        <ComboBox ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}" />
-        <Label Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesLanguage}"
-               VerticalAlignment="Center" />
-        <ComboBox ItemsSource="{Binding LanguageOptions}" SelectedItem="{Binding SelectedLanguage}" />
-        <Label Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesFont}"
-               VerticalAlignment="Center" />
-        <ComboBox ItemsSource="{Binding FontOptions}" SelectedItem="{Binding SelectedFont}" />
 
-        <!-- Button panel for Save and Back buttons -->
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10">
-            <Button Content="{Binding Converter={StaticResource LocalizedStringConverter}, ConverterParameter=PreferencesSaveButton}"
-                    Command="{Binding SaveCommand}"
-                    Margin="0,0,10,0" />
-            <Button Content="Back"
-                    Command="{Binding BackCommand}"
-                    IsVisible="{Binding BackCommand, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    <UserControl.Resources>
+        <converters:AccentColorConverter x:Key="AccentColorConverter" />
+    </UserControl.Resources>
+
+    <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="450" HorizontalAlignment="Center" Spacing="32">
+
+            <!-- Header Section -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="{StaticResource Preferences_Title}"
+                           FontSize="28"
+                           FontWeight="SemiBold"
+                           HorizontalAlignment="Center"
+                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                <Rectangle Height="1"
+                          Fill="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                          Margin="0,8,0,0" />
+            </StackPanel>
+
+            <!-- Settings Groups -->
+            <StackPanel Spacing="24">
+
+                <!-- Appearance Group -->
+                <u:FormItem Label="{StaticResource Preferences_Appearance}"
+                           Classes="group-header">
+                    <StackPanel Spacing="16">
+
+                        <!-- Theme Setting -->
+                        <u:FormItem Label="{StaticResource Preferences_Theme}">
+                            <ComboBox ItemsSource="{Binding ThemeOptions}"
+                                     SelectedItem="{Binding SelectedTheme}"
+                                     MinWidth="200"
+                                     HorizontalAlignment="Stretch"
+                                     ToolTip.Tip="{StaticResource Preferences_Theme_Tooltip}"
+                                     AutomationProperties.Name="{StaticResource Preferences_Theme_A11y}" />
+                        </u:FormItem>
+
+                        <!-- Accent Color Setting -->
+                        <u:FormItem Label="{StaticResource Preferences_AccentColor}">
+                            <ComboBox ItemsSource="{Binding AccentColorOptions}"
+                                     SelectedItem="{Binding SelectedAccentColor}"
+                                     MinWidth="200"
+                                     HorizontalAlignment="Stretch"
+                                     ToolTip.Tip="{StaticResource Preferences_AccentColor_Tooltip}"
+                                     AutomationProperties.Name="{StaticResource Preferences_AccentColor_A11y}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <!-- Color Preview -->
+                                            <Border Width="16" Height="16"
+                                                   CornerRadius="8"
+                                                   VerticalAlignment="Center">
+                                                <Border.Background>
+                                                    <SolidColorBrush Color="{Binding Converter={StaticResource AccentColorConverter}}" />
+                                                </Border.Background>
+                                            </Border>
+                                            <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </u:FormItem>
+
+                        <!-- Font Setting -->
+                        <u:FormItem Label="{StaticResource Preferences_Font}">
+                            <ComboBox ItemsSource="{Binding FontOptions}"
+                                     SelectedItem="{Binding SelectedFont}"
+                                     MinWidth="200"
+                                     HorizontalAlignment="Stretch"
+                                     ToolTip.Tip="{StaticResource Preferences_Font_Tooltip}"
+                                     AutomationProperties.Name="{StaticResource Preferences_Font_A11y}" />
+                        </u:FormItem>
+
+                    </StackPanel>
+                </u:FormItem>
+
+                <!-- Localization Group -->
+                <u:FormItem Label="{StaticResource Preferences_Localization}"
+                           Classes="group-header">
+                    <StackPanel Spacing="16">
+
+                        <!-- Language Setting -->
+                        <u:FormItem Label="{StaticResource Preferences_Language}">
+                            <ComboBox ItemsSource="{Binding LanguageOptions}"
+                                     SelectedItem="{Binding SelectedLanguage}"
+                                     MinWidth="200"
+                                     HorizontalAlignment="Stretch"
+                                     ToolTip.Tip="{StaticResource Preferences_Language_Tooltip}"
+                                     AutomationProperties.Name="{StaticResource Preferences_Language_A11y}" />
+                        </u:FormItem>
+
+                    </StackPanel>
+                </u:FormItem>
+
+            </StackPanel>
+
+            <!-- Action Buttons -->
+            <Border Background="{DynamicResource SystemControlBackgroundChromeLowBrush}"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20">
+                <StackPanel Orientation="Horizontal"
+                           HorizontalAlignment="Center"
+                           Spacing="12">
+
+                    <!-- Save Button -->
+                    <Button Content="{StaticResource Preferences_SaveButton}"
+                            Command="{Binding SaveCommand}"
+                            Classes="accent"
+                            MinWidth="100"
+                            HorizontalContentAlignment="Center"
+                            ToolTip.Tip="{StaticResource Preferences_SaveButton_Tooltip}"
+                            AutomationProperties.Name="{StaticResource Preferences_SaveButton_A11y}">
+                        <Button.Styles>
+                            <Style Selector="Button.accent">
+                                <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}" />
+                            </Style>
+                            <Style Selector="Button.accent:pointerover">
+                                <Setter Property="Opacity" Value="0.9" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+
+                    <!-- Back Button -->
+                    <Button Content="{StaticResource Preferences_BackButton}"
+                            Command="{Binding BackCommand}"
+                            IsVisible="{Binding BackCommand, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            MinWidth="100"
+                            HorizontalContentAlignment="Center"
+                            ToolTip.Tip="{StaticResource Preferences_BackButton_Tooltip}"
+                            AutomationProperties.Name="{StaticResource Preferences_BackButton_A11y}" />
+
+                </StackPanel>
+            </Border>
+
         </StackPanel>
-    </StackPanel>
+    </ScrollViewer>
+
+    <!-- Custom Styles -->
+    <UserControl.Styles>
+        <Style Selector="u|FormItem.group-header">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <Style Selector="u|FormItem:not(.group-header)">
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <Style Selector="ComboBox">
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontWeight" Value="Medium" />
+        </Style>
+    </UserControl.Styles>
+
 </UserControl>

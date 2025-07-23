@@ -13,10 +13,10 @@ using GalaxyViewer.Models;
 using GalaxyViewer.Services;
 using GalaxyViewer.Views;
 using Newtonsoft.Json;
+using OpenMetaverse;
 using ReactiveUI;
 using Ursa.Controls;
 using Serilog;
-using OpenMetaverse;
 
 namespace GalaxyViewer.ViewModels;
 
@@ -40,6 +40,26 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         get => _loginStatusMessage;
         set => this.RaiseAndSetIfChanged(ref _loginStatusMessage, value);
     }
+
+    /*
+    public static string SplashScreenUrl
+    {
+        get
+        {
+            var version = VersionHelper.GetInformationalVersion();
+            var platform = GetFullPlatformString().ToLowerInvariant();
+            return $"https://galaxyviewer-splash.pages.dev?version={version}&platform={platform}";
+        }
+    }
+
+#if DEBUG
+    public bool ShowSplashScreen => false;
+    // Hide in debug builds because you need a bunch of dependencies for Linux and why would I do all that for a tiny thing?
+    // The built one has all the dependencies included so leave it in there
+#else
+    public bool ShowSplashScreen => true;  // Show in release builds
+#endif
+*/
 
     private readonly LiteDbService _liteDbService;
     private readonly PreferencesViewModel _preferencesViewModel;
@@ -68,7 +88,6 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         _preferencesViewModel = new PreferencesViewModel();
         _currentSession = _liteDbService.GetSession() ??
                           throw new InvalidOperationException("Session could not be retrieved.");
-        var timer = new Timer(CheckSessionChanges, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
         _username = string.Empty;
         _password = string.Empty;
         LoginLocations = _preferencesViewModel.LoginLocationOptions;
@@ -89,13 +108,6 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
 
         // Subscribe to the Network.LoginProgress event
         _client.Network.LoginProgress += OnLoginProgress;
-    }
-
-    private void CheckSessionChanges(object? state)
-    {
-        if (!_liteDbService.HasSessionChanged(_currentSession)) return;
-        _currentSession = _liteDbService.GetSession();
-        UpdateViewBindings();
     }
 
     private void UpdateViewBindings()
@@ -173,7 +185,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         {
             if (_selectedGrid == value) return;
             _selectedGrid = value;
-            _preferencesViewModel.SelectedGridNick = value.GridName;
+            if (value != null) _preferencesViewModel.SelectedGridNick = value.GridName;
             this.RaisePropertyChanged();
         }
     }
@@ -228,7 +240,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         loginParams.MfaEnabled = true;
         loginParams.Platform = ourPlatform;
         loginParams.PlatformVersion = Environment.OSVersion.VersionString;
-        loginParams.Start = _preferencesViewModel?.SelectedLoginLocation switch
+        loginParams.Start = _preferencesViewModel.SelectedLoginLocation switch
         {
             "Home" => "home",
             "Last Location" => "last",
@@ -284,6 +296,13 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         }
     }
 
+    private bool _isMfaPromptVisible;
+    public bool IsMfaPromptVisible
+    {
+        get => _isMfaPromptVisible;
+        set => this.RaiseAndSetIfChanged(ref _isMfaPromptVisible, value);
+    }
+
     private async Task<string> ShowMfaPromptDialogAsync()
     {
         var tcs = new TaskCompletionSource<string>();
@@ -294,10 +313,12 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         };
 
         MfaPromptContainer = mfaPromptDialog;
+        IsMfaPromptVisible = true;
 
         var mfaCode = await tcs.Task;
 
         MfaPromptContainer = null;
+        IsMfaPromptVisible = false;
 
         return mfaCode;
     }
@@ -317,6 +338,23 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
         return platformMap.FirstOrDefault(kv => RuntimeInformation.IsOSPlatform(kv.Key)).Value ??
                "Unk";
     }
+
+    private static string GetFullPlatformString()
+    {
+        var platformMap = new Dictionary<OSPlatform, string>
+        {
+            { OSPlatform.Windows, "Windows" },
+            { OSPlatform.Linux, "Linux" },
+            { OSPlatform.OSX, "MacOS" },
+            { OSPlatform.Create("BROWSER"), "Browser" },
+            { OSPlatform.Create("ANDROID"), "Android" },
+            { OSPlatform.Create("IOS"), "iOS" }
+        };
+
+        return platformMap.FirstOrDefault(kv => RuntimeInformation.IsOSPlatform(kv.Key)).Value ??
+               "Unknown";
+    }
+
 
     private async Task HandleSuccessfulLogin()
     {
