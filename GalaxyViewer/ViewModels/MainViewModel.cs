@@ -173,6 +173,7 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
     }
 
 
+    private readonly object _disposeLock = new();
     public void Dispose()
     {
         Dispose(true);
