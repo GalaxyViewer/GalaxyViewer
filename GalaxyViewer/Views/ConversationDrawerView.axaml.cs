@@ -1,11 +1,11 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
 namespace GalaxyViewer.Views;
 
-public partial class DebugView : UserControl
+public partial class ConversationDrawerView : UserControl
 {
-    public DebugView()
+    public ConversationDrawerView()
     {
         InitializeComponent();
     }

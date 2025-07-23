@@ -1,150 +1,197 @@
-﻿using System;
-using System.IO;
-using System.Reactive;
-using System.Threading.Tasks;
+using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
 using GalaxyViewer.Views;
+using GalaxyViewer.Services;
 using OpenMetaverse;
 using ReactiveUI;
-using Serilog;
 
-namespace GalaxyViewer.ViewModels
+namespace GalaxyViewer.ViewModels;
+
+public class MainViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
 {
-    public class MainViewModel : ViewModelBase
+    private UserControl _currentView;
+    private readonly GridClient _client;
+    private readonly LiteDbService _liteDbService;
+    private readonly SessionService _sessionService;
+    private readonly ChatService _chatService;
+    private readonly DashboardView _dashboardView;
+    private bool _disposed;
+
+    private PreferencesWindow? _preferencesWindow;
+
+    public new event PropertyChangedEventHandler? PropertyChanged;
+
+    public object CurrentView
     {
-        private UserControl? _currentView;
-        private bool _isLoggedIn;
-
-        private readonly GridClient _client = new();
-
-        private string? _username;
-        public string? Username
+        get => _currentView;
+        set
         {
-            get => _username;
-            set => this.RaiseAndSetIfChanged(ref _username, value);
+            if (_currentView == value) return;
+            _currentView = (UserControl)value;
+            OnPropertyChanged();
         }
+    }
 
-        private string? _password;
-        public string? Password
-        {
-            get => _password;
-            set => this.RaiseAndSetIfChanged(ref _password, value);
-        }
+    private new void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 
-        private string? _loginLocation;
-        public string? LoginLocation
-        {
-            get => _loginLocation;
-            set => this.RaiseAndSetIfChanged(ref _loginLocation, value);
-        }
+    public bool IsLoggedIn => App.IsLoggedIn;
 
-        private string? _grid;
-        public string? Grid
-        {
-            get => _grid;
-            set => this.RaiseAndSetIfChanged(ref _grid, value);
-        }
+    public ICommand ExitCommand { get; }
+    public ICommand LogoutCommand { get; }
+    public ICommand NavToLoginViewCommand { get; }
+    public ICommand NavToPreferencesViewCommand { get; }
+    public ICommand NavToDevViewCommand { get; }
+    public ICommand BackToDashboardViewCommand { get; }
 
-        public UserControl? CurrentView
-        {
-            get => _currentView;
-            set => this.RaiseAndSetIfChanged(ref _currentView, value);
-        }
 
-        public bool IsLoggedIn
+    public MainViewModel(LiteDbService liteDbService, GridClient client,
+        SessionService sessionService)
+    {
+        _liteDbService = liteDbService;
+        _client = client;
+        _sessionService = sessionService;
+        _chatService = new ChatService(_client, _liteDbService);
+
+        ExitCommand = ReactiveCommand.Create(LogoutAndExit);
+        LogoutCommand = ReactiveCommand.Create(Logout);
+        NavToLoginViewCommand = ReactiveCommand.Create(NavigateToLoginView);
+        NavToPreferencesViewCommand = ReactiveCommand.Create(NavigateToPreferencesView);
+        NavToDevViewCommand = ReactiveCommand.Create(NavigateToDevView);
+        BackToDashboardViewCommand = ReactiveCommand.Create(NavigateBackToDashboardView);
+
+        var dashboardViewModel = new DashboardViewModel(_liteDbService, _client, _sessionService,
+            NavToPreferencesViewCommand, _chatService);
+        _dashboardView = new DashboardView { DataContext = dashboardViewModel };
+
+        App.StaticPropertyChanged += (_, args) =>
         {
-            get => _isLoggedIn;
-            set
+            if (args.PropertyName != nameof(App.IsLoggedIn)) return;
+            OnPropertyChanged(nameof(IsLoggedIn));
+            if (IsLoggedIn)
             {
-                this.RaiseAndSetIfChanged(ref _isLoggedIn, value);
-                CurrentView = value ? new LoggedInView() : new LoginView();
+                Dispatcher.UIThread.Post(NavigateToDashboardView);
             }
-        }
+        };
 
-        public ReactiveCommand<Unit, Unit> LogoutCommand { get; }
-        public ReactiveCommand<Unit, Unit> LoginCommand { get; }
-        public ICommand ShowPreferencesCommand { get; }
-        public ICommand ExitCommand { get; }
+        var loginViewModel = new LoginViewModel(_liteDbService, _client);
+        _currentView = new LoginView { DataContext = loginViewModel };
+    }
 
-        public MainViewModel()
+    private void LogoutAndExit()
+    {
+        Logout();
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime
+            desktop)
         {
-            _currentView = new LoginView();
-            IsLoggedIn = false; // By default you aren't logged in
-
-            LogoutCommand = ReactiveCommand.Create(Logout);
-            LoginCommand = ReactiveCommand.CreateFromTask(Login);
-            ShowPreferencesCommand = ReactiveCommand.Create(ShowPreferences);
-            ExitCommand = ReactiveCommand.Create(ExitApplication);
+            desktop.Shutdown();
         }
+    }
 
-        private void Logout()
-        {
-            // Perform logout operation here
-            _client.Network.Logout();
-            IsLoggedIn = false;
-        }
+    private void Logout()
+    {
+        _chatService.Dispose();
+        _client.Network.Logout();
+        App.IsLoggedIn = false;
+        NavigateToLoginView();
+    }
 
-        private async Task Login()
+    private void NavigateToLoginView()
+    {
+        Dispatcher.UIThread.Post(() =>
         {
-            try
+            var loginViewModel = new LoginViewModel(_liteDbService, _client);
+            var loginView = new LoginView { DataContext = loginViewModel };
+            CurrentView = loginView;
+
+            if (OperatingSystem.IsAndroid())
             {
-                // Validate properties before using them
-                if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Password))
+                Dispatcher.UIThread.Post(() =>
                 {
-                    // Handle invalid login parameters
-                    await File.AppendAllTextAsync("error.log", $"Invalid login parameters for user: {Username}");
-                    return; // Exit the method if validation fails
-                }
+                    loginView.Focus();
+                }, DispatcherPriority.Loaded);
+            }
+        });
+    }
 
-                const string userAgent = "GalaxyViewer/0.1.0";
-                var loginParams = _client.Network.DefaultLoginParams(Username, Password, userAgent, LoginLocation, Grid);
+    private void NavigateToDashboardView()
+    {
+        CurrentView = _dashboardView;
+    }
 
-                var loginSuccess = await Task.Run(() => _client.Network.Login(loginParams));
-
-                if (loginSuccess)
+    private void NavigateToPreferencesView()
+    {
+        if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
+        {
+            CurrentView = new PreferencesView { DataContext = new PreferencesViewModel(BackToDashboardViewCommand) };
+        }
+        else
+        {
+            if (_preferencesWindow is not { IsVisible: true })
+            {
+                _preferencesWindow?.Close();
+                _preferencesWindow = new PreferencesWindow
                 {
-                    IsLoggedIn = true;
-                }
-                else
-                {
-                    // Handle failed login
-                    Log.Error("Failed to login user: {Username}", Username);
-                }
+                    DataContext = new PreferencesViewModel()
+                };
+                _preferencesWindow.Closed += (_, _) => _preferencesWindow = null;
+                _preferencesWindow.Show();
             }
-            catch (Exception ex)
+            else
             {
-                // Handle any exceptions that occur during login
-                Log.Error(ex, "An error occurred while logging in user: {Username}", Username);
+                _preferencesWindow?.Activate();
             }
         }
+    }
 
-        private void ShowPreferences()
+    private void NavigateBackToDashboardView()
+    {
+        Dispatcher.UIThread.Post(() =>
         {
-#if ANDROID
-            CurrentView = new PreferencesView();
-#else
-            var preferencesWindow = new PreferencesWindow
+            if (App.IsLoggedIn)
             {
-                DataContext = new PreferencesViewModel()
-            };
-            preferencesWindow.Show();
-#endif
-        }
-
-        private void ExitApplication()
-        {
-            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopLifetime)
-            {
-                desktopLifetime.Shutdown();
+                NavigateToDashboardView();
             }
-        }
+            else
+            {
+                NavigateToLoginView();
+            }
+        });
+    }
 
-        public void Dispose()
+    private void NavigateToDevView()
+    {
+        CurrentView = new DevView { DataContext = new DevViewModel() };
+    }
+
+
+    private readonly object _disposeLock = new();
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing)
         {
-            _client.Network.Logout();
+            _chatService.Dispose();
         }
+        _disposed = true;
+    }
+
+    ~MainViewModel()
+    {
+        Dispose(false);
     }
 }

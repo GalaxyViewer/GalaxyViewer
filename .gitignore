@@ -452,3 +452,21 @@ $RECYCLE.BIN/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+##
+## GalaxyViewer specific build things
+##
+
+# AppImage files
+*.AppImage
+
+# Build output directory (already covered by publish/ above)
+/publish/
+
+# Desktop files generated during build
+*.desktop
+
+# LinuxDeploy build artifacts
+linuxdeploy-output/
+linuxdeploy-*.AppImage
+appimagetool-*.AppImage

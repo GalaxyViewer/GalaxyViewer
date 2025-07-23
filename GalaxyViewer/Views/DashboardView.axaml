@@ -1,0 +1,185 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:GalaxyViewer.ViewModels"
+             xmlns:controls="clr-namespace:GalaxyViewer.Controls"
+             x:DataType="vm:DashboardViewModel"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="GalaxyViewer.Views.DashboardView">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Top Bar with Address Bar and Balance Button -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBackground}"
+                BorderBrush="{DynamicResource CardBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                Margin="0,0,0,4"
+                Padding="10,8"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
+            <!-- Top Bar with Address Bar and Balance Button -->
+            <Grid ColumnDefinitions="*,Auto"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch">
+                <controls:AddressBar DataContext="{Binding AddressBarViewModel}" Grid.Column="0"
+                                     HorizontalAlignment="Stretch" />
+                <!-- Balance Button -->
+                <Button Grid.Column="1"
+                        Command="{Binding RefreshBalanceCommand}"
+                        Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                        BorderThickness="1"
+                        CornerRadius="15"
+                        Padding="12,6"
+                        Margin="8,0,0,0"
+                        Cursor="Hand"
+                        ToolTip.Tip="{StaticResource Dashboard_RefreshBalance_Tooltip}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <!-- Wallet Icon -->
+                        <PathIcon
+                            Data="M17,6H3A1,1 0 0,0 2,7V17A1,1 0 0,0 3,18H17A1,1 0 0,0 18,17V7A1,1 0 0,0 17,6M17,16H3V12H17V16M17,10H3V8H17V10M7,14H9V15H7V14Z"
+                            Width="16"
+                            Height="16"
+                            Foreground="{DynamicResource SystemAccentColorBrush}"
+                            VerticalAlignment="Center" />
+                        <!-- Balance Text -->
+                        <TextBlock Text="{Binding FormattedBalance}"
+                                   FontSize="14"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource SystemAccentColorBrush}"
+                                   VerticalAlignment="Center" />
+                        <!-- Refresh Icon -->
+                        <PathIcon
+                            Data="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"
+                            Width="12"
+                            Height="12"
+                            Foreground="{DynamicResource SystemAccentColorBrush}"
+                            VerticalAlignment="Center"
+                            Opacity="0.7" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Tab Strip -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1,1,1,0"
+                CornerRadius="4,4,0,0">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled"
+                          Padding="4,2">
+                <ItemsControl ItemsSource="{Binding Tabs}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="2" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TabItem">
+                            <Border Name="TabBorder"
+                                    Background="{DynamicResource SystemControlBackgroundChromeLowBrush}"
+                                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4,4,0,0"
+                                    Padding="8,4"
+                                    Margin="1,0"
+                                    Classes.active="{Binding IsActive}">
+                                <Border.Styles>
+                                    <Style Selector="Border[Name=TabBorder]:not(.active)">
+                                        <Setter Property="Background"
+                                                Value="{DynamicResource SystemControlBackgroundChromeLowBrush}" />
+                                        <Setter Property="Opacity" Value="0.7" />
+                                        <Setter Property="Transitions">
+                                            <Transitions>
+                                                <BrushTransition Property="Background" Duration="0:0:0.2" />
+                                            </Transitions>
+                                        </Setter>
+                                    </Style>
+                                    <Style Selector="Border[Name=TabBorder]:pointerover:not(.active)">
+                                        <Setter Property="Background"
+                                                Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+                                        <Setter Property="Opacity" Value="0.9" />
+                                    </Style>
+                                    <Style Selector="Border[Name=TabBorder].active">
+                                        <Setter Property="Background" Value="{DynamicResource CardBackground}" />
+                                        <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}" />
+                                        <Setter Property="BorderThickness" Value="2,2,2,0" />
+                                        <Setter Property="Opacity" Value="1" />
+                                    </Style>
+                                </Border.Styles>
+
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Button Background="Transparent"
+                                            BorderThickness="0"
+                                            Padding="4,2"
+                                            HorizontalAlignment="Stretch"
+                                            Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).ActivateTabCommand}"
+                                            CommandParameter="{Binding}">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <!-- Tab Title -->
+                                            <TextBlock Text="{Binding Title}"
+                                                       VerticalAlignment="Center">
+                                                <TextBlock.Styles>
+                                                    <Style Selector="TextBlock">
+                                                        <Setter Property="FontWeight" Value="Normal" />
+                                                        <Setter Property="Foreground"
+                                                                Value="{DynamicResource SystemAccentColorBrush}" />
+                                                    </Style>
+                                                    <Style Selector="Border.active TextBlock">
+                                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                                        <Setter Property="Foreground"
+                                                                Value="{DynamicResource SystemAccentColorBrush}" />
+                                                    </Style>
+                                                </TextBlock.Styles>
+                                            </TextBlock>
+                                            <!-- Notification Badge -->
+                                            <Border Background="{DynamicResource SystemAccentColorBrush}"
+                                                    CornerRadius="10"
+                                                    MinWidth="18"
+                                                    Height="18"
+                                                    IsVisible="{Binding HasNotification}"
+                                                    Padding="4,1">
+                                                <TextBlock Text="{Binding NotificationCount}"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="11"
+                                                           Foreground="White" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Button>
+                                    <!-- Close Button -->
+                                    <Button Background="Transparent"
+                                            BorderThickness="0"
+                                            Padding="2"
+                                            Width="20"
+                                            Height="20"
+                                            IsVisible="{Binding IsCloseable}"
+                                            Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).CloseTabCommand}"
+                                            CommandParameter="{Binding}">
+                                        <PathIcon Data="M6,6 L14,14 M6,14 L14,6"
+                                                  Width="12"
+                                                  Height="12"
+                                                  Foreground="{DynamicResource SystemAccentColorBrush}" />
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Tab Content -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource CardBackground}"
+                BorderBrush="{DynamicResource CardBorderBrush}"
+                BorderThickness="1,0,1,1"
+                CornerRadius="0,0,4,4">
+            <ContentControl Content="{Binding ActiveTabContent}" />
+        </Border>
+    </Grid>
+</UserControl>

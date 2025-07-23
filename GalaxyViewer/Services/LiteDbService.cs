@@ -1,158 +1,181 @@
-using LiteDB;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using Avalonia.Markup.Xaml.MarkupExtensions;
+using LiteDB;
 using GalaxyViewer.Models;
+using OpenMetaverse;
 using Serilog;
 
-namespace GalaxyViewer.Services
+namespace GalaxyViewer.Services;
+
+public class LiteDbService : IDisposable, INotifyPropertyChanged
 {
-    public class LiteDbService : IDisposable
+    private LiteDatabase? _database;
+    private readonly string _databasePath;
+    public LiteDatabase? Database => _database;
+    private readonly GridClient _client;
+
+    public LiteDbService(GridClient client)
     {
-        private LiteDatabase? _database;
-        private readonly string _databasePath;
+        _client = client;
+        _databasePath = GetDatabasePath();
+        InitializeDatabase();
+        Session = GetSession();
+    }
 
-        public LiteDbService()
+    private SessionModel _session;
+
+    public SessionModel Session
+    {
+        get => _session;
+        private set
         {
-            try
-            {
-                _databasePath = GetDatabasePath();
-                Directory.CreateDirectory(Path.GetDirectoryName(_databasePath) ?? throw new InvalidOperationException()); // Ensure the directory exists
-                _database = new LiteDatabase(_databasePath);
-                Log.Information("LiteDbService initialized with database path: {DbPath}", _databasePath);
+            _session = value;
+            OnPropertyChanged();
+        }
+    }
 
-                // Call SeedDatabase to ensure the grids table is generated
-                SeedDatabase();
-            }
-            catch (LiteException ex)
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private static string GetDatabasePath()
+    {
+        var appDataPath =
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "GalaxyViewer");
+        return Path.Combine(appDataPath, "data.db");
+    }
+
+    private void InitializeDatabase()
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(_databasePath) ??
+                                      throw new InvalidOperationException());
+
+            _database = new LiteDatabase(_databasePath);
+            Log.Information("LiteDbService initialized with database path: {DbPath}", _databasePath);
+
+            var gridsCollection = _database.GetCollection<GridModel>("grids");
+            if (gridsCollection.Count() == 0)
             {
-                Log.Error(ex, "LiteDB exception occurred. Attempting to recreate the database.");
-                HandleDatabaseCorruption();
+                SeedGrids();
             }
-            catch (Exception ex)
+
+            ClearSessionData();
+            SeedDatabase();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to initialize LiteDbService");
+            throw;
+        }
+    }
+
+
+    private void SeedDatabase()
+    {
+        ClearSessionData();
+        SeedPreferences();
+    }
+
+    private void SeedPreferences()
+    {
+        var preferencesCollection = _database?.GetCollection<PreferencesModel>("preferences");
+        if (preferencesCollection != null && preferencesCollection.Count() != 0) return;
+        var defaultPreferences = PreferencesManager.CreateDefaultPreferences();
+        preferencesCollection?.Insert(defaultPreferences);
+        // Log.Debug("Database seeded with default preferences");
+    }
+
+    private void SeedGrids()
+    {
+        var gridsCollection = _database?.GetCollection<GridModel>("grids");
+        if (gridsCollection != null && gridsCollection.Count() != 0) return;
+        var grids = new[]
+        {
+            new GridModel
             {
-                Log.Error(ex, "Failed to initialize LiteDbService");
-                throw;
+                GridNick = "agni",
+                GridName = "Second Life (agni)",
+                Platform = "SecondLife",
+                LoginUri = "https://login.agni.lindenlab.com/cgi-bin/login.cgi",
+                LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Release",
+                HelperUri = "https://secondlife.com/helpers/",
+                Website = "http://secondlife.com/",
+                Support = "http://secondlife.com/support/",
+                Register = "http://secondlife.com/registration/",
+                Password = "http://secondlife.com/account/request.php",
+                Version = "0"
+            },
+            new GridModel
+            {
+                GridNick = "aditi",
+                GridName = "Second Life Beta (aditi)",
+                Platform = "SecondLife",
+                LoginUri = "https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
+                LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Beta",
+                HelperUri = "http://aditi-secondlife.webdev.lindenlab.com/helpers/",
+                Website = "http://secondlife.com/",
+                Support = "http://secondlife.com/support/",
+                Register = "http://secondlife.com/registration/",
+                Password = "http://secondlife.com/account/request.php",
+                Version = "1"
             }
+        };
+        gridsCollection?.InsertBulk(grids);
+        // Log.Debug("Database seeded with default grids");
+    }
+
+    private void ClearSessionData()
+    {
+        var sessionCollection = _database?.GetCollection<SessionModel>("session");
+        if (sessionCollection != null && sessionCollection.Count() > 0)
+        {
+            sessionCollection.DeleteAll();
+            // Log.Debug("Session data cleared");
         }
 
-        private static string GetDatabasePath()
-        {
-            string appDataPath;
-             appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GalaxyViewer");
-            return Path.Combine(appDataPath, "data.db");
-        }
+        if (sessionCollection != null && sessionCollection.Count() != 0) return;
+        sessionCollection?.Insert(new SessionModel());
+        // Log.Debug("Session data created");
+    }
 
-        private void HandleDatabaseCorruption()
-        {
-            try
-            {
-                if (File.Exists(_databasePath))
-                {
-                    File.Delete(_databasePath);
-                }
-                _database = new LiteDatabase(_databasePath);
-                SeedDatabase();
-                Log.Information("Database recreated successfully.");
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to recreate the database.");
-                throw;
-            }
-        }
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 
-        public ILiteCollection<T> GetCollection<T>(string name)
-        {
-            Log.Information("Retrieving collection: {CollectionName}", name);
-            return _database.GetCollection<T>(name);
-        }
+    public event EventHandler? SessionChanged;
 
-        public LiteDatabase? Database()
-        {
-            return _database;
-        }
+    public SessionModel GetSession()
+    {
+        var collection = _database?.GetCollection<SessionModel>("session");
+        return collection?.FindOne(Query.All()) ?? new SessionModel();
+    }
 
-        private void SeedDatabase()
-        {
-            SeedPreferences();
-            SeedGrids();
-        }
+    public bool HasSessionChanged(SessionModel currentSession)
+    {
+        var storedSession = GetSession();
+        return !storedSession.Equals(currentSession);
+    }
 
-        private void SeedPreferences()
-        {
-            try
-            {
-                var preferencesCollection = _database.GetCollection<PreferencesModel>("preferences");
-                if (preferencesCollection.Count() != 0) return;
-                var defaultPreferences = new PreferencesModel
-                {
-                    Theme = "Default",
-                    LoginLocation = "Home",
-                    Font = "Atkinson Hyperlegible",
-                    Language = "en-US",
-                    SelectedGridNick = "agni",
-                    LastSavedEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-                };
-                preferencesCollection.Insert(defaultPreferences);
-                Log.Information("Database seeded with default preferences");
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to seed preferences");
-            }
-        }
+    public void SaveSession(SessionModel session)
+    {
+        var collection = _database?.GetCollection<SessionModel>("session");
+        collection?.Upsert(session);
+        // Log.Debug("Session data saved");
 
-        private void SeedGrids()
-        {
-            try
-            {
-                var gridsCollection = _database.GetCollection<GridModel>("grids");
-                if (gridsCollection.Count() != 0) return;
-                var grids = new[]
-                {
-                    new GridModel
-                    {
-                        GridNick = "agni",
-                        GridName = "Second Life (agni)",
-                        Platform = "SecondLife",
-                        LoginUri = "https://login.agni.lindenlab.com/cgi-bin/login.cgi",
-                        LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Release",
-                        HelperUri = "https://secondlife.com/helpers/",
-                        Website = "http://secondlife.com/",
-                        Support = "http://secondlife.com/support/",
-                        Register = "http://secondlife.com/registration/",
-                        Password = "http://secondlife.com/account/request.php",
-                        Version = "0"
-                    },
-                    new GridModel
-                    {
-                        GridNick = "aditi",
-                        GridName = "Second Life Beta (aditi)",
-                        Platform = "SecondLife",
-                        LoginUri = "https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
-                        LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Beta",
-                        HelperUri = "http://aditi-secondlife.webdev.lindenlab.com/helpers/",
-                        Website = "http://secondlife.com/",
-                        Support = "http://secondlife.com/support/",
-                        Register = "http://secondlife.com/registration/",
-                        Password = "http://secondlife.com/account/request.php",
-                        Version = "1"
-                    }
-                };
+        Session = session;
+        SessionChanged?.Invoke(this, EventArgs.Empty);
+    }
 
-                gridsCollection.InsertBulk(grids);
-                Log.Information("Database seeded with default grids");
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to seed grids");
-            }
-        }
-
-        public void Dispose()
-        {
-            _database?.Dispose();
-            Log.Information("LiteDbService disposed");
-        }
+    void IDisposable.Dispose()
+    {
+        _database?.Dispose();
     }
 }

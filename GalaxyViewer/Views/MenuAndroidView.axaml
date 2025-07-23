@@ -1,0 +1,129 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="clr-namespace:GalaxyViewer.ViewModels"
+             x:Class="GalaxyViewer.Views.MenuAndroidView"
+             x:DataType="vm:MainViewModel">
+
+    <!-- Mobile-friendly toolbar with hamburger menu -->
+    <Grid Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+          Height="56">
+
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="16,8">
+
+            <DockPanel>
+                <!-- Hamburger Menu Button -->
+                <Button DockPanel.Dock="Left"
+                        Classes="icon-button"
+                        Background="Transparent"
+                        Padding="8"
+                        AutomationProperties.Name="Open menu">
+                    <Button.Flyout>
+                        <MenuFlyout Placement="BottomEdgeAlignedLeft">
+
+                            <!-- File Section -->
+                            <MenuItem Header="{StaticResource MenuAndroid_Login}"
+                                      Command="{Binding NavToLoginViewCommand}"
+                                      IsEnabled="{Binding !IsLoggedIn}">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M10,17V14H3V10H10V7L15,12L10,17Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{StaticResource MenuAndroid_Logout}"
+                                      Command="{Binding LogoutCommand}"
+                                      IsEnabled="{Binding IsLoggedIn}">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M14,12L10,8V11H2V13H10V16L14,12Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{StaticResource MenuAndroid_Preferences}"
+                                      Command="{Binding NavToPreferencesViewCommand}">
+                                <MenuItem.Icon>
+                                    <PathIcon
+                                        Data="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+
+                            <Separator />
+
+                            <!-- Communication Section -->
+                            <MenuItem Header="{StaticResource MenuAndroid_Chat}"
+                                      Command="{Binding BackToDashboardViewCommand}"
+                                      IsEnabled="{Binding IsLoggedIn}">
+                                <MenuItem.Icon>
+                                    <PathIcon
+                                        Data="M12,3C17.5,3 22,6.58 22,11C22,15.42 17.5,19 12,19C10.76,19 9.57,18.82 8.47,18.5C5.55,21 2,21 2,21C4.33,18.67 4.7,17.1 4.75,16.5C3.05,15.07 2,13.13 2,11C2,6.58 6.5,3 12,3Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{StaticResource MenuAndroid_Friends}"
+                                      IsEnabled="{Binding IsLoggedIn}">
+                                <MenuItem.Icon>
+                                    <PathIcon
+                                        Data="M16,4C18.2,4 20,5.8 20,8C20,10.2 18.2,12 16,12C13.8,12 12,10.2 12,8C12,5.8 13.8,4 16,4M16,6A2,2 0 0,0 14,8A2,2 0 0,0 16,10A2,2 0 0,0 18,8A2,2 0 0,0 16,6M16,13C18.67,13 22,14.33 22,17V20H10V17C10,14.33 13.33,13 16,13Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{StaticResource MenuAndroid_Groups}"
+                                      IsEnabled="{Binding IsLoggedIn}">
+                                <MenuItem.Icon>
+                                    <PathIcon
+                                        Data="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+
+                            <Separator />
+
+                            <!-- World Section -->
+                            <MenuItem Header="{StaticResource MenuAndroid_TeleportHome}"
+                                      IsEnabled="{Binding IsLoggedIn}">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{StaticResource MenuAndroid_WorldMap}"
+                                      IsEnabled="{Binding IsLoggedIn}">
+                                <MenuItem.Icon>
+                                    <PathIcon
+                                        Data="M15,19L9,16.89V5L15,7.11M20.5,3C20.44,3 20.39,3 20.34,3L15,5.1L9,3L3.36,4.9C3.15,4.97 3,5.15 3,5.38V20.5A0.5,0.5 0 0,0 3.5,21C3.55,21 3.61,21 3.66,21L9,18.9L15,21L20.64,19.1C20.85,19.03 21,18.85 21,18.62V3.5A0.5,0.5 0 0,0 20.5,3Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{StaticResource MenuAndroid_Landmarks}"
+                                      IsEnabled="{Binding IsLoggedIn}">
+                                <MenuItem.Icon>
+                                    <PathIcon
+                                        Data="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+
+                            <Separator />
+
+                            <!-- Developer -->
+                            <MenuItem Header="{StaticResource MenuAndroid_DevTools}"
+                                      Command="{Binding NavToDevViewCommand}">
+                                <MenuItem.Icon>
+                                    <PathIcon
+                                        Data="M8,3A2,2 0 0,0 6,5V9A2,2 0 0,1 4,11H3V13H4A2,2 0 0,1 6,15V19A2,2 0 0,0 8,21H10V19H8V14A2,2 0 0,0 6,12A2,2 0 0,0 8,10V5H10V3M16,3A2,2 0 0,1 18,5V9A2,2 0 0,0 20,11H21V13H20A2,2 0 0,0 18,15V19A2,2 0 0,1 16,21H14V19H16V14A2,2 0 0,1 18,12A2,2 0 0,1 16,10V5H14V3H16Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+
+                        </MenuFlyout>
+                    </Button.Flyout>
+
+                    <!-- Hamburger Icon -->
+                    <PathIcon Data="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"
+                              Width="24" Height="24" />
+                </Button>
+
+                <!-- App Title -->
+                <TextBlock DockPanel.Dock="Left"
+                           Text="{StaticResource App_Title}"
+                           FontSize="20"
+                           FontWeight="Medium"
+                           VerticalAlignment="Center"
+                           Margin="16,0,0,0"
+                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

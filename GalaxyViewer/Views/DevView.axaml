@@ -1,6 +1,9 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="GalaxyViewer.Views.DebugView">
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="clr-namespace:GalaxyViewer.ViewModels"
+             x:Class="GalaxyViewer.Views.DevView"
+             x:DataType="vm:DevViewModel">
     <StackPanel Margin="20">
         <TextBlock Text="Debugging View" FontSize="20" FontWeight="Bold" Margin="0,0,0,20" />
 
@@ -43,5 +46,14 @@
             <ListBoxItem Content="List Item 2" />
             <ListBoxItem Content="List Item 3" />
         </ListBox>
+
+        <!-- Ursa Tests -->
+        <TextBlock Text="Ursa Tests:" FontWeight="Bold" Margin="0,0,0,10" />
+        <u:ButtonGroup>
+            <Button Content="Button 1" />
+        </u:ButtonGroup>
+        <u:Avatar>
+            <Image Source="avares://GalaxyViewer/Assets/Images/Logo.png" Width="100" Height="100" />
+        </u:Avatar>
     </StackPanel>
 </UserControl>

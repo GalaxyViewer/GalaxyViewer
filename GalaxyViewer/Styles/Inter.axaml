@@ -4,7 +4,7 @@
     <Design.PreviewWith>
         <Border Padding="20">
             <!-- Add Controls for Previewer Here -->
-            <local:EmojiTextBlock Text="🌌 Galaxy Viewer" FontSize="24" />
+            <local:EmojiAwareTextBlock Text="🌌 Galaxy Viewer" FontSize="24" />
         </Border>
     </Design.PreviewWith>
     <Style Selector="local|EmojiTextBlock">

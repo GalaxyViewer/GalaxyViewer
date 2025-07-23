@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GalaxyViewer.ViewModels"
+             x:Class="GalaxyViewer.Views.ChatArea"
+             x:DataType="vm:ChatViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Conversation Header -->
+        <Border Grid.Row="0" Padding="15,10"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                BorderThickness="0,2,0,0">
+            <TextBlock Text="{Binding ActiveConversation.Name}" FontSize="16" FontWeight="SemiBold" />
+        </Border>
+
+        <!-- Messages -->
+        <ScrollViewer Grid.Row="1" Name="MessagesScrollViewer"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch">
+            <StackPanel x:Name="MessagesPanel" />
+        </ScrollViewer>
+
+        <!-- Typing indicator -->
+        <StackPanel Grid.Row="2" MinHeight="40">
+            <Border Padding="10,4" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}"
+                    IsVisible="{Binding ActiveConversation.IsTyping}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="3">
+                        <Ellipse Width="4" Height="4"
+                                 Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                        <Ellipse Width="4" Height="4"
+                                 Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                        <Ellipse Width="4" Height="4"
+                                 Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding ActiveConversation.LastMessage}" FontStyle="Italic" FontSize="11" />
+                </StackPanel>
+            </Border>
+
+            <!-- Input -->
+            <Border Padding="15,10" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right"
+                                Command="{Binding SendMessageCommand}"
+                                Content="{StaticResource Chat_Send}"
+                                Margin="8,0,0,0"
+                                IsEnabled="{Binding CanSendMessage}" />
+                        <TextBox Text="{Binding MessageText}"
+                                 Watermark="{StaticResource Chat_TypeMessage}"
+                                 AcceptsReturn="False"
+                                 AcceptsTab="False"
+                                 MinHeight="30"
+                                 VerticalAlignment="Center"
+                                 IsEnabled="{Binding CanTypeMessage}">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" Command="{Binding SendMessageCommand}" />
+                                <KeyBinding Gesture="Return" Command="{Binding SendMessageCommand}" />
+                            </TextBox.KeyBindings>
+                        </TextBox>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>
