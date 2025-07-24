@@ -18,6 +18,7 @@
                 <Button DockPanel.Dock="Left"
                         Classes="icon-button"
                         Background="Transparent"
+                        Foreground="{StaticResource SystemAccentColor}"
                         Padding="8"
                         AutomationProperties.Name="Open menu">
                     <Button.Flyout>
@@ -112,6 +113,7 @@
 
                     <!-- Hamburger Icon -->
                     <PathIcon Data="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"
+                              Foreground="{StaticResource SystemAccentColor}"
                               Width="24" Height="24" />
                 </Button>
 
@@ -120,9 +122,9 @@
                            Text="{StaticResource App_Title}"
                            FontSize="20"
                            FontWeight="Medium"
+                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                            VerticalAlignment="Center"
-                           Margin="16,0,0,0"
-                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                           Margin="16,0,0,0" />
             </DockPanel>
         </Border>
     </Grid>

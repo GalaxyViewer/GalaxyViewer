@@ -28,6 +28,12 @@
     <x:String x:Key="Common_Cancel">Cancel</x:String>
     <x:String x:Key="Common_Error">Error</x:String>
     <x:String x:Key="Common_Ok">Ok</x:String>
+    <x:String x:Key="Common_Yes">Yes</x:String>
+    <x:String x:Key="Common_No">No</x:String>
+    <x:String x:Key="Common_Confirm">Confirm</x:String>
+    <x:String x:Key="Common_ConfirmDelete">Are you sure you want to delete this?</x:String>
+    <x:String x:Key="Common_ConfirmDelete_A11y">Confirmation dialog for deletion</x:String>
+    <x:String x:Key="ConversationDrawer_OpenTooltip">Open Conversations Drawer</x:String>
     <x:String x:Key="ConversationDrawer_Title">Conversations</x:String>
     <x:String x:Key="Dashboard_RefreshBalance_Tooltip">Click to refresh balance</x:String>
     <x:String x:Key="DesktopMenu_AboutLand">About Land</x:String>

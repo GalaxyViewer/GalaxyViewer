@@ -16,7 +16,7 @@
                 <TextBlock Text="{StaticResource ConversationDrawer_Title}"
                            FontSize="18"
                            FontWeight="Bold"
-                           Margin="0,0,0,8" />
+                           Margin="0,0,0,12" />
                 <ItemsControl ItemsSource="{Binding Conversations}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="models:ChatConversation">
@@ -51,6 +51,15 @@
                                                    FontSize="16"
                                                    Foreground="{StaticResource SystemAccentColor}"
                                                    FontWeight="{Binding IsActive, Converter={StaticResource BoolToFontWeightConverter}}" />
+                                        <TextBlock
+                                            Text="{Binding LastMessage}"
+                                            FontSize="12"
+                                            Opacity="0.7"
+                                            TextTrimming="CharacterEllipsis"
+                                            MaxLines="1"
+                                            Margin="0,2,0,0"
+                                            IsVisible="{Binding LastMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                            Foreground="{DynamicResource TextColor}" />
                                     </StackPanel>
 
                                     <!-- Notification Badge -->

@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using GalaxyViewer.Models;
 using GalaxyViewer.ViewModels;
+using Serilog;
 using Ursa.Controls;
 using Ursa.Common;
 using Ursa.Controls.Options;
@@ -38,8 +39,8 @@ public partial class ChatArea : UserControl
         _messagesPanel = this.FindControl<StackPanel>("MessagesPanel");
 
         var openDrawerButton = this.FindControl<Button>("OpenDrawerButton");
-        if (openDrawerButton != null)
-            openDrawerButton.Click += (s, e) => OpenDrawer();
+        if (openDrawerButton == null) return;
+        openDrawerButton.Click += (s, e) => OpenDrawer();
     }
 
     private void OpenDrawer()
@@ -49,15 +50,28 @@ public partial class ChatArea : UserControl
             Position = Position.Left,
             CanLightDismiss = true,
             IsCloseButtonVisible = true,
-            Title = "Conversations",
             CanResize = false
         };
 
-        var hostId = "ChatDrawer";
+        const string hostId = "ChatDrawer";
+
+        if (_chatViewModel == null)
+        {
+            Log.Error("ChatViewModel is null in OpenDrawer. Cannot open drawer.");
+            return;
+        }
+
         var drawerViewModel = new ConversationDrawerViewModel(_chatViewModel);
 
-        Drawer.ShowCustom<ConversationDrawerView, ConversationDrawerViewModel>(drawerViewModel,
-            hostId, options);
+        try
+        {
+            Drawer.ShowCustom<ConversationDrawerView, ConversationDrawerViewModel>(drawerViewModel,
+                hostId, options);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Drawer.ShowCustom threw an exception.");
+        }
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)
@@ -88,6 +102,10 @@ public partial class ChatArea : UserControl
         {
             _chatViewModel.ActiveConversation.Messages.CollectionChanged += OnMessagesChanged;
         }
+
+        var openDrawerButton = this.FindControl<Button>("OpenDrawerButton");
+        if (openDrawerButton != null)
+            openDrawerButton.IsEnabled = _chatViewModel != null;
 
         RefreshMessages();
     }

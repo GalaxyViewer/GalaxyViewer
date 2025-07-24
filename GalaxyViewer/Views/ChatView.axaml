@@ -109,10 +109,6 @@
             </ItemsControl>
         </Grid>
 
-        <!-- Mobile Drawer -->
-        <u:OverlayDialogHost Name="ConversationDrawerHost" HostId="ChatDrawer"
-                             IsVisible="{OnPlatform Default=False, iOS=True, Android=True}" />
-
         <!-- Shared Chat Area -->
         <Border x:Name="ChatContainer" Background="{DynamicResource CardBackground}">
             <views:ChatArea DataContext="{Binding}" />

@@ -137,7 +137,12 @@ public class App : Application, IDisposable
                     Log.Information("Desktop main window created and shown");
                     break;
                 case ISingleViewApplicationLifetime singleViewPlatform:
-                    Log.Information("Creating MainView for single view platform (Android)");
+                    var mainView = new MainView
+                    {
+                        DataContext = new MainViewModel(liteDbService, gridClient, sessionService)
+                    };
+                    singleViewPlatform.MainView = mainView;
+                    Log.Information("MainView for single view platform (Android) created and set");
                     break;
                 default:
                     Log.Warning("Unknown application lifetime type: {Type}",
@@ -253,11 +258,11 @@ public class App : Application, IDisposable
             }
 
             Resources["SystemAccentColorBrush"] = accentBrush;
-            Resources["SystemAccentColor"] = ((SolidColorBrush)accentBrush).Color;
-            // Ensure these resources are available for DynamicResource lookups
+            if (accentBrush is not SolidColorBrush solidBrush) return;
+            Resources["SystemAccentColor"] = solidBrush.Color;
             if (Current == null) return;
-            Current.Resources["SystemAccentColorBrush"] = accentBrush;
-            Current.Resources["SystemAccentColor"] = ((SolidColorBrush)accentBrush).Color;
+            Current.Resources["SystemAccentColorBrush"] = solidBrush;
+            Current.Resources["SystemAccentColor"] = solidBrush.Color;
         }
         catch (Exception ex)
         {

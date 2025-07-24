@@ -4,12 +4,14 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GalaxyViewer.Models;
 using System.Windows.Input;
+using Serilog;
 
 namespace GalaxyViewer.ViewModels;
 
 public class ConversationDrawerViewModel : ObservableObject
 {
     private readonly ChatViewModel? _parentChatViewModel;
+    public event Action? RequestCloseDrawer;
 
     public ObservableCollection<ChatConversation> Conversations { get; }
 
@@ -17,6 +19,9 @@ public class ConversationDrawerViewModel : ObservableObject
 
     public ConversationDrawerViewModel(ChatViewModel? parentChatViewModel)
     {
+        Log.Information(
+            "ConversationDrawerViewModel created. ParentChatViewModel: {ParentChatViewModel}",
+            parentChatViewModel);
         _parentChatViewModel = parentChatViewModel;
         Conversations = _parentChatViewModel?.Conversations ?? [];
 
@@ -25,9 +30,8 @@ public class ConversationDrawerViewModel : ObservableObject
 
     private void SelectConversation(ChatConversation? conversation)
     {
-        if (conversation != null && _parentChatViewModel != null)
-        {
-            _parentChatViewModel.SelectConversationCommand.Execute(conversation).Subscribe();
-        }
+        if (conversation == null || _parentChatViewModel == null) return;
+        _parentChatViewModel.SelectConversationCommand.Execute(conversation).Subscribe();
+        RequestCloseDrawer?.Invoke();
     }
 }
