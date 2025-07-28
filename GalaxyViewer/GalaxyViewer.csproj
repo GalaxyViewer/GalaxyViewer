@@ -2,7 +2,7 @@
     <PropertyGroup>
         <TargetFrameworks>net9.0;net8.0;net8.0-android34.0</TargetFrameworks>
         <LangVersion>latest</LangVersion>
-        <Version>2025.07.22-test</Version>
+        <Version>2025.07.27-test</Version>
         <AssemblyInformationalVersion>$(Version)</AssemblyInformationalVersion>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     </PropertyGroup>
