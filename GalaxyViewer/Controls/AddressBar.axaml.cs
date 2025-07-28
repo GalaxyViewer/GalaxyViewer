@@ -39,5 +39,14 @@ namespace GalaxyViewer.Controls
                 vm.CancelEditCommand.Execute(Unit.Default);
             }
         }
+
+        // Auto-select all text when the address TextBox receives focus (Android editing)
+        private void EditTextBox_GotFocus(object? sender, GotFocusEventArgs e)
+        {
+            if (sender is TextBox tb)
+            {
+                tb.SelectAll();
+            }
+        }
     }
 }

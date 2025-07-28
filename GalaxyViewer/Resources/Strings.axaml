@@ -9,6 +9,7 @@
     <x:String x:Key="AddressBar_Forward_A11y">Go forward</x:String>
     <x:String x:Key="AddressBar_Forward_Tooltip">Go Forward</x:String>
     <x:String x:Key="AddressBar_Go_A11y">Search or go to location</x:String>
+    <x:String x:Key="AddressBar_Go_Button">Go</x:String>
     <x:String x:Key="AddressBar_Go_Tooltip">Search/Go</x:String>
     <x:String x:Key="AddressBar_Home_A11y">Go to home location</x:String>
     <x:String x:Key="AddressBar_Home_Tooltip">Go Home</x:String>
