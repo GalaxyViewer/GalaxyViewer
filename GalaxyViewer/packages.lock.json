@@ -141,6 +141,16 @@
           "System.Reactive": "6.0.0"
         }
       },
+      "Material.Icons.Avalonia": {
+        "type": "Direct",
+        "requested": "[2.4.1, )",
+        "resolved": "2.4.1",
+        "contentHash": "bJZzJCHfZDBg33ZyiSxvexMs2qMGkkv1XEgkAJkqLK9I8WNIUGLCnXcjoBrpSh2Sd2ytoD1IEjV72Zy54St3zA==",
+        "dependencies": {
+          "Avalonia": "11.0.0",
+          "Material.Icons": "2.4.1"
+        }
+      },
       "Microsoft.Extensions.DependencyInjection": {
         "type": "Direct",
         "requested": "[9.0.7, )",
@@ -303,6 +313,11 @@
         "dependencies": {
           "System.Configuration.ConfigurationManager": "4.5.0"
         }
+      },
+      "Material.Icons": {
+        "type": "Transitive",
+        "resolved": "2.4.1",
+        "contentHash": "5/8ekF4GXqpluBF+kPfv3TytBpV5Z+h4CUU5iNCDC7+A9hPQvtn08ZUjMUXtcRGxGyfScHYDqzshzTvYiPTCdA=="
       },
       "MessagePack": {
         "type": "Transitive",
@@ -1274,6 +1289,16 @@
           "System.Reactive": "6.0.0"
         }
       },
+      "Material.Icons.Avalonia": {
+        "type": "Direct",
+        "requested": "[2.4.1, )",
+        "resolved": "2.4.1",
+        "contentHash": "bJZzJCHfZDBg33ZyiSxvexMs2qMGkkv1XEgkAJkqLK9I8WNIUGLCnXcjoBrpSh2Sd2ytoD1IEjV72Zy54St3zA==",
+        "dependencies": {
+          "Avalonia": "11.0.0",
+          "Material.Icons": "2.4.1"
+        }
+      },
       "Microsoft.Extensions.DependencyInjection": {
         "type": "Direct",
         "requested": "[9.0.7, )",
@@ -1436,6 +1461,11 @@
         "dependencies": {
           "System.Configuration.ConfigurationManager": "4.5.0"
         }
+      },
+      "Material.Icons": {
+        "type": "Transitive",
+        "resolved": "2.4.1",
+        "contentHash": "5/8ekF4GXqpluBF+kPfv3TytBpV5Z+h4CUU5iNCDC7+A9hPQvtn08ZUjMUXtcRGxGyfScHYDqzshzTvYiPTCdA=="
       },
       "MessagePack": {
         "type": "Transitive",
@@ -1840,6 +1870,16 @@
           "System.Reactive": "6.0.0"
         }
       },
+      "Material.Icons.Avalonia": {
+        "type": "Direct",
+        "requested": "[2.4.1, )",
+        "resolved": "2.4.1",
+        "contentHash": "bJZzJCHfZDBg33ZyiSxvexMs2qMGkkv1XEgkAJkqLK9I8WNIUGLCnXcjoBrpSh2Sd2ytoD1IEjV72Zy54St3zA==",
+        "dependencies": {
+          "Avalonia": "11.0.0",
+          "Material.Icons": "2.4.1"
+        }
+      },
       "Microsoft.Extensions.DependencyInjection": {
         "type": "Direct",
         "requested": "[9.0.7, )",
@@ -2002,6 +2042,11 @@
         "dependencies": {
           "System.Configuration.ConfigurationManager": "4.5.0"
         }
+      },
+      "Material.Icons": {
+        "type": "Transitive",
+        "resolved": "2.4.1",
+        "contentHash": "5/8ekF4GXqpluBF+kPfv3TytBpV5Z+h4CUU5iNCDC7+A9hPQvtn08ZUjMUXtcRGxGyfScHYDqzshzTvYiPTCdA=="
       },
       "MessagePack": {
         "type": "Transitive",

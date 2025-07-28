@@ -52,6 +52,8 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
     public ICommand NavToDevViewCommand { get; }
     public ICommand BackToDashboardViewCommand { get; }
 
+    public MenuViewModel Menu { get; }
+
 
     public MainViewModel(LiteDbService liteDbService, GridClient client,
         SessionService sessionService)
@@ -67,6 +69,15 @@ public class MainViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
         NavToPreferencesViewCommand = ReactiveCommand.Create(NavigateToPreferencesView);
         NavToDevViewCommand = ReactiveCommand.Create(NavigateToDevView);
         BackToDashboardViewCommand = ReactiveCommand.Create(NavigateBackToDashboardView);
+
+        Menu = new MenuViewModel(
+            NavToLoginViewCommand,
+            LogoutCommand,
+            NavToPreferencesViewCommand,
+            NavToDevViewCommand,
+            BackToDashboardViewCommand,
+            ExitCommand
+        );
 
         var dashboardViewModel = new DashboardViewModel(_liteDbService, _client, _sessionService,
             NavToPreferencesViewCommand, _chatService);

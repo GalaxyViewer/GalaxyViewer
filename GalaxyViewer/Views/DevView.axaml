@@ -5,6 +5,7 @@
              x:Class="GalaxyViewer.Views.DevView"
              x:DataType="vm:DevViewModel">
     <StackPanel Margin="20">
+        <Button Content="Back to Dashboard" Margin="0,0,0,20" Command="{Binding GoToDashboardCommand}" />
         <TextBlock Text="Debugging View" FontSize="20" FontWeight="Bold" Margin="0,0,0,20" />
 
         <!-- Radio Buttons -->

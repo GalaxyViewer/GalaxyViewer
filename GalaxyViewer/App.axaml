@@ -3,6 +3,7 @@
              xmlns:local="using:GalaxyViewer"
              xmlns:semi="https://irihi.tech/semi"
              xmlns:u-Semi="https://irihi.tech/ursa/themes/semi"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:converters="clr-namespace:GalaxyViewer.Converters"
              x:Class="GalaxyViewer.App">
     <Application.DataTemplates>
@@ -13,6 +14,7 @@
         <StyleInclude Source="avares://GalaxyViewer/Styles/TextBlockOverride.axaml" />
         <semi:SemiTheme Locale="en-US" />
         <u-Semi:SemiTheme Locale="en-US" />
+        <materialIcons:MaterialIconStyles />
         <StyleInclude Source="avares://GalaxyViewer/Styles.axaml" />
     </Application.Styles>
     <Application.Resources>

@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:GalaxyViewer.ViewModels"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="GalaxyViewer.Views.ChatArea"
              x:DataType="vm:ChatViewModel">
 
@@ -13,20 +14,22 @@
                     BorderThickness="0,2,0,0"
                     HorizontalAlignment="Stretch">
                 <DockPanel HorizontalAlignment="Stretch" LastChildFill="True">
+                    <Button x:Name="OpenDrawerButton"
+                            DockPanel.Dock="Left"
+                            ToolTip.Tip="{StaticResource ConversationDrawer_OpenTooltip}"
+                            Background="Transparent"
+                            Foreground="{StaticResource SystemAccentColor}"
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center"
+                            IsVisible="{OnPlatform Default=False, iOS=True, Android=True}">
+                        <materialIcons:MaterialIcon Kind="Menu" Width="24" Height="24"/>
+                    </Button>
                     <TextBlock Text="{Binding ActiveConversation.Name}"
                                FontSize="16"
                                FontWeight="SemiBold"
                                VerticalAlignment="Center"
-                               DockPanel.Dock="Left" />
-                    <Button x:Name="OpenDrawerButton"
-                            DockPanel.Dock="Right"
-                            ToolTip.Tip="{StaticResource ConversationDrawer_OpenTooltip}"
-                            Foreground="{StaticResource SystemAccentColor}"
-                            Margin="8,0,0,0"
-                            VerticalAlignment="Center"
-                            IsVisible="{OnPlatform Default=False, iOS=True, Android=True}">
-                        <PathIcon Data="M3,6h18M3,12h18M3,18h18" Width="24" Height="24" />
-                    </Button>
+                               DockPanel.Dock="Left"
+                               Margin="0,0,8,0" />
                 </DockPanel>
             </Border>
 
