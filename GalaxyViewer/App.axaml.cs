@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia;
@@ -225,6 +226,28 @@ public class App : Application, IDisposable
 
             UpdateAccentColorResource(preferences.AccentColor);
             UpdateTextColorResource(isDarkTheme);
+
+            // Dynamically load the correct font style based on preferences.Font
+            var fontStyleFile = preferences.Font switch
+            {
+                "Inter" => "avares://GalaxyViewer/Styles/Inter.axaml",
+                "Atkinson Hyperlegible" => "avares://GalaxyViewer/Styles/Atkinson Hyperlegible.axaml",
+                "DejaVu Sans" => "avares://GalaxyViewer/Styles/DejaVuSans.axaml",
+                _ => "avares://GalaxyViewer/Styles/Atkinson Hyperlegible.axaml"
+            };
+            var fontStyleInclude = new StyleInclude(new Uri("resm:"))
+            {
+                Source = new Uri(fontStyleFile)
+            };
+            // Remove previous font styles
+            var toRemove = Resources.MergedDictionaries
+                .Where(d => d is StyleInclude s && (s.Source?.ToString().Contains("Inter.axaml") == true ||
+                                                    s.Source?.ToString().Contains("Atkinson Hyperlegible.axaml") == true ||
+                                                    s.Source?.ToString().Contains("DejaVuSans.axaml") == true))
+                .ToList();
+            foreach (var dict in toRemove)
+                Resources.MergedDictionaries.Remove(dict);
+            Resources.MergedDictionaries.Add(fontStyleInclude);
         });
     }
 

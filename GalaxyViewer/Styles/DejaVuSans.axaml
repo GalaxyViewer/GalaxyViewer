@@ -1,4 +1,4 @@
-﻿<Styles xmlns="https://github.com/avaloniaui"
+<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:GalaxyViewer.Controls">
     <Design.PreviewWith>
@@ -9,6 +9,6 @@
     </Design.PreviewWith>
     <Style Selector="local|EmojiTextBlock">
         <Setter Property="EmojiFontFamily" Value="avares://GalaxyViewer/Assets/Fonts/NotoColorEmoji.ttf#Noto Color Emoji" />
-        <Setter Property="DefaultFontFamily" Value="avares://GalaxyViewer/Assets/Fonts/Inter-VariableFont_opsz,wght.ttf#Inter Regular" />
+        <Setter Property="DefaultFontFamily" Value="avares://GalaxyViewer/Assets/Fonts/DejaVuSans.ttf#DejaVu Sans" />
     </Style>
 </Styles>

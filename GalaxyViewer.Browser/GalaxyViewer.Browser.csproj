@@ -1,21 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
-    <WasmMainJSPath>wwwroot/main.js</WasmMainJSPath>
-    <WasmRuntimeAssetsLocation>./_framework</WasmRuntimeAssetsLocation>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+        <WasmMainJSPath>wwwroot/main.js</WasmMainJSPath>
+        <WasmRuntimeAssetsLocation>./_framework</WasmRuntimeAssetsLocation>
+        <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <WasmExtraFilesToDeploy Include="wwwroot/**" />
-  </ItemGroup>
+    <ItemGroup>
+        <WasmExtraFilesToDeploy Include="wwwroot/**"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Avalonia.Browser" Version="11.1.4" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="../GalaxyViewer/Assets/Fonts/*.ttf">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <TargetPath>wwwroot/Assets/Fonts/%(Filename)%(Extension)</TargetPath>
+        </None>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\GalaxyViewer\GalaxyViewer.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Avalonia.Browser" Version="11.3.2"/>
+        <PackageReference Include="SkiaSharp.NativeAssets.WebAssembly" Version="3.119.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\GalaxyViewer\GalaxyViewer.csproj"/>
+    </ItemGroup>
 </Project>

@@ -5,7 +5,7 @@
     <!-- Global font for emoji and accessibility -->
     <Style Selector="TextBlock">
         <Setter Property="FontFamily"
-                Value="avares://GalaxyViewer/Assets/Fonts/#Noto Emoji, avar://GalaxyViewer/Assets/Fonts/#Atkinson Hyperlegible" />
+                Value="avares://GalaxyViewer/Assets/Fonts/NotoColorEmoji.ttf#Noto Emoji, avares://GalaxyViewer/Assets/Fonts/AtkinsonHyperlegible-Regular.ttf#Atkinson Hyperlegible Regular" />
     </Style>
 
     <!-- Chat bubble base style -->
