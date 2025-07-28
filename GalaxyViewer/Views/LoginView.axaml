@@ -3,6 +3,7 @@
              xmlns:u="https://irihi.tech/ursa"
              x:Class="GalaxyViewer.Views.LoginView"
              xmlns:viewModels="clr-namespace:GalaxyViewer.ViewModels"
+             xmlns:converters="clr-namespace:GalaxyViewer.Converters"
              x:DataType="viewModels:LoginViewModel">
 
     <!-- Add styles to use accent color for login buttons -->
@@ -30,37 +31,32 @@
         </Style>
     </UserControl.Styles>
 
+    <UserControl.Resources>
+        <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+    </UserControl.Resources>
+
     <Grid>
+        <!-- MFA Prompt, shown when IsMfaPromptVisible is true -->
+        <ContentControl IsVisible="{Binding IsMfaPromptVisible}" Content="{Binding MfaPromptContainer}" />
+
+        <!-- Login UI, shown when IsMfaPromptVisible is false -->
         <OnPlatform>
-            <!-- On platform Windows or Linux -->
             <On Options="Windows, Linux">
-                <!-- Notice for Pre-Alpha Build -->
-                <Grid RowDefinitions="*,Auto,Auto,Auto,Auto">
-                    <Border
-                        Grid.Row="0"
-                        Margin="10,10,10,0"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        AutomationProperties.Name="Warning: Pre-Alpha Build. This software is barely functioning and not ready for external testing. Use at your own risk.">
-                        <TextBlock
-                            Text="⚠️ WARNING: PRE-ALPHA BUILD ⚠️"
-                            FontSize="18"
-                            FontWeight="Bold"
-                            TextWrapping="Wrap" />
+                <Grid IsVisible="{Binding IsMfaPromptVisible, Converter={StaticResource InverseBoolConverter}}"
+                      RowDefinitions="*,Auto,Auto,Auto,Auto">
+                    <Border Grid.Row="0" Margin="10,10,10,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            AutomationProperties.Name="Warning: Pre-Alpha Build. This software is barely functioning and not ready for external testing. Use at your own risk.">
+                        <TextBlock Text="⚠️ WARNING: PRE-ALPHA BUILD ⚠️" FontSize="18" FontWeight="Bold"
+                                   TextWrapping="Wrap" />
                     </Border>
                     <TextBlock
                         Text="This software is barely functioning and not ready for external testing. Use at your own risk!"
-                        FontSize="14"
-                        Grid.Row="1"
-                        Margin="10,0,10,20"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        TextWrapping="Wrap" />
+                        FontSize="14" Grid.Row="1" Margin="10,0,10,20" HorizontalAlignment="Center"
+                        VerticalAlignment="Center" TextWrapping="Wrap" />
                     <TextBlock Grid.Row="2" Text="{Binding LoginStatusMessage}" Margin="20,20,0,0"
                                VerticalAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap" />
                     <Grid Grid.Row="3" Margin="20" ColumnDefinitions="Auto,240,Auto,240,Auto,Auto,*">
-                        <Label Grid.Column="0"
-                               Content="{StaticResource Login_Username}"
+                        <Label Grid.Column="0" Content="{StaticResource Login_Username}"
                                ToolTip.Tip="{StaticResource Login_Username_Tooltip}"
                                AutomationProperties.Name="{StaticResource Login_Username_A11y}"
                                VerticalAlignment="Center" />
@@ -68,102 +64,56 @@
                                  Watermark="{StaticResource Login_Username_Watermark}"
                                  ToolTip.Tip="{StaticResource Login_Username_Tooltip}"
                                  AutomationProperties.Name="{StaticResource Login_Username_A11y}"
-                                 Text="{Binding Username}"
-                                 Margin="5,0" />
-                        <Label Grid.Column="2"
-                               Content="{StaticResource Login_Password}"
+                                 Text="{Binding Username}" Margin="5,0" />
+                        <Label Grid.Column="2" Content="{StaticResource Login_Password}"
                                ToolTip.Tip="{StaticResource Login_Password_Tooltip}"
                                AutomationProperties.Name="{StaticResource Login_Password_A11y}"
                                VerticalAlignment="Center" Margin="5,0" />
                         <TextBox Grid.Column="3" Name="PasswordBoxDesktop"
                                  Watermark="{StaticResource Login_Password_Watermark}"
                                  ToolTip.Tip="{StaticResource Login_Password_Tooltip}"
-                                 AutomationProperties.Name="{StaticResource Login_Password_A11y}"
-                                 PasswordChar="*"
-                                 Text="{Binding Password}"
-                                 Margin="5,0" />
-                        <ComboBox Grid.Column="4" Name="LoginLocationDesktop"
-                                  ItemsSource="{Binding LoginLocations}"
-                                  SelectedItem="{Binding SelectedLoginLocation}"
-                                  Margin="5,0" />
-                        <ComboBox Grid.Column="5" Name="GridSelectionDesktop"
-                                  ItemsSource="{Binding Grids}"
-                                  SelectedItem="{Binding SelectedGrid}"
-                                  Margin="5,0" />
-                        <Button Grid.Column="6" Name="ButtonLoginDesktop"
-                                Classes="login-button"
+                                 AutomationProperties.Name="{StaticResource Login_Password_A11y}" PasswordChar="*"
+                                 Text="{Binding Password}" Margin="5,0" />
+                        <ComboBox Grid.Column="4" Name="LoginLocationDesktop" ItemsSource="{Binding LoginLocations}"
+                                  SelectedItem="{Binding SelectedLoginLocation}" Margin="5,0" />
+                        <ComboBox Grid.Column="5" Name="GridSelectionDesktop" ItemsSource="{Binding Grids}"
+                                  SelectedItem="{Binding SelectedGrid}" Margin="5,0" />
+                        <Button Grid.Column="6" Name="ButtonLoginDesktop" Classes="login-button"
                                 Content="{StaticResource Login_Button}"
                                 ToolTip.Tip="{StaticResource Login_Button_Tooltip}"
                                 AutomationProperties.Name="{StaticResource Login_Button_A11y}"
-                                Command="{Binding TryLoginCommand}"
-                                Margin="5,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                                Command="{Binding TryLoginCommand}" Margin="5,0" VerticalAlignment="Center"
+                                HorizontalAlignment="Left" />
                     </Grid>
                 </Grid>
             </On>
-            <!-- On platform Android -->
             <On Options="Android">
-                <StackPanel>
-                    <!-- Notice for Pre-Alpha Build -->
-                    <TextBlock Text="⚠️ WARNING: PRE-ALPHA BUILD ⚠️"
-                               FontSize="18"
-                               FontWeight="Bold"
-                               Margin="10,10,10,0"
-                               HorizontalAlignment="Center"
-                               TextWrapping="Wrap" />
+                <StackPanel IsVisible="{Binding IsMfaPromptVisible, Converter={StaticResource InverseBoolConverter}}">
+                    <TextBlock Text="⚠️ WARNING: PRE-ALPHA BUILD ⚠️" FontSize="18" FontWeight="Bold"
+                               Margin="10,10,10,0" HorizontalAlignment="Center" TextWrapping="Wrap" />
                     <TextBlock
                         Text="This software is barely functioning and not ready for external testing. Use at your own risk!"
-                        FontSize="14"
-                        Margin="10,0,10,20"
-                        HorizontalAlignment="Center"
-                        TextWrapping="Wrap" />
-                    <TextBox Name="UsernameBoxAndroid"
-                             Watermark="{StaticResource Login_Username_Watermark}"
+                        FontSize="14" Margin="10,0,10,20" HorizontalAlignment="Center" TextWrapping="Wrap" />
+                    <TextBox Name="UsernameBoxAndroid" Watermark="{StaticResource Login_Username_Watermark}"
                              ToolTip.Tip="{StaticResource Login_Username_Tooltip}"
-                             AutomationProperties.Name="{StaticResource Login_Username_A11y}"
-                             Text="{Binding Username}"
+                             AutomationProperties.Name="{StaticResource Login_Username_A11y}" Text="{Binding Username}"
                              Margin="5" />
-                    <TextBox Name="PasswordBoxAndroid"
-                             Watermark="{StaticResource Login_Password_Watermark}"
+                    <TextBox Name="PasswordBoxAndroid" Watermark="{StaticResource Login_Password_Watermark}"
                              ToolTip.Tip="{StaticResource Login_Password_Tooltip}"
-                             AutomationProperties.Name="{StaticResource Login_Password_A11y}"
-                             PasswordChar="*"
-                             Text="{Binding Password}"
-                             Margin="5" />
-                    <ComboBox Name="LoginLocationAndroid"
-                              ItemsSource="{Binding LoginLocations}"
-                              SelectedItem="{Binding SelectedLoginLocation}"
-                              Margin="5" />
-                    <ComboBox Name="GridSelectionAndroid"
-                              ItemsSource="{Binding Grids}"
-                              SelectedItem="{Binding SelectedGrid}"
-                              Margin="5" />
-                    <Button Name="ButtonLoginAndroid"
-                            Classes="login-button"
-                            Content="{StaticResource Login_Button}"
+                             AutomationProperties.Name="{StaticResource Login_Password_A11y}" PasswordChar="*"
+                             Text="{Binding Password}" Margin="5" />
+                    <ComboBox Name="LoginLocationAndroid" ItemsSource="{Binding LoginLocations}"
+                              SelectedItem="{Binding SelectedLoginLocation}" Margin="5" />
+                    <ComboBox Name="GridSelectionAndroid" ItemsSource="{Binding Grids}"
+                              SelectedItem="{Binding SelectedGrid}" Margin="5" />
+                    <Button Name="ButtonLoginAndroid" Classes="login-button" Content="{StaticResource Login_Button}"
                             ToolTip.Tip="{StaticResource Login_Button_Tooltip}"
                             AutomationProperties.Name="{StaticResource Login_Button_A11y}"
-                            Command="{Binding TryLoginCommand}"
-                            Margin="5" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                    <ContentControl Content="{Binding MfaPromptContainer}" />
+                            Command="{Binding TryLoginCommand}" Margin="5" VerticalAlignment="Center"
+                            HorizontalAlignment="Center" />
                     <TextBlock Text="{Binding LoginStatusMessage}" Margin="5" TextWrapping="Wrap" />
                 </StackPanel>
             </On>
         </OnPlatform>
-        <!-- MFA Overlay -->
-        <Border
-            Background="#CC000000"
-            IsVisible="{Binding IsMfaPromptVisible}"
-            ZIndex="100"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch">
-            <ContentControl
-                Content="{Binding MfaPromptContainer}"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Width="400"
-                Height="300"
-                CornerRadius="12"
-                Padding="32" />
-        </Border>
     </Grid>
 </UserControl>

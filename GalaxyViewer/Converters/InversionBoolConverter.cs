@@ -4,7 +4,7 @@ using Avalonia.Data.Converters;
 
 namespace GalaxyViewer.Converters;
 
-public class InverseBoolConverter : IValueConverter
+public partial class InverseBoolConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value is bool b ? !b : value;
