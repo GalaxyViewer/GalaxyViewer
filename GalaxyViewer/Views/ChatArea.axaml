@@ -13,24 +13,35 @@
                     Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
                     BorderThickness="0,2,0,0"
                     HorizontalAlignment="Stretch">
-                <DockPanel HorizontalAlignment="Stretch" LastChildFill="True">
-                    <Button x:Name="OpenDrawerButton"
-                            DockPanel.Dock="Left"
-                            ToolTip.Tip="{StaticResource ConversationDrawer_OpenTooltip}"
-                            Background="Transparent"
-                            Foreground="{StaticResource SystemAccentColor}"
-                            Margin="0,0,8,0"
-                            VerticalAlignment="Center"
-                            IsVisible="{OnPlatform Default=False, iOS=True, Android=True}">
-                        <materialIcons:MaterialIcon Kind="Menu" Width="24" Height="24"/>
-                    </Button>
-                    <TextBlock Text="{Binding ActiveConversation.Name}"
-                               FontSize="16"
-                               FontWeight="SemiBold"
-                               VerticalAlignment="Center"
-                               DockPanel.Dock="Left"
-                               Margin="0,0,8,0" />
-                </DockPanel>
+                <Grid>
+                    <DockPanel HorizontalAlignment="Stretch" LastChildFill="True">
+                        <Button x:Name="OpenDrawerButton"
+                                DockPanel.Dock="Left"
+                                ToolTip.Tip="{StaticResource ConversationDrawer_OpenTooltip}"
+                                Background="Transparent"
+                                Foreground="{StaticResource SystemAccentColor}"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                IsVisible="{OnPlatform Default=False, iOS=True, Android=True}">
+                            <Grid>
+                                <materialIcons:MaterialIcon Kind="Menu" Width="24" Height="24"/>
+                                <u:Badge
+                                    Header="{Binding TotalUnreadCount}"
+                                    IsVisible="{Binding HasUnreadMessages}"
+                                    Background="{StaticResource SystemAccentColor}"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    Margin="0,0,0,0" />
+                            </Grid>
+                        </Button>
+                        <TextBlock Text="{Binding ActiveConversation.Name}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   DockPanel.Dock="Left"
+                                   Margin="0,0,8,0" />
+                    </DockPanel>
+                </Grid>
             </Border>
 
             <!-- Messages -->

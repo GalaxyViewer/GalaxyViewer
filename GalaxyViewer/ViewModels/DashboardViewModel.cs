@@ -105,6 +105,14 @@ public sealed class DashboardViewModel : ViewModelBase, INotifyPropertyChanged
         }
     }
 
+    private string GetResourceString(string key)
+    {
+        if (Avalonia.Application.Current == null) return key;
+        var result = Avalonia.Application.Current.FindResource(key);
+        if (result is string str)
+            return str;
+        return key;
+    }
 
     private void InitializeTabs()
     {
@@ -112,30 +120,29 @@ public sealed class DashboardViewModel : ViewModelBase, INotifyPropertyChanged
 
         // Main Chat/Local Chat tab (non-closeable for now)
         var chatViewModel = new ChatViewModel(_chatService);
-        var mainChatTab = new TabItem("main_chat", "{DynamicResource Menu_Chat}",
+        var mainChatTab = new TabItem("main_chat", "Menu_Chat", GetResourceString("Menu_Chat"),
             new ChatView { DataContext = chatViewModel }, false);
         Tabs.Add(mainChatTab);
 
         // World/Map tab (placeholder)
-        // TODO: Implement actual world/map functionality
-        var worldTab = new TabItem("world", "{DynamicResource Menu_World}",
-            new TextBlock { Text = "World/Map view - Coming Soon" }, false);
+        var worldTab = new TabItem("world", "Menu_World", GetResourceString("Menu_World"),
+            new TextBlock { Text = "World/Map view - Coming Soon" }, true);
         Tabs.Add(worldTab);
 
         // Inventory tab (placeholder)
-        // TODO: Implement actual inventory functionality
-        var inventoryTab = new TabItem("inventory", "{DynamicResource Menu_Inventory}",
-            new TextBlock { Text = "Inventory view - Coming Soon" }, false);
+        var inventoryTab = new TabItem("inventory", "Menu_Inventory", GetResourceString("Menu_Inventory"),
+            new TextBlock { Text = "Inventory view - Coming Soon" }, true);
         Tabs.Add(inventoryTab);
 
         // People/Friends tab (placeholder)
-        // TODO: Implement actual people/friends functionality
-        var peopleTab = new TabItem("people", "{DynamicResource Menu_People}",
-            new TextBlock { Text = "People/Friends view - Coming Soon" }, false);
+        var peopleTab = new TabItem("people", "Menu_People", GetResourceString("Menu_People"),
+            new TextBlock { Text = "People/Friends view - Coming Soon" }, true);
         Tabs.Add(peopleTab);
 
         if (Tabs.Count > 0)
             ActiveTab = Tabs[0];
+
+        UpdateChatTabBadge();
     }
 
     private void ActivateTab(TabItem tab)
@@ -144,6 +151,7 @@ public sealed class DashboardViewModel : ViewModelBase, INotifyPropertyChanged
         tab.NotificationCount = 0;
         this.RaisePropertyChanged(nameof(ActiveTabContent));
         UpdateUnreadMessageCount();
+        UpdateChatTabBadge();
     }
 
     private void CloseTab(TabItem tab)
@@ -169,10 +177,22 @@ public sealed class DashboardViewModel : ViewModelBase, INotifyPropertyChanged
         _sessionService.BalanceChanged += OnBalanceChanged;
     }
 
+    private void UpdateChatTabBadge()
+    {
+        // Find the chat tab
+        var chatTab = Tabs.FirstOrDefault(t => t.TitleResourceKey == "Menu_Chat");
+        if (chatTab != null && chatTab.Content is ChatView chatView && chatView.DataContext is ChatViewModel chatVm)
+        {
+            chatTab.ChatTabUnreadCount = chatVm.TotalUnreadCount;
+            chatTab.ShowChatTabBadge = !chatTab.IsActive && chatVm.TotalUnreadCount > 0;
+        }
+    }
+
     private void UpdateUnreadMessageCount()
     {
         var totalUnread = Tabs.Sum(tab => tab.NotificationCount);
         TotalUnreadMessages = totalUnread;
+        UpdateChatTabBadge();
     }
 
     private void OnLoginProgress(object? sender, LoginProgressEventArgs e)

@@ -5,6 +5,7 @@
              xmlns:vm="using:GalaxyViewer.ViewModels"
              xmlns:views="using:GalaxyViewer.Views"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:models="clr-namespace:GalaxyViewer.Models"
              x:DataType="vm:ChatViewModel"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
@@ -19,11 +20,7 @@
                 BorderThickness="0,0,0,1"
                 Padding="12,8"
                 IsVisible="{OnPlatform Default=True, iOS=False, Android=False}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
                             IsVisible="{Binding IsInChatWindow, Converter={StaticResource InverseBoolConverter}}">
                     <Button Command="{Binding PopOutChatCommand}"
@@ -34,11 +31,7 @@
                             ToolTip.Tip="{StaticResource Chat_PopOutTooltip}"
                             AutomationProperties.Name="{StaticResource Chat_PopOutA11y}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <PathIcon
-                                Data="M 9 4 V 8 H 21 V 20 H 11 V 16 H 7 V 4 H 9 Z M 11 6 H 19 V 10 H 11 V 6 Z M 15 12 V 14 H 17 V 12 H 15 Z"
-                                Width="16"
-                                Height="16"
-                                Foreground="{DynamicResource SystemAccentColorBrush}" />
+                            <materialIcons:MaterialIcon Kind="OpenInNew" />
                             <TextBlock Text="{StaticResource Chat_PopOut}"
                                        VerticalAlignment="Center"
                                        Foreground="{DynamicResource SystemAccentColorBrush}" />

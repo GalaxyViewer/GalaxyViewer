@@ -10,19 +10,22 @@ public class TabItem : INotifyPropertyChanged
     private bool _isActive;
     private bool _hasNotification;
     private int _notificationCount;
-    private string _title;
+    private string _titleResourceKey;
     private object _content;
+    private int _chatTabUnreadCount;
+    private bool _showChatTabBadge;
+    private string _title;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public string Id { get; set; }
 
-    public string Title
+    public string TitleResourceKey
     {
-        get => _title;
+        get => _titleResourceKey;
         set
         {
-            _title = value;
+            _titleResourceKey = value;
             OnPropertyChanged();
         }
     }
@@ -79,9 +82,28 @@ public class TabItem : INotifyPropertyChanged
 
     public IBrush? IconBrush { get; set; }
 
-    public TabItem(string id, string title, object content, bool isCloseable = true)
+    public int ChatTabUnreadCount
+    {
+        get => _chatTabUnreadCount;
+        set { _chatTabUnreadCount = value; OnPropertyChanged(); }
+    }
+
+    public bool ShowChatTabBadge
+    {
+        get => _showChatTabBadge;
+        set { _showChatTabBadge = value; OnPropertyChanged(); }
+    }
+
+    public string Title
+    {
+        get => _title;
+        set { _title = value; OnPropertyChanged(); }
+    }
+
+    public TabItem(string id, string titleResourceKey, string title, object content, bool isCloseable = true)
     {
         Id = id;
+        TitleResourceKey = titleResourceKey;
         Title = title;
         Content = content;
         IsCloseable = isCloseable;

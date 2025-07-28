@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -84,6 +85,9 @@ public class ChatViewModel : ViewModelBase, IDisposable
         ? Application.Current?.FindResource("Chat_ObjectImWarning") as string ?? string.Empty
         : string.Empty;
 
+    public int TotalUnreadCount => Conversations?.Where(c => c != ActiveConversation).Sum(c => c.UnreadCount) ?? 0;
+    public bool HasUnreadMessages => TotalUnreadCount > 0;
+
     public ReactiveCommand<Unit, Unit> SendMessageCommand { get; }
     public ReactiveCommand<ChatConversation, Unit> SelectConversationCommand { get; }
     public ReactiveCommand<Unit, Unit> PopOutChatCommand { get; }
@@ -97,6 +101,12 @@ public class ChatViewModel : ViewModelBase, IDisposable
         _chatService.MessageReceived += OnMessageReceived;
         _chatService.ConversationUpdated += OnConversationUpdated;
 
+        if (Conversations != null)
+            Conversations.CollectionChanged += Conversations_CollectionChanged;
+
+        foreach (var conv in Conversations)
+            conv.PropertyChanged += Conversation_PropertyChanged;
+
         SendMessageCommand = ReactiveCommand.CreateFromTask(SendMessageAsync);
         SelectConversationCommand = ReactiveCommand.Create<ChatConversation>(SelectConversation);
         PopOutChatCommand = ReactiveCommand.Create(PopOutChat);
@@ -104,6 +114,29 @@ public class ChatViewModel : ViewModelBase, IDisposable
         ActiveConversation = _chatService.LocalChatConversation;
 
         InitializeTypingTimer();
+    }
+
+    private void Conversations_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems != null)
+            foreach (ChatConversation conv in e.NewItems)
+                conv.PropertyChanged += Conversation_PropertyChanged;
+        if (e.OldItems != null)
+            foreach (ChatConversation conv in e.OldItems)
+                conv.PropertyChanged -= Conversation_PropertyChanged;
+        RaiseUnreadProperties();
+    }
+
+    private void Conversation_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ChatConversation.UnreadCount))
+            RaiseUnreadProperties();
+    }
+
+    private void RaiseUnreadProperties()
+    {
+        OnPropertyChanged(nameof(TotalUnreadCount));
+        OnPropertyChanged(nameof(HasUnreadMessages));
     }
 
     private void InitializeTypingTimer()

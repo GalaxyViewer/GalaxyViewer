@@ -2,6 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="using:GalaxyViewer.ViewModels"
              xmlns:controls="clr-namespace:GalaxyViewer.Controls"
              x:DataType="vm:DashboardViewModel"
@@ -121,8 +123,7 @@
                                             CommandParameter="{Binding}">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                             <!-- Tab Title -->
-                                            <TextBlock Text="{Binding Title}"
-                                                       VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center">
                                                 <TextBlock.Styles>
                                                     <Style Selector="TextBlock">
                                                         <Setter Property="FontWeight" Value="Normal" />
@@ -136,19 +137,12 @@
                                                     </Style>
                                                 </TextBlock.Styles>
                                             </TextBlock>
-                                            <!-- Notification Badge -->
-                                            <Border Background="{DynamicResource SystemAccentColorBrush}"
-                                                    CornerRadius="10"
-                                                    MinWidth="18"
-                                                    Height="18"
-                                                    IsVisible="{Binding HasNotification}"
-                                                    Padding="4,1">
-                                                <TextBlock Text="{Binding NotificationCount}"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           FontSize="11"
-                                                           Foreground="White" />
-                                            </Border>
+                                            <!-- Notification Badge for Chat Tab (only if not active) -->
+                                            <u:Badge
+                                                Header="{Binding ChatTabUnreadCount}"
+                                                IsVisible="{Binding ShowChatTabBadge}"
+                                                Background="{DynamicResource SystemAccentColor}"
+                                                Margin="4,0,0,0" />
                                         </StackPanel>
                                     </Button>
                                     <!-- Close Button -->
@@ -160,10 +154,7 @@
                                             IsVisible="{Binding IsCloseable}"
                                             Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).CloseTabCommand}"
                                             CommandParameter="{Binding}">
-                                        <PathIcon Data="M6,6 L14,14 M6,14 L14,6"
-                                                  Width="12"
-                                                  Height="12"
-                                                  Foreground="{DynamicResource SystemAccentColorBrush}" />
+                                        <materialIcons:MaterialIcon Kind="Close" Foreground="{DynamicResource SystemAccentColorBrush}" Width="16" Height="16"/>
                                     </Button>
                                 </StackPanel>
                             </Border>
