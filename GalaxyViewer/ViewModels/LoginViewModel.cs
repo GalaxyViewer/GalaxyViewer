@@ -221,9 +221,10 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion ?? "Version not found";
 
+        var trimmedUsername = Username.Trim();
         var loginParams = _client.Network?.DefaultLoginParams(
-            Username.Split(' ')[0], // firstName
-            Username.Contains(' ') ? Username.Split(' ')[1] : "Resident", // lastName
+            trimmedUsername.Split(' ')[0], // firstName
+            trimmedUsername.Contains(' ') ? trimmedUsername.Split(' ')[1] : "Resident", // lastName
             Password,
             "GalaxyViewer", // ViewerName
             version // ViewerVersion
@@ -297,6 +298,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
     }
 
     private bool _isMfaPromptVisible;
+
     public bool IsMfaPromptVisible
     {
         get => _isMfaPromptVisible;
