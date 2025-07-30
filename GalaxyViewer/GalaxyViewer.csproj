@@ -2,7 +2,7 @@
     <PropertyGroup>
         <TargetFrameworks>net9.0;net8.0;net8.0-android34.0</TargetFrameworks>
         <LangVersion>latest</LangVersion>
-        <Version>2025.07.28-test</Version>
+        <Version>2025.07.30-test</Version>
         <AssemblyInformationalVersion>$(Version)</AssemblyInformationalVersion>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     </PropertyGroup>
@@ -60,5 +60,12 @@
         <Folder Include="Helpers\" />
         <Folder Include="Libs\"/>
         <Folder Include="Wrappers\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Views\AddressBar.axaml.cs">
+        <DependentUpon>AddressBar.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 </Project>

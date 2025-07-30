@@ -18,6 +18,7 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="8" />
             <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}" />
         </Style>
         <Style Selector="Button.address-bar-button:pointerover">
             <Setter Property="Background" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
@@ -46,19 +47,6 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Padding" Value="4" />
-        </Style>
-
-        <!-- Icon styling -->
-        <Style Selector="PathIcon.address-bar-icon">
-            <Setter Property="Width" Value="16" />
-            <Setter Property="Height" Value="16" />
-            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}" />
-        </Style>
-        <Style Selector="Button.address-bar-button:pointerover PathIcon.address-bar-icon">
-            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}" />
-        </Style>
-        <Style Selector="Button.address-bar-button:pressed PathIcon.address-bar-icon">
-            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorBrush}" />
         </Style>
     </UserControl.Styles>
 
@@ -145,8 +133,8 @@
                             Command="{Binding HomeCommand}"
                             ToolTip.Tip="{StaticResource AddressBar_Home_Tooltip}"
                             Margin="4"
-                            AutomationProperties.Name="{StaticResource AddressBar_Home_A11y}"
-                            Content="{materialIcons:MaterialIconExt Kind=Home}">
+                            AutomationProperties.Name="{StaticResource AddressBar_Home_A11y}">
+                        <materialIcons:MaterialIconExt Kind="Home" />
                     </Button>
 
                     <!-- Navigation Button Group -->
@@ -158,8 +146,8 @@
                                 ToolTip.Tip="{StaticResource AddressBar_Back_Tooltip}"
                                 Margin="2,4"
                                 AutomationProperties.Name="{StaticResource AddressBar_Back_A11y}"
-                                Opacity="{Binding CanGoBack, Converter={StaticResource BoolToDoubleConverter}, ConverterParameter='1.0 0.4'}"
-                                Content="{materialIcons:MaterialIconExt Kind=ArrowBack}">
+                                Opacity="{Binding CanGoBack, Converter={StaticResource BoolToDoubleConverter}, ConverterParameter='1.0 0.4'}">
+                            <materialIcons:MaterialIconExt Kind="ArrowBack" />
                         </Button>
 
                         <!-- Forward Button -->
@@ -169,8 +157,8 @@
                                 ToolTip.Tip="{StaticResource AddressBar_Forward_Tooltip}"
                                 Margin="2,4"
                                 AutomationProperties.Name="{StaticResource AddressBar_Forward_A11y}"
-                                Opacity="{Binding CanGoForward, Converter={StaticResource BoolToDoubleConverter}, ConverterParameter='1.0 0.4'}"
-                                Content="{materialIcons:MaterialIconExt Kind=ArrowForward}">
+                                Opacity="{Binding CanGoForward, Converter={StaticResource BoolToDoubleConverter}, ConverterParameter='1.0 0.4'}">
+                            <materialIcons:MaterialIconExt Kind="ArrowForward" />
                         </Button>
                     </StackPanel>
 
@@ -271,19 +259,21 @@
                         <!-- Search/Go Button -->
                         <Button Classes="address-bar-button"
                                 Command="{Binding CommitEditCommand}"
+                                Foreground="{StaticResource SystemAccentColor}"
                                 ToolTip.Tip="{StaticResource AddressBar_Go_Tooltip}"
                                 Margin="2,4"
-                                AutomationProperties.Name="{StaticResource AddressBar_Go_A11y}"
-                                Content="{materialIcons:MaterialIconExt Kind=Search}">
+                                AutomationProperties.Name="{StaticResource AddressBar_Go_A11y}">
+                            <materialIcons:MaterialIconExt Kind="Search" />
                         </Button>
 
                         <!-- Settings Button -->
                         <Button Classes="address-bar-button"
                                 Command="{Binding SettingsCommand}"
+                                Foreground="{StaticResource SystemAccentColor}"
                                 ToolTip.Tip="{StaticResource AddressBar_Settings_Tooltip}"
                                 Margin="4"
-                                AutomationProperties.Name="{StaticResource AddressBar_Settings_A11y}"
-                                Content="{materialIcons:MaterialIconExt Kind=Settings}">
+                                AutomationProperties.Name="{StaticResource AddressBar_Settings_A11y}">
+                            <materialIcons:MaterialIconExt Kind="Settings" />
                         </Button>
                     </StackPanel>
                 </Grid>

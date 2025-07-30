@@ -37,6 +37,9 @@ namespace GalaxyViewer.ViewModels
         [GeneratedRegex(@"^(.+?)\/(\d+)\/(\d+)\/(\d+)$")]
         private static partial Regex SlurlRegex();
 
+        private System.Timers.Timer? _connectionCheckTimer;
+        private bool _pendingSimDisconnect;
+
         public AddressBarViewModel(LiteDbService liteDbService,
             GridClient client,
             ICommand? openPreferencesCommand = null)
@@ -66,6 +69,21 @@ namespace GalaxyViewer.ViewModels
             {
                 UpdateLocationDisplay();
             }
+
+            // Start periodic connection check
+            _connectionCheckTimer = new System.Timers.Timer(2000); // every 2 seconds
+            _connectionCheckTimer.Elapsed += (s, e) =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (!_client.Network.Connected || _client.Network.CurrentSim == null) return;
+                    if (CurrentLocationDisplay == "Disconnected")
+                    {
+                        UpdateLocationDisplay();
+                    }
+                });
+            };
+            _connectionCheckTimer.Start();
         }
 
         public ReactiveCommand<Unit, Unit> HomeCommand { get; }
@@ -141,7 +159,7 @@ namespace GalaxyViewer.ViewModels
                 if (_maturityRating == value) return;
                 _maturityRating = value;
                 OnPropertyChanged(nameof(MaturityRating));
-                OnPropertyChanged(nameof(MaturityRatingTooltip)); // Don't forget this!
+                OnPropertyChanged(nameof(MaturityRatingTooltip));
             }
         }
 
@@ -544,14 +562,25 @@ namespace GalaxyViewer.ViewModels
         {
             Log.Information("Connected to simulator: {Simulator}",
                 _client.Network.CurrentSim?.Name);
+            _pendingSimDisconnect = false;
             UpdateLocationDisplay();
         }
 
-        private void OnSimDisconnected(object? sender, EventArgs e)
+        private async void OnSimDisconnected(object? sender, EventArgs e)
         {
             Log.Information("Disconnected from simulator");
-            CurrentLocationDisplay = "Disconnected";
-            CurrentCoordinatesDisplay = "";
+            _pendingSimDisconnect = true;
+            await Task.Delay(1500); // debounce: wait for possible reconnect
+            if (!_pendingSimDisconnect) return;
+            if (_client.Network.Connected && _client.Network.CurrentSim != null)
+            {
+                UpdateLocationDisplay();
+            }
+            else
+            {
+                CurrentLocationDisplay = "Disconnected";
+                CurrentCoordinatesDisplay = "";
+            }
         }
 
         private void OnTeleportProgress(object? sender, TeleportEventArgs e)
@@ -667,6 +696,13 @@ namespace GalaxyViewer.ViewModels
             _client.Objects.AvatarUpdate -= OnAvatarUpdate;
             _client.Network.SimConnected -= OnSimConnected;
             _client.Network.SimDisconnected -= OnSimDisconnected;
+            if (_connectionCheckTimer != null)
+            {
+                _connectionCheckTimer.Stop();
+                _connectionCheckTimer.Dispose();
+                _connectionCheckTimer = null;
+            }
         }
     }
 }
+
