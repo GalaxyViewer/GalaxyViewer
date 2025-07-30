@@ -53,6 +53,7 @@
     <x:String x:Key="Menu_Friends">Friends</x:String>
     <x:String x:Key="Menu_FriendsList">Friends List</x:String>
     <x:String x:Key="Menu_Groups">Groups</x:String>
+    <x:String x:Key="Menu_Inventory">Inventory</x:String>
     <x:String x:Key="Menu_ImportObject">Import Object</x:String>
     <x:String x:Key="Menu_Landmarks">Landmarks</x:String>
     <x:String x:Key="Menu_Login">Login</x:String>
