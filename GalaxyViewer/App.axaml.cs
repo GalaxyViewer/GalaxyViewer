@@ -69,9 +69,9 @@ public class App : Application, IDisposable
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        _gridClient = new GridClient();
-        services.AddSingleton(_gridClient);
-        services.AddSingleton<LiteDbService>(_ => new LiteDbService(_gridClient));
+        services.AddSingleton<GridClient>();
+        services.AddSingleton<LiteDbService>(provider =>
+            new LiteDbService(provider.GetRequiredService<GridClient>()));
         services.AddSingleton<SessionService>(provider =>
             new SessionService(
                 provider.GetRequiredService<LiteDbService>(),
