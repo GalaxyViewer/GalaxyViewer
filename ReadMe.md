@@ -83,6 +83,24 @@ Make sure you have the [.NET Core SDK](https://dotnet.microsoft.com/download) in
 
 Clone the repository and navigate to the project directory.
 
+### Android Build Requirements
+
+To build the Android version, you need:
+
+- **Android Studio** (for SDK management and device emulation)
+- **Android SDK version 34** (required by the project)
+
+#### Steps:
+
+1. Download and install [Android Studio](https://developer.android.com/studio).
+2. Use the SDK Manager in Android Studio to install **Android SDK Platform 34**.
+3. Make sure your `ANDROID_HOME` environment variable is set, or let Android Studio manage it.
+4. Run:
+  ```bash
+  dotnet workload install android
+  ```
+  to install the .NET Android workload.
+
 Install the .NET things for android, wasm, etc. if you want to build for those platforms.
 `dotnet workload install android`, `dotnet workload install wasm-tools`, etc.
 
