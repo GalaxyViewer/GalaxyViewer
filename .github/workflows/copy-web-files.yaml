@@ -1,4 +1,6 @@
 name: Copy files to destination repo
+permissions:
+  contents: read
 
 on:
   push:
