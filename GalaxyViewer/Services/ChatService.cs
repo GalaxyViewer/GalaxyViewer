@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using GalaxyViewer.Models;
 using OpenMetaverse;
 using Serilog;
+using System.Collections.Concurrent;
 using ChatType = OpenMetaverse.ChatType;
 
 namespace GalaxyViewer.Services;
@@ -15,7 +17,10 @@ public sealed class ChatService : IDisposable
 {
     private readonly GridClient _client;
     private readonly LiteDbService _dbService;
+    private readonly ProfileImageService _profileImageService;
     private bool _disposed;
+
+    public GridClient Client => _client;
 
     private bool
         _hasShownConnectionMessage;
@@ -27,17 +32,27 @@ public sealed class ChatService : IDisposable
     public event EventHandler<ChatConversation>? ConversationUpdated;
     public event EventHandler<ChatConversation?>? ActiveConversationChanged;
 
-    private readonly Dictionary<UUID, Queue<(InstantMessageEventArgs Args, DateTime Timestamp)>> _pendingGroupMessages = new();
+    private readonly Dictionary<UUID, Queue<(InstantMessageEventArgs Args, DateTime Timestamp)>>
+        _pendingGroupMessages = new();
+
+    private readonly ConcurrentDictionary<UUID, string> _avatarNameCache = new();
 
     public ChatService(GridClient client, LiteDbService dbService)
     {
         _client = client;
         _dbService = dbService;
+        _profileImageService = new ProfileImageService(client);
         InitializeLocalChat();
         RegisterClientEvents();
 
         _client.Network.EventQueueRunning += OnNetworkConnected;
         _client.Network.LoginProgress += OnLoginProgress;
+
+        // Register for ChatterBoxSessionStartReply CAPS event to capture group chat session IDs
+        _client.Network.RegisterEventCallback("ChatterBoxSessionStartReply",
+            OnChatterBoxSessionStartReplyCaps);
+        // Register for avatar name replies
+        _client.Avatars.UUIDNameReply += OnUUIDNameReply;
     }
 
     private void InitializeLocalChat()
@@ -93,7 +108,11 @@ public sealed class ChatService : IDisposable
             IsFromSelf = e.SourceID == _client.Self.AgentID
         };
 
-        if (LocalChatConversation != null) AddMessageToConversation(LocalChatConversation, message);
+        if (LocalChatConversation != null)
+        {
+            AddMessageToConversation(LocalChatConversation, message);
+            LoadProfileImageForMessage(message);
+        }
     }
 
     private static bool ShouldFilterMessage(string message)
@@ -116,7 +135,8 @@ public sealed class ChatService : IDisposable
     private void OnInstantMessage(object? sender, InstantMessageEventArgs eventArgs)
     {
         // Group chats want to be special so we figure that out here, before any others
-        if (eventArgs.IM.GroupIM || _client.Groups.GroupName2KeyCache.ContainsKey(eventArgs.IM.IMSessionID))
+        if (eventArgs.IM.GroupIM ||
+            _client.Groups.GroupName2KeyCache.ContainsKey(eventArgs.IM.IMSessionID))
         {
             HandleGroupIm(eventArgs);
             return;
@@ -166,11 +186,31 @@ public sealed class ChatService : IDisposable
 
     private void HandleGroupIm(InstantMessageEventArgs e)
     {
-        var groupId = e.IM.GroupIM ? e.IM.ToAgentID : e.IM.IMSessionID;
+        // For group IMs:
+        // - If GroupIM flag is true: ToAgentID is the group UUID, IMSessionID is the session ID
+        // - If GroupIM flag is false but it's in cache: IMSessionID is BOTH the group UUID AND session ID
+        UUID groupId;
+        UUID sessionId;
+
+        if (e.IM.GroupIM)
+        {
+            // Standard group IM: ToAgentID = group, IMSessionID = session
+            groupId = e.IM.ToAgentID;
+            sessionId = e.IM.IMSessionID;
+        }
+        else
+        {
+            // For groups you're already in: IMSessionID serves as both group and session ID
+            groupId = e.IM.IMSessionID;
+            sessionId = e.IM.IMSessionID; // Use the same UUID for session ID
+        }
+
+        Log.Debug(
+            "[ChatService] HandleGroupIm: GroupIM={GroupIM}, ToAgentID={ToAgentID}, IMSessionID={IMSessionID}, Derived GroupId={GroupId}, Derived SessionId={SessionId}",
+            e.IM.GroupIM, e.IM.ToAgentID, e.IM.IMSessionID, groupId, sessionId);
 
         if (!_client.Groups.GroupName2KeyCache.TryGetValue(groupId, out var groupName))
         {
-
             if (!_pendingGroupMessages.ContainsKey(groupId))
             {
                 _pendingGroupMessages[groupId] = new Queue<(InstantMessageEventArgs, DateTime)>();
@@ -197,7 +237,7 @@ public sealed class ChatService : IDisposable
             return;
         }
 
-        var conversation = GetOrCreateGroupConversation(groupId, groupName);
+        var conversation = GetOrCreateGroupConversation(groupId, groupName, sessionId);
         AddMessageToGroupConversation(conversation, e);
     }
 
@@ -206,7 +246,24 @@ public sealed class ChatService : IDisposable
         if (!_pendingGroupMessages.TryGetValue(groupId, out var messageQueue))
             return;
 
-        var conversation = GetOrCreateGroupConversation(groupId, groupName);
+        // Get sessionId from the first message in the queue
+        UUID sessionId = UUID.Zero;
+        if (messageQueue.Count > 0)
+        {
+            var firstMessage = messageQueue.Peek().Item1;
+            if (firstMessage.IM.GroupIM)
+            {
+                // Standard group IM: IMSessionID is the session ID
+                sessionId = firstMessage.IM.IMSessionID;
+            }
+            else
+            {
+                // For groups you're already in: IMSessionID serves as both group and session ID
+                sessionId = firstMessage.IM.IMSessionID;
+            }
+        }
+
+        var conversation = GetOrCreateGroupConversation(groupId, groupName, sessionId);
 
         while (messageQueue.Count > 0)
         {
@@ -217,24 +274,34 @@ public sealed class ChatService : IDisposable
         _pendingGroupMessages.Remove(groupId);
     }
 
-    private ChatConversation GetOrCreateGroupConversation(UUID groupId, string groupName)
+    private ChatConversation GetOrCreateGroupConversation(UUID groupId, string groupName, UUID sessionId = default)
     {
         var conversation = Conversations.FirstOrDefault(c =>
             c.MessageType == ChatMessageType.GroupChat && c.GroupId == groupId);
 
-        if (conversation != null) return conversation;
+        if (conversation != null)
+        {
+            // Update SessionId if it wasn't set before and we have a valid one now
+            if ((conversation.SessionId == null || conversation.SessionId == UUID.Zero) &&
+                sessionId != UUID.Zero)
+            {
+                conversation.SessionId = sessionId;
+                Log.Information("[ChatService] Updated SessionId={SessionId} for GroupId={GroupId}",
+                    sessionId, groupId);
+            }
+            return conversation;
+        }
+
         conversation = new ChatConversation
         {
             MessageType = ChatMessageType.GroupChat,
             GroupId = groupId,
             GroupName = groupName,
-            Name = groupName
+            Name = groupName,
+            SessionId = sessionId != UUID.Zero ? sessionId : null
         };
 
-        Dispatcher.UIThread.Post(() =>
-        {
-            Conversations.Add(conversation);
-        });
+        Dispatcher.UIThread.Post(() => { Conversations.Add(conversation); });
 
         return conversation;
     }
@@ -252,6 +319,8 @@ public sealed class ChatService : IDisposable
             ImDialog = e.IM.Dialog,
             IsFromSelf = e.IM.FromAgentID == _client.Self.AgentID
         };
+
+        LoadProfileImageForMessage(message);
 
         AddMessageToConversation(conversation, message);
     }
@@ -273,6 +342,7 @@ public sealed class ChatService : IDisposable
             IsFromSelf = false
         };
 
+        LoadProfileImageForMessage(message);
         AddMessageToConversation(conversation, message);
     }
 
@@ -315,7 +385,8 @@ public sealed class ChatService : IDisposable
         });
     }
 
-    private void AddMessageToGroupConversation(ChatConversation conversation, InstantMessageEventArgs e)
+    private void AddMessageToGroupConversation(ChatConversation conversation,
+        InstantMessageEventArgs e)
     {
         var m = new ChatMessage
         {
@@ -332,6 +403,7 @@ public sealed class ChatService : IDisposable
 
         Dispatcher.UIThread.Post(() =>
         {
+            // Add message to conversation
             conversation.Messages.Add(m);
             conversation.LastMessage = m.Message;
             conversation.LastActivity = m.Timestamp;
@@ -342,6 +414,7 @@ public sealed class ChatService : IDisposable
                 conversation.UnreadCount++;
             }
 
+
             MessageReceived?.Invoke(this, m);
         });
     }
@@ -349,7 +422,8 @@ public sealed class ChatService : IDisposable
     private void HandleTypingIndicator(InstantMessageEventArgs eventArgs, bool isTyping)
     {
         var conversation = Conversations.FirstOrDefault(c =>
-            c.MessageType == ChatMessageType.InstantMessage && c.ParticipantId == eventArgs.IM.FromAgentID);
+            c.MessageType == ChatMessageType.InstantMessage &&
+            c.ParticipantId == eventArgs.IM.FromAgentID);
 
         if (conversation == null) return;
         Dispatcher.UIThread.Post(() =>
@@ -392,6 +466,7 @@ public sealed class ChatService : IDisposable
             ImDialog = e.IM.Dialog,
             IsFromSelf = false
         };
+        LoadProfileImageForMessage(message);
         AddMessageToConversation(conversation, message);
     }
 
@@ -407,6 +482,7 @@ public sealed class ChatService : IDisposable
             ImDialog = e.IM.Dialog,
             IsFromSelf = false
         };
+        LoadProfileImageForMessage(message);
         AddMessageToConversation(conversation, message);
     }
 
@@ -524,15 +600,27 @@ public sealed class ChatService : IDisposable
 
     public async Task SendLocalChatAsync(string message, ChatType chatType = ChatType.Normal)
     {
-        await Task.Run(() =>
-        {
-            _client.Self.Chat(message, 0, chatType);
-        });
+        await Task.Run(() => { _client.Self.Chat(message, 0, chatType); });
     }
 
     public async Task SendInstantMessageAsync(UUID targetId, string message)
     {
         await Task.Run(() => { _client.Self.InstantMessage(targetId, message); });
+
+        // Add your own message to the conversation
+        var conversation = GetOrCreateImConversation(targetId, _client.Self.Name);
+        var chatMessage = new ChatMessage
+        {
+            SenderName = _client.Self.Name,
+            SenderUuid = _client.Self.AgentID,
+            Message = message,
+            MessageType = ChatMessageType.InstantMessage,
+            ImDialog = InstantMessageDialog.MessageFromAgent,
+            IsFromSelf = true,
+            Timestamp = DateTime.Now
+        };
+        LoadProfileImageForMessage(chatMessage);
+        AddMessageToConversation(conversation, chatMessage);
     }
 
     public async Task SendGroupMessageAsync(UUID sessionId, string message)
@@ -551,6 +639,18 @@ public sealed class ChatService : IDisposable
                 []
             );
         });
+    }
+
+    public void RequestGroupMembers(UUID groupId)
+    {
+        if (groupId == UUID.Zero)
+        {
+            Log.Warning("[ChatService] Cannot request group members with UUID.Zero");
+            return;
+        }
+
+        Log.Debug("[ChatService] Requesting group members for GroupId={GroupId}", groupId);
+        _client.Groups.RequestGroupMembers(groupId);
     }
 
     public void MarkConversationAsRead(ChatConversation conversation)
@@ -590,6 +690,8 @@ public sealed class ChatService : IDisposable
             Timestamp = DateTime.Now
         };
 
+        LoadProfileImageForMessage(message);
+
         if (LocalChatConversation != null) AddMessageToConversation(LocalChatConversation, message);
     }
 
@@ -611,6 +713,7 @@ public sealed class ChatService : IDisposable
                         Timestamp = DateTime.Now
                     };
 
+                    LoadProfileImageForMessage(welcomeMessage);
                     if (LocalChatConversation != null)
                         AddMessageToConversation(LocalChatConversation, welcomeMessage);
                 }
@@ -624,24 +727,185 @@ public sealed class ChatService : IDisposable
                     Timestamp = DateTime.Now
                 };
 
+                LoadProfileImageForMessage(loginMessage);
                 if (LocalChatConversation != null)
                     AddMessageToConversation(LocalChatConversation, loginMessage);
                 break;
             }
             case LoginStatus.Failed:
-                break;
             case LoginStatus.None:
-                break;
             case LoginStatus.ConnectingToLogin:
-                break;
             case LoginStatus.ReadingResponse:
-                break;
             case LoginStatus.ConnectingToSim:
-                break;
             case LoginStatus.Redirecting:
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    private void OnChatterBoxSessionStartReplyCaps(string capsKey,
+        OpenMetaverse.Interfaces.IMessage message, Simulator simulator)
+    {
+        if (message is not OpenMetaverse.Messages.Linden.ChatterBoxSessionStartReplyMessage
+            sessionStart) return;
+        var sessionId = sessionStart.SessionID;
+        var tempSessionId = sessionStart.TempSessionID;
+        var sessionName = sessionStart.SessionName;
+        var type = sessionStart.Type;
+        var voiceEnabled = sessionStart.VoiceEnabled;
+        var moderatedVoice = sessionStart.ModeratedVoice;
+        var success = sessionStart.Success;
+
+        Log.Information(
+            "[ChatService] ChatterBoxSessionStartReply: SessionId={SessionId}, TempSessionId={TempSessionId}, SessionName={SessionName}, Type={Type}, VoiceEnabled={VoiceEnabled}, ModeratedVoice={ModeratedVoice}, Success={Success}",
+            sessionId, tempSessionId, sessionName, type, voiceEnabled, moderatedVoice, success);
+
+        var conversation = Conversations.FirstOrDefault(c =>
+            c.MessageType == ChatMessageType.GroupChat &&
+            (c.GroupName == sessionName || c.Name == sessionName));
+
+        if (conversation == null)
+        {
+            // Try to find by GroupId if we can determine it
+            UUID groupId = UUID.Zero;
+            if (_client.Groups.GroupName2KeyCache.ContainsValue(sessionName))
+            {
+                groupId = _client.Groups.GroupName2KeyCache.FirstOrDefault(x => x.Value == sessionName).Key;
+            }
+
+            if (groupId != UUID.Zero)
+            {
+                conversation = Conversations.FirstOrDefault(c =>
+                    c.MessageType == ChatMessageType.GroupChat && c.GroupId == groupId);
+            }
+
+            if (conversation == null)
+            {
+                conversation = new ChatConversation
+                {
+                    MessageType = ChatMessageType.GroupChat,
+                    GroupId = groupId,
+                    GroupName = sessionName,
+                    Name = sessionName,
+                    SessionId = sessionId
+                };
+                Dispatcher.UIThread.Post(() => { Conversations.Add(conversation); });
+                Log.Information("[ChatService] Created new conversation for session {SessionName} with SessionId={SessionId}, GroupId={GroupId}",
+                    sessionName, sessionId, groupId);
+            }
+        }
+
+        // Directly update the existing conversation object instead of replacing it
+        conversation.SessionId = sessionId;
+
+        // Try to get the groupId from the group name if not already set
+        if (conversation.GroupId == UUID.Zero && _client.Groups.GroupName2KeyCache.ContainsValue(sessionName))
+        {
+            var groupId = _client.Groups.GroupName2KeyCache.FirstOrDefault(x => x.Value == sessionName).Key;
+            if (groupId != UUID.Zero)
+            {
+                conversation.GroupId = groupId;
+            }
+        }
+
+        Log.Information("[ChatService] Updated SessionId={SessionId} for conversation {ConversationName}, GroupId={GroupId}",
+            sessionId, conversation.Name, conversation.GroupId);
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            ConversationUpdated?.Invoke(this, conversation);
+        });
+    }
+
+    private void OnUUIDNameReply(object? sender, UUIDNameReplyEventArgs e)
+    {
+        foreach (var kvp in e.Names)
+        {
+            _avatarNameCache[kvp.Key] = kvp.Value;
+            // Update all conversations that have this participant
+            foreach (var conversation in Conversations.ToList())
+            {
+                var participant =
+                    conversation.Participants.FirstOrDefault(p => p.AgentId == kvp.Key);
+                if (participant != null)
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        participant.Name = kvp.Value;
+                        ConversationUpdated?.Invoke(this, conversation);
+                    });
+                }
+            }
+        }
+    }
+
+    private void LoadProfileImageForMessage(ChatMessage message)
+    {
+        if (message.SenderUuid == UUID.Zero || message.MessageType == ChatMessageType.System)
+            return;
+
+        // Load profile image asynchronously
+        Task.Run(async () =>
+        {
+            try
+            {
+                await LoadProfileImageAsync(message);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[ChatService] Failed to load profile image for {SenderUuid}", message.SenderUuid);
+            }
+        });
+    }
+
+    private async Task LoadProfileImageAsync(ChatMessage message)
+    {
+        var senderUuid = message.SenderUuid;
+        var tcs = new TaskCompletionSource<AvatarPropertiesReplyEventArgs>();
+        EventHandler<AvatarPropertiesReplyEventArgs>? handler = null;
+
+        handler = (sender, e) =>
+        {
+            if (e.AvatarID != senderUuid) return;
+            _client.Avatars.AvatarPropertiesReply -= handler;
+            tcs.TrySetResult(e);
+        };
+
+        _client.Avatars.AvatarPropertiesReply += handler;
+        _client.Avatars.RequestAvatarProperties(senderUuid);
+
+        try
+        {
+            // Wait for the avatar properties with a timeout
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var avatarProps = await tcs.Task.WaitAsync(cts.Token);
+
+            if (avatarProps.Properties.ProfileImage != UUID.Zero)
+            {
+                var bitmap = await _profileImageService.GetProfileImageAsync(avatarProps.Properties.ProfileImage, cts.Token);
+                if (bitmap != null)
+                {
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        message.AvatarImage = bitmap;
+                        // Trigger UI refresh by finding the conversation and notifying update
+                        var conversation = Conversations.FirstOrDefault(c => c.Messages.Contains(message));
+                        if (conversation != null)
+                        {
+                            ConversationUpdated?.Invoke(this, conversation);
+                        }
+                    });
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Log.Warning("[ChatService] Profile image request timed out for {SenderUuid}", senderUuid);
+        }
+        finally
+        {
+            _client.Avatars.AvatarPropertiesReply -= handler;
         }
     }
 
@@ -661,6 +925,8 @@ public sealed class ChatService : IDisposable
             UnregisterClientEvents();
             _pendingGroupMessages.Clear();
             _hasShownConnectionMessage = false;
+            // Unsubscribe from avatar name reply
+            _client.Avatars.UUIDNameReply -= OnUUIDNameReply;
         }
 
         _disposed = true;

@@ -26,17 +26,19 @@ Features unique to this viewer (compared to the stock viewer) will include:
   - [ ] Friends
   - [ ] Groups
   - [ ] Profiles
-  - [ ] Search
+  - [ ] People Search
 
 - [ ] World Interaction
 
   - [x] Teleporting
   - [ ] 3D World View
+  - [ ] Rezzing Objects
   - [ ] Camera Controls
   - [ ] World Map
   - [ ] Mini Map
   - [ ] Radar
   - [ ] Nearby People
+  - [ ] Places Search
 
 - [ ] Content Creation and Management
 
@@ -81,6 +83,8 @@ To be added...
 
 Make sure you have the [.NET Core SDK](https://dotnet.microsoft.com/download) installed. We currently use .NET 9.0.
 
+On Arch Linux you may need to use dotnet-install.sh as described [here](https://wiki.archlinux.org/title/.NET#Install_multiple_versions_manually).
+
 Clone the repository and navigate to the project directory.
 
 ### Android Build Requirements
@@ -88,20 +92,23 @@ Clone the repository and navigate to the project directory.
 To build the Android version, you need:
 
 - **Android Studio** (for SDK management and device emulation)
-- **Android SDK version 34** (required by the project)
+- **Android SDK version 36** (required by the project)
+- **Java SDK 21**
+ 
+Note: If you are on Arch Linux, the aur package is missing the workload for Android. You will need to install the dotnet SDK manually as mentioned above.
 
 #### Steps:
 
 1. Download and install [Android Studio](https://developer.android.com/studio).
-2. Use the SDK Manager in Android Studio to install **Android SDK Platform 34**.
+2. Use the SDK Manager in Android Studio to install **Android SDK Platform 36**.
 3. Make sure your `ANDROID_HOME` environment variable is set, or let Android Studio manage it.
 4. Run:
   ```bash
   dotnet workload install android
   ```
-  to install the .NET Android workload.
+  to install the .NET Android workload. (May require sudo privileges.)
 
-Install the .NET things for android, wasm, etc. if you want to build for those platforms.
+Be sure to install the .NET things for android, wasm, etc. if you want to build for those platforms.
 `dotnet workload install android`, `dotnet workload install wasm-tools`, etc.
 
 Run `dotnet build` to build the project.

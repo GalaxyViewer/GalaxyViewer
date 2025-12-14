@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net9.0-android35.0</TargetFramework>
+        <TargetFramework>net9.0-android36.0</TargetFramework>
         <AndroidUseLatestPlatformSdk>true</AndroidUseLatestPlatformSdk>
-        <AndroidSdkVersion>35</AndroidSdkVersion>
+        <AndroidSdkVersion>36</AndroidSdkVersion>
         <SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
         <Nullable>enable</Nullable>
         <ApplicationId>com.GalaxyViewer.GalaxyViewer</ApplicationId>
@@ -15,8 +15,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia.Android" Version="11.3.2" />
-        <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.16" />
+        <PackageReference Include="Avalonia.Android" Version="11.3.7" />
+        <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.17" />
     </ItemGroup>
 
     <ItemGroup>

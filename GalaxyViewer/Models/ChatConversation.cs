@@ -15,10 +15,11 @@ public class ChatConversation : INotifyPropertyChanged
     public UUID ParticipantId { get; init; }
     public UUID GroupId { get; set; }
     public string? GroupName { get; set; }
-    public UUID? SessionId { get; init; }
+    public UUID? SessionId { get; set; }
     public string? AvatarImage { get; set; }
     public ObservableCollection<ChatMessage> Messages { get; set; } = [];
     public ObservableCollection<string> TypingUsers { get; set; } = [];
+    public ObservableCollection<ChatParticipant> Participants { get; set; } = new();
 
     private DateTime _lastActivity = DateTime.Now;
     private bool _hasUnreadMessages;

@@ -1,15 +1,13 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using Avalonia.Markup.Xaml.MarkupExtensions;
 using LiteDB;
 using GalaxyViewer.Models;
 using OpenMetaverse;
 using Serilog;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace GalaxyViewer.Services;
 
@@ -17,7 +15,7 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
 {
     private LiteDatabase? _database;
     private readonly string _databasePath;
-    public LiteDatabase? Database => _database;
+    public LiteDatabase? Database { get { lock (_dbLock) { return _database; } } }
     private readonly GridClient _client;
 
     public LiteDbService(GridClient client)
@@ -33,7 +31,7 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
     public SessionModel Session
     {
         get => _session;
-        private set
+        set
         {
             _session = value;
             OnPropertyChanged();
@@ -50,14 +48,18 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
         return Path.Combine(appDataPath, "data.db");
     }
 
+    private readonly object _dbLock = new();
+
     private void InitializeDatabase()
     {
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_databasePath) ??
                                       throw new InvalidOperationException());
-
-            _database = new LiteDatabase(_databasePath);
+            lock (_dbLock)
+            {
+                _database = new LiteDatabase(_databasePath);
+            }
             Log.Information("LiteDbService initialized with database path: {DbPath}", _databasePath);
 
             var gridsCollection = _database.GetCollection<GridModel>("grids");
@@ -85,64 +87,73 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
 
     private void SeedPreferences()
     {
-        var preferencesCollection = _database?.GetCollection<PreferencesModel>("preferences");
-        if (preferencesCollection != null && preferencesCollection.Count() != 0) return;
-        var defaultPreferences = PreferencesManager.CreateDefaultPreferences();
-        preferencesCollection?.Insert(defaultPreferences);
+        lock (_dbLock)
+        {
+            var preferencesCollection = _database?.GetCollection<PreferencesModel>("preferences");
+            if (preferencesCollection != null && preferencesCollection.Count() != 0) return;
+            var defaultPreferences = PreferencesManager.CreateDefaultPreferences();
+            preferencesCollection?.Insert(defaultPreferences);
+        }
         // Log.Debug("Database seeded with default preferences");
     }
 
     private void SeedGrids()
     {
-        var gridsCollection = _database?.GetCollection<GridModel>("grids");
-        if (gridsCollection != null && gridsCollection.Count() != 0) return;
-        var grids = new[]
+        lock (_dbLock)
         {
-            new GridModel
+            var gridsCollection = _database?.GetCollection<GridModel>("grids");
+            if (gridsCollection != null && gridsCollection.Count() != 0) return;
+            var grids = new[]
             {
-                GridNick = "agni",
-                GridName = "Second Life (agni)",
-                Platform = "SecondLife",
-                LoginUri = "https://login.agni.lindenlab.com/cgi-bin/login.cgi",
-                LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Release",
-                HelperUri = "https://secondlife.com/helpers/",
-                Website = "http://secondlife.com/",
-                Support = "http://secondlife.com/support/",
-                Register = "http://secondlife.com/registration/",
-                Password = "http://secondlife.com/account/request.php",
-                Version = "0"
-            },
-            new GridModel
-            {
-                GridNick = "aditi",
-                GridName = "Second Life Beta (aditi)",
-                Platform = "SecondLife",
-                LoginUri = "https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
-                LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Beta",
-                HelperUri = "http://aditi-secondlife.webdev.lindenlab.com/helpers/",
-                Website = "http://secondlife.com/",
-                Support = "http://secondlife.com/support/",
-                Register = "http://secondlife.com/registration/",
-                Password = "http://secondlife.com/account/request.php",
-                Version = "1"
-            }
-        };
-        gridsCollection?.InsertBulk(grids);
+                new GridModel
+                {
+                    GridNick = "agni",
+                    GridName = "Second Life (agni)",
+                    Platform = "SecondLife",
+                    LoginUri = "https://login.agni.lindenlab.com/cgi-bin/login.cgi",
+                    LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Release",
+                    HelperUri = "https://secondlife.com/helpers/",
+                    Website = "http://secondlife.com/",
+                    Support = "http://secondlife.com/support/",
+                    Register = "http://secondlife.com/registration/",
+                    Password = "http://secondlife.com/account/request.php",
+                    Version = "0"
+                },
+                new GridModel
+                {
+                    GridNick = "aditi",
+                    GridName = "Second Life Beta (aditi)",
+                    Platform = "SecondLife",
+                    LoginUri = "https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
+                    LoginPage = "http://secondlife.com/app/login/?channel=Second+Life+Beta",
+                    HelperUri = "http://aditi-secondlife.webdev.lindenlab.com/helpers/",
+                    Website = "http://secondlife.com/",
+                    Support = "http://secondlife.com/support/",
+                    Register = "http://secondlife.com/registration/",
+                    Password = "http://secondlife.com/account/request.php",
+                    Version = "1"
+                }
+            };
+            gridsCollection?.InsertBulk(grids);
+        }
         // Log.Debug("Database seeded with default grids");
     }
 
     private void ClearSessionData()
     {
-        var sessionCollection = _database?.GetCollection<SessionModel>("session");
-        if (sessionCollection != null && sessionCollection.Count() > 0)
+        lock (_dbLock)
         {
-            sessionCollection.DeleteAll();
-            // Log.Debug("Session data cleared");
-        }
+            var sessionCollection = _database?.GetCollection<SessionModel>("session");
+            if (sessionCollection != null && sessionCollection.Count() > 0)
+            {
+                sessionCollection.DeleteAll();
+                // Log.Debug("Session data cleared");
+            }
 
-        if (sessionCollection != null && sessionCollection.Count() != 0) return;
-        sessionCollection?.Insert(new SessionModel());
-        // Log.Debug("Session data created");
+            if (sessionCollection != null && sessionCollection.Count() != 0) return;
+            sessionCollection?.Insert(new SessionModel());
+            // Log.Debug("Session data created");
+        }
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -154,28 +165,128 @@ public class LiteDbService : IDisposable, INotifyPropertyChanged
 
     public SessionModel GetSession()
     {
-        var collection = _database?.GetCollection<SessionModel>("session");
-        return collection?.FindOne(Query.All()) ?? new SessionModel();
+        lock (_dbLock)
+        {
+            var collection = _database?.GetCollection<SessionModel>("session");
+            return collection?.FindOne(Query.All()) ?? new SessionModel();
+        }
     }
 
-    public bool HasSessionChanged(SessionModel currentSession)
+    public async Task<T?> ExecuteDbAsync<T>(Func<LiteDatabase, T> func, CancellationToken cancellationToken = default)
     {
-        var storedSession = GetSession();
-        return !storedSession.Equals(currentSession);
+        return await Task.Run(() =>
+        {
+            lock (_dbLock)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return _database != null ? func(_database) : default;
+            }
+        }, cancellationToken);
     }
 
-    public void SaveSession(SessionModel session)
+    public async Task<SessionModel> GetSessionAsync(CancellationToken cancellationToken = default)
     {
-        var collection = _database?.GetCollection<SessionModel>("session");
-        collection?.Upsert(session);
-        // Log.Debug("Session data saved");
+        return await ExecuteDbAsync(db =>
+        {
+            var collection = db.GetCollection<SessionModel>("session");
+            return collection.FindOne(Query.All()) ?? new SessionModel();
+        }, cancellationToken) ?? new SessionModel();
+    }
 
+    public async Task SaveSessionAsync(SessionModel session, CancellationToken cancellationToken = default)
+    {
+        await ExecuteDbAsync(db =>
+        {
+            var collection = db.GetCollection<SessionModel>("session");
+            collection.Upsert(session);
+            return true;
+        }, cancellationToken);
         Session = session;
         SessionChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    // TODO: Finish implementing this cache system
+    public async Task AgentCacheSetAsync<T>(string agentUuid, string key, T value, CancellationToken cancellationToken = default)
+    {
+        await ExecuteDbAsync(db =>
+        {
+            var collection = db.GetCollection<CacheEntry<T>>(agentUuid);
+            var entry = new CacheEntry<T> { Key = key, Value = value, Timestamp = DateTime.UtcNow };
+            collection.Upsert(entry);
+            return true;
+        }, cancellationToken);
+    }
+
+    public async Task<T?> AgentCacheGetAsync<T>(string agentUuid, string key, CancellationToken cancellationToken = default)
+    {
+        return await ExecuteDbAsync(db =>
+        {
+            var collection = db.GetCollection<CacheEntry<T>>(agentUuid);
+            var entry = collection.FindOne(x => x.Key == key);
+            return entry != null ? entry.Value : default;
+        }, cancellationToken);
+    }
+
+    public async Task GridCacheSetAsync<T>(string gridName, string key, T value, CancellationToken cancellationToken = default)
+    {
+        await ExecuteDbAsync(db =>
+        {
+            var collection = db.GetCollection<CacheEntry<T>>("gridcache_" + gridName);
+            var entry = new CacheEntry<T> { Key = key, Value = value, Timestamp = DateTime.UtcNow };
+            collection.Upsert(entry);
+            return true;
+        }, cancellationToken);
+    }
+
+    public async Task<T?> GridCacheGetAsync<T>(string gridName, string key, CancellationToken cancellationToken = default)
+    {
+        return await ExecuteDbAsync(db =>
+        {
+            var collection = db.GetCollection<CacheEntry<T>>("gridcache_" + gridName);
+            var entry = collection.FindOne(x => x.Key == key);
+            return entry != null ? entry.Value : default;
+        }, cancellationToken);
+    }
+
+    public class CacheEntry<T>
+    {
+        [BsonId]
+        public string Key { get; set; } = string.Empty;
+        public T? Value { get; set; }
+        public DateTime Timestamp { get; set; }
+    }
+
+    public class AvatarNameCacheEntry
+    {
+        [BsonId]
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
     void IDisposable.Dispose()
     {
-        _database?.Dispose();
+        lock (_dbLock)
+        {
+            _database?.Dispose();
+        }
+    }
+
+    public string? GetAvatarName(Guid id)
+    {
+        lock (_dbLock)
+        {
+            var col = _database!.GetCollection<AvatarNameCacheEntry>("avatar_name_cache");
+            var entry = col.FindById(id);
+            return entry?.Name;
+        }
+    }
+
+    public void SetAvatarName(Guid id, string name)
+    {
+        lock (_dbLock)
+        {
+            var col = _database!.GetCollection<AvatarNameCacheEntry>("avatar_name_cache");
+            col.Upsert(new AvatarNameCacheEntry { Id = id, Name = name });
+        }
     }
 }

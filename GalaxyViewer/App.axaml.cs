@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 using Avalonia.Platform;
 using Avalonia.Media;
@@ -92,6 +91,10 @@ public class App : Application, IDisposable
 
         AvaloniaXamlLoader.Load(this);
 
+#if DEBUG
+        this.AttachDeveloperTools();
+#endif
+
         try
         {
             _platformSettings = PlatformSettings;
@@ -152,10 +155,7 @@ public class App : Application, IDisposable
                     if (PreferencesManager != null)
                     {
                         var preferences = await PreferencesManager.LoadPreferencesAsync();
-                        if (preferences != null)
-                        {
-                            ApplyPreferences(preferences);
-                        }
+                        ApplyPreferences(preferences);
                     }
                 }
                 catch (Exception ex)
@@ -265,7 +265,7 @@ public class App : Application, IDisposable
         }
     }
 
-    internal static IBrush GetSystemAccentBrush()
+    private static IBrush GetSystemAccentBrush()
     {
         try
         {
@@ -299,11 +299,9 @@ public class App : Application, IDisposable
 
         Resources["TextColor"] = color;
         Resources["TextColorBrush"] = brush;
-        if (Current != null)
-        {
-            Current.Resources["TextColor"] = color;
-            Current.Resources["TextColorBrush"] = brush;
-        }
+        if (Current == null) return;
+        Current.Resources["TextColor"] = color;
+        Current.Resources["TextColorBrush"] = brush;
     }
 
     private ThemeVariant GetThemeVariant(string themePreference)
@@ -372,22 +370,6 @@ public class App : Application, IDisposable
         catch (Exception e)
         {
             Log.Warning(e, "Failed to refresh theme for all windows");
-        }
-    }
-
-    // TODO: Implement a method to set language resources based on user preferences
-    // Currently we only have US English resources
-    private static void SetLanguageResources()
-    {
-        var language = PreferencesManager?.CurrentPreferences?.Language ?? "en-US";
-        var resources = Current?.Resources;
-        if (resources == null) return;
-        resources.MergedDictionaries.Clear();
-
-        if (language == "en-US")
-        {
-            resources.MergedDictionaries.Add(
-                new ResourceInclude(new Uri("avares://GalaxyViewer/Resources/Strings.axaml")));
         }
     }
 

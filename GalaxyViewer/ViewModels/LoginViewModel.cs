@@ -270,6 +270,8 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
                 return;
             }
 
+            LoginStatusMessage = "Logging in with MFA...";
+
             loginParams.Token = mfaCode;
 
 #if DEBUG
@@ -370,7 +372,7 @@ public class LoginViewModel : ReactiveObject, IRoutableViewModel
             LoginWelcomeMessage = _client.Network.LoginMessage
         };
 
-        _liteDbService.SaveSession(session);
+        await _liteDbService.SaveSessionAsync(session);
         CurrentSession = session;
         UpdateViewBindings();
 

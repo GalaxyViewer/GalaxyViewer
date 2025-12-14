@@ -1,67 +1,121 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:GalaxyViewer.ViewModels"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:views="clr-namespace:GalaxyViewer.Views"
              x:Class="GalaxyViewer.Views.ChatArea"
              x:DataType="vm:ChatViewModel">
 
-    <Grid RowDefinitions="Auto,*,Auto">
-        <!-- Conversation Header -->
-        <Border Grid.Row="0" Padding="15,10"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
-                BorderThickness="0,2,0,0">
-            <TextBlock Text="{Binding ActiveConversation.Name}" FontSize="16" FontWeight="SemiBold" />
-        </Border>
+    <Grid>
+        <!-- Main chat area -->
+        <Grid>
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Conversation Header -->
+                <Border Grid.Row="0" Padding="15,10"
+                        Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                        BorderThickness="0,2,0,0"
+                        HorizontalAlignment="Stretch">
+                    <Grid>
+                        <DockPanel HorizontalAlignment="Stretch" LastChildFill="False">
+                            <Button x:Name="OpenDrawerButton"
+                                    DockPanel.Dock="Left"
+                                    ToolTip.Tip="{StaticResource ConversationDrawer_OpenTooltip}"
+                                    Background="Transparent"
+                                    Foreground="{StaticResource SystemAccentColor}"
+                                    Margin="0,0,8,0"
+                                    VerticalAlignment="Center"
+                                    IsVisible="{OnPlatform Default=False, iOS=True, Android=True}">
+                                <Grid>
+                                    <materialIcons:MaterialIcon Kind="Menu" Width="24" Height="24"/>
+                                    <u:Badge
+                                        Header="{Binding TotalUnreadCount}"
+                                        IsVisible="{Binding HasUnreadMessages}"
+                                        Background="{StaticResource SystemAccentColor}"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        Margin="0,0,0,0" />
+                                </Grid>
+                            </Button>
+                            <TextBlock Text="{Binding ActiveConversation.Name}"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       DockPanel.Dock="Left"
+                                       Margin="0,0,8,0" />
+                            <Button x:Name="OpenConversationParticipantsDrawerButton"
+                                    DockPanel.Dock="Right"
+                                    ToolTip.Tip="Show Conversation Participants"
+                                    Foreground="{StaticResource SystemAccentColor}"
+                                    Margin="0,0,8,0"
+                                    VerticalAlignment="Center">
+                                <materialIcons:MaterialIcon Kind="EmojiMan" Width="24" Height="24"/>
+                            </Button>
+                        </DockPanel>
+                    </Grid>
+                </Border>
 
-        <!-- Messages -->
-        <ScrollViewer Grid.Row="1" Name="MessagesScrollViewer"
-                      HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalAlignment="Stretch"
-                      VerticalAlignment="Stretch">
-            <StackPanel x:Name="MessagesPanel" />
-        </ScrollViewer>
+                <!-- Messages -->
+                <ScrollViewer Grid.Row="1" Name="MessagesScrollViewer"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch">
+                    <StackPanel x:Name="MessagesPanel" />
+                </ScrollViewer>
 
-        <!-- Typing indicator -->
-        <StackPanel Grid.Row="2" MinHeight="40">
-            <Border Padding="10,4" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}"
-                    IsVisible="{Binding ActiveConversation.IsTyping}">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <StackPanel Orientation="Horizontal" Spacing="3">
-                        <Ellipse Width="4" Height="4"
-                                 Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-                        <Ellipse Width="4" Height="4"
-                                 Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-                        <Ellipse Width="4" Height="4"
-                                 Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-                    </StackPanel>
-                    <TextBlock Text="{Binding ActiveConversation.LastMessage}" FontStyle="Italic" FontSize="11" />
+                <!-- Typing indicator -->
+                <StackPanel Grid.Row="2" MinHeight="40">
+                    <Border Padding="10,4" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}"
+                            IsVisible="{Binding ActiveConversation.IsTyping}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <StackPanel Orientation="Horizontal" Spacing="3">
+                                <Ellipse Width="4" Height="4"
+                                         Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                <Ellipse Width="4" Height="4"
+                                         Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                <Ellipse Width="4" Height="4"
+                                         Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding ActiveConversation.LastMessage}" FontStyle="Italic" FontSize="11" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Input -->
+                    <Border Padding="15,10" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}">
+                        <StackPanel>
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right"
+                                        Command="{Binding SendMessageCommand}"
+                                        Content="{StaticResource Chat_Send}"
+                                        Margin="8,0,0,0"
+                                        IsEnabled="{Binding CanSendMessage}" />
+                                <TextBox Text="{Binding MessageText}"
+                                         Watermark="{StaticResource Chat_TypeMessage}"
+                                         AcceptsReturn="False"
+                                         AcceptsTab="False"
+                                         MinHeight="30"
+                                         VerticalAlignment="Center"
+                                         IsEnabled="{Binding CanTypeMessage}">
+                                    <TextBox.KeyBindings>
+                                        <KeyBinding Gesture="Enter" Command="{Binding SendMessageCommand}" />
+                                        <KeyBinding Gesture="Return" Command="{Binding SendMessageCommand}" />
+                                    </TextBox.KeyBindings>
+                                </TextBox>
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
-            </Border>
+            </Grid>
 
-            <!-- Input -->
-            <Border Padding="15,10" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}">
-                <StackPanel>
-                    <DockPanel>
-                        <Button DockPanel.Dock="Right"
-                                Command="{Binding SendMessageCommand}"
-                                Content="{StaticResource Chat_Send}"
-                                Margin="8,0,0,0"
-                                IsEnabled="{Binding CanSendMessage}" />
-                        <TextBox Text="{Binding MessageText}"
-                                 Watermark="{StaticResource Chat_TypeMessage}"
-                                 AcceptsReturn="False"
-                                 AcceptsTab="False"
-                                 MinHeight="30"
-                                 VerticalAlignment="Center"
-                                 IsEnabled="{Binding CanTypeMessage}">
-                            <TextBox.KeyBindings>
-                                <KeyBinding Gesture="Enter" Command="{Binding SendMessageCommand}" />
-                                <KeyBinding Gesture="Return" Command="{Binding SendMessageCommand}" />
-                            </TextBox.KeyBindings>
-                        </TextBox>
-                    </DockPanel>
-                </StackPanel>
-            </Border>
-        </StackPanel>
+            <!-- Mobile Drawer -->
+            <u:OverlayDialogHost Name="ConversationDrawer" HostId="ChatDrawer"
+                                 IsVisible="{OnPlatform Default=False, iOS=True, Android=True}"
+                                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+
+            <!-- Conversation Participants Drawer (Ursa) -->
+            <u:OverlayDialogHost Name="ChatParticipantsDrawer" HostId="ChatParticipantsDrawerHost"
+                                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+        </Grid>
     </Grid>
 </UserControl>

@@ -112,25 +112,25 @@ public sealed class DashboardViewModel : ViewModelBase, INotifyPropertyChanged
 
         // Main Chat/Local Chat tab (non-closeable for now)
         var chatViewModel = new ChatViewModel(_chatService);
-        var mainChatTab = new TabItem("main_chat", "Local Chat",
+        var mainChatTab = new TabItem("main_chat", "local_chat_resource_key", "Local Chat",
             new ChatView { DataContext = chatViewModel }, false);
         Tabs.Add(mainChatTab);
 
         // World/Map tab (placeholder)
         // TODO: Implement actual world/map functionality
-        var worldTab = new TabItem("world", "World",
+        var worldTab = new TabItem("world", "world_resource_key", "World",
             new TextBlock { Text = "World/Map view - Coming Soon" }, false);
         Tabs.Add(worldTab);
 
         // Inventory tab (placeholder)
         // TODO: Implement actual inventory functionality
-        var inventoryTab = new TabItem("inventory", "Inventory",
+        var inventoryTab = new TabItem("inventory", "inventory_resource_key", "Inventory",
             new TextBlock { Text = "Inventory view - Coming Soon" }, false);
         Tabs.Add(inventoryTab);
 
         // People/Friends tab (placeholder)
         // TODO: Implement actual people/friends functionality
-        var peopleTab = new TabItem("people", "People",
+        var peopleTab = new TabItem("people", "people_resource_key", "People",
             new TextBlock { Text = "People/Friends view - Coming Soon" }, false);
         Tabs.Add(peopleTab);
 

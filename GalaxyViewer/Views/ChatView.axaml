@@ -28,6 +28,7 @@
                             IsVisible="{Binding IsInChatWindow, Converter={StaticResource InverseBoolConverter}}">
                     <Button Command="{Binding PopOutChatCommand}"
                             Background="Transparent"
+                            Foreground="{StaticResource SystemAccentColor}"
                             BorderThickness="0"
                             Padding="8,6"
                             CornerRadius="4"

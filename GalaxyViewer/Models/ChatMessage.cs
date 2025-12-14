@@ -1,4 +1,5 @@
 using System;
+using Avalonia.Media.Imaging;
 using OpenMetaverse;
 
 namespace GalaxyViewer.Models;
@@ -17,15 +18,18 @@ public class ChatMessage
     public string? GroupName { get; set; }
     public bool IsFromSelf { get; set; }
     public InstantMessageDialog? ImDialog { get; set; }
-    public bool IsSystemMessage { get; set; }
+    public Bitmap? AvatarImage { get; set; }
 
     public string MessageTag
     {
         get
         {
-            if (MessageType == ChatMessageType.System)
-                return "system-message";
-            return IsFromSelf ? "from-self" : "from-other";
+            return MessageType switch
+            {
+                ChatMessageType.System => "system-message",
+                ChatMessageType.Objects => "from-object",
+                _ => IsFromSelf ? "from-self" : "from-other"
+            };
         }
     }
 }

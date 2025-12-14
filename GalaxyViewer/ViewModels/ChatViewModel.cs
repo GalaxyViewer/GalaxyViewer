@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -14,9 +15,9 @@ using ReactiveUI;
 
 namespace GalaxyViewer.ViewModels;
 
-public class ChatViewModel : ViewModelBase, IDisposable
+public sealed class ChatViewModel : ViewModelBase, IDisposable
 {
-    private readonly ChatService _chatService;
+    internal readonly ChatService ChatService;
     private readonly ICommand? _backToDashboardCommand;
     private ChatConversation? _activeConversation;
     private string _messageText = string.Empty;
@@ -29,7 +30,7 @@ public class ChatViewModel : ViewModelBase, IDisposable
 
     public bool IsInChatWindow { get; set; }
 
-    public ObservableCollection<ChatConversation> Conversations => _chatService.Conversations;
+    public ObservableCollection<ChatConversation> Conversations => ChatService.Conversations;
 
     public ChatConversation? ActiveConversation
     {
@@ -38,7 +39,7 @@ public class ChatViewModel : ViewModelBase, IDisposable
         {
             if (_activeConversation == value) return;
             _activeConversation = value;
-            _chatService.SetActiveConversation(value);
+            ChatService.SetActiveConversation(value);
             OnPropertyChanged(nameof(ActiveConversation));
             OnPropertyChanged(nameof(ActiveMessages));
             OnPropertyChanged(nameof(CanSendMessage));
@@ -78,11 +79,14 @@ public class ChatViewModel : ViewModelBase, IDisposable
         && !IsLoading
         && ActiveConversation.MessageType != ChatMessageType.Objects;
 
-    public bool ShowObjectImWarning => ActiveConversation?.MessageType == ChatMessageType.Objects;
+    private bool ShowObjectImWarning => ActiveConversation?.MessageType == ChatMessageType.Objects;
 
     public string ObjectImWarning => ShowObjectImWarning
         ? Application.Current?.FindResource("Chat_ObjectImWarning") as string ?? string.Empty
         : string.Empty;
+
+    public int TotalUnreadCount => Conversations.Where(c => c != ActiveConversation).Sum(c => c.UnreadCount);
+    public bool HasUnreadMessages => TotalUnreadCount > 0;
 
     public ReactiveCommand<Unit, Unit> SendMessageCommand { get; }
     public ReactiveCommand<ChatConversation, Unit> SelectConversationCommand { get; }
@@ -90,20 +94,48 @@ public class ChatViewModel : ViewModelBase, IDisposable
 
     public ChatViewModel(ChatService chatService, ICommand? backToDashboardCommand = null)
     {
-        _chatService = chatService;
+        ChatService = chatService;
         _backToDashboardCommand = backToDashboardCommand;
 
-        _chatService.ActiveConversationChanged += OnActiveConversationChanged;
-        _chatService.MessageReceived += OnMessageReceived;
-        _chatService.ConversationUpdated += OnConversationUpdated;
+        ChatService.ActiveConversationChanged += OnActiveConversationChanged;
+        ChatService.MessageReceived += OnMessageReceived;
+        ChatService.ConversationUpdated += OnConversationUpdated;
+
+        Conversations.CollectionChanged += Conversations_CollectionChanged;
+
+        foreach (var conv in Conversations.ToList())
+            conv.PropertyChanged += Conversation_PropertyChanged;
 
         SendMessageCommand = ReactiveCommand.CreateFromTask(SendMessageAsync);
         SelectConversationCommand = ReactiveCommand.Create<ChatConversation>(SelectConversation);
         PopOutChatCommand = ReactiveCommand.Create(PopOutChat);
 
-        ActiveConversation = _chatService.LocalChatConversation;
+        ActiveConversation = ChatService.LocalChatConversation;
 
         InitializeTypingTimer();
+    }
+
+    private void Conversations_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems != null)
+            foreach (ChatConversation conv in e.NewItems)
+                conv.PropertyChanged += Conversation_PropertyChanged;
+        if (e.OldItems != null)
+            foreach (ChatConversation conv in e.OldItems)
+                conv.PropertyChanged -= Conversation_PropertyChanged;
+        RaiseUnreadProperties();
+    }
+
+    private void Conversation_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ChatConversation.UnreadCount))
+            RaiseUnreadProperties();
+    }
+
+    private void RaiseUnreadProperties()
+    {
+        OnPropertyChanged(nameof(TotalUnreadCount));
+        OnPropertyChanged(nameof(HasUnreadMessages));
     }
 
     private void InitializeTypingTimer()
@@ -128,14 +160,14 @@ public class ChatViewModel : ViewModelBase, IDisposable
             switch (ActiveConversation.MessageType)
             {
                 case ChatMessageType.LocalChat:
-                    await _chatService.SendLocalChatAsync(message);
+                    await ChatService.SendLocalChatAsync(message);
                     break;
                 case ChatMessageType.InstantMessage when !false:
-                    await _chatService.SendInstantMessageAsync(ActiveConversation.ParticipantId,
+                    await ChatService.SendInstantMessageAsync(ActiveConversation.ParticipantId,
                         message);
                     break;
                 case ChatMessageType.GroupChat when !false:
-                    await _chatService.SendGroupMessageAsync(ActiveConversation.GroupId, message);
+                    await ChatService.SendGroupMessageAsync(ActiveConversation.GroupId, message);
                     break;
                 case ChatMessageType.System:
                     break;
@@ -158,7 +190,7 @@ public class ChatViewModel : ViewModelBase, IDisposable
     private void SelectConversation(ChatConversation conversation)
     {
         ActiveConversation = conversation;
-        _chatService.MarkConversationAsRead(conversation);
+        ChatService.MarkConversationAsRead(conversation);
     }
 
     private void OnMessageReceived(object? sender, ChatMessage message)
@@ -224,7 +256,7 @@ public class ChatViewModel : ViewModelBase, IDisposable
             if (!_isCurrentlyTyping)
             {
                 _isCurrentlyTyping = true;
-                _chatService.StartLocalChatTyping();
+                ChatService.StartLocalChatTyping();
             }
 
             _typingTimer?.Stop();
@@ -255,7 +287,7 @@ public class ChatViewModel : ViewModelBase, IDisposable
     {
         if (!_isCurrentlyTyping) return;
         _isCurrentlyTyping = false;
-        _chatService.StopLocalChatTyping();
+        ChatService.StopLocalChatTyping();
         _typingTimer?.Stop();
     }
 
@@ -265,14 +297,14 @@ public class ChatViewModel : ViewModelBase, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (_disposed) return;
         if (disposing)
         {
-            _chatService.ActiveConversationChanged -= OnActiveConversationChanged;
-            _chatService.MessageReceived -= OnMessageReceived;
-            _chatService.ConversationUpdated -= OnConversationUpdated;
+            ChatService.ActiveConversationChanged -= OnActiveConversationChanged;
+            ChatService.MessageReceived -= OnMessageReceived;
+            ChatService.ConversationUpdated -= OnConversationUpdated;
         }
 
         _disposed = true;

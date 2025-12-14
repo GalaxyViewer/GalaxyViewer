@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GalaxyViewer.ViewModels"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:models="clr-namespace:GalaxyViewer.Models"
+             x:Class="GalaxyViewer.Views.ChatParticipantsView"
+             x:DataType="vm:ChatParticipantsViewModel">
+    <Border Background="{DynamicResource CardBackground}" Padding="16" Width="280">
+        <StackPanel>
+            <TextBlock Text="Chat Participants" FontSize="20" FontWeight="Bold" Margin="0,0,0,12" />
+            <ItemsControl ItemsSource="{Binding Participants}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="models:ChatParticipant">
+                        <Border Margin="0,0,0,8" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}" CornerRadius="8">
+                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <u:Avatar Width="48" Height="48" CornerRadius="24">
+                                    <Image Source="{Binding AvatarImage}" Width="48" Height="48"/>
+                                </u:Avatar>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16"/>
+                                    <TextBlock Text="{Binding DisplayName}" FontSize="14" Foreground="Gray"/>
+                                    <TextBlock Text="{Binding Distance, StringFormat='{}{0:0.0} m'}"
+                                               FontSize="12"
+                                               Opacity="0.7"
+                                               IsVisible="{Binding $parent[UserControl].((vm:ChatParticipantsViewModel)DataContext).ShowDistance}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </Border>
+</UserControl>
+

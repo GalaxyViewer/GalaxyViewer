@@ -7,7 +7,9 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Threading;
 using GalaxyViewer.Models;
+using GalaxyViewer.Services;
 using GalaxyViewer.ViewModels;
+using Serilog;
 using Ursa.Controls;
 using Ursa.Common;
 using Ursa.Controls.Options;
@@ -25,10 +27,15 @@ public partial class ChatArea : UserControl
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
 
-        Loaded += (s, e) =>
+        Loaded += (_, _) =>
         {
             _messagesScrollViewer = this.FindControl<ScrollViewer>("MessagesScrollViewer");
         };
+
+        var openChatParticipantsDrawerButton = this.FindControl<Button>("OpenConversationParticipantsDrawerButton");
+        if (openChatParticipantsDrawerButton == null) return;
+        openChatParticipantsDrawerButton.Click -= OpenConversationParticipantsDrawerButton_Click;
+        openChatParticipantsDrawerButton.Click += OpenConversationParticipantsDrawerButton_Click;
     }
 
     private void InitializeComponent()
@@ -37,27 +44,74 @@ public partial class ChatArea : UserControl
 
         _messagesPanel = this.FindControl<StackPanel>("MessagesPanel");
 
-        var openDrawerButton = this.FindControl<Button>("OpenDrawerButton");
-        if (openDrawerButton != null)
-            openDrawerButton.Click += (s, e) => OpenDrawer();
+        var openConversationsDrawer = this.FindControl<Button>("OpenDrawerButton");
+        if (openConversationsDrawer == null) return;
+        openConversationsDrawer.Click += (_, _) => OpenConversationDrawer();
     }
 
-    private void OpenDrawer()
+    private void OpenConversationDrawer()
     {
         var options = new DrawerOptions
         {
             Position = Position.Left,
             CanLightDismiss = true,
             IsCloseButtonVisible = true,
-            Title = "Conversations",
             CanResize = false
         };
 
-        var hostId = "ChatDrawer";
+        const string hostId = "ChatDrawer";
+
+        if (_chatViewModel == null)
+        {
+            Log.Error("ChatViewModel is null in OpenDrawer. Cannot open drawer.");
+            return;
+        }
+
         var drawerViewModel = new ConversationDrawerViewModel(_chatViewModel);
 
-        Drawer.ShowCustom<ConversationDrawerView, ConversationDrawerViewModel>(drawerViewModel,
-            hostId, options);
+        try
+        {
+            Drawer.ShowCustom<ConversationDrawerView, ConversationDrawerViewModel>(drawerViewModel,
+                hostId, options);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Drawer.ShowCustom threw an exception.");
+        }
+    }
+
+    private void OpenChatParticipantsDrawer()
+    {
+        var options = new DrawerOptions
+        {
+            Position = Position.Right,
+            CanLightDismiss = true,
+            IsCloseButtonVisible = true,
+            CanResize = false
+        };
+
+        const string hostId = "ChatParticipantsDrawerHost";
+
+        if (_chatViewModel == null)
+        {
+            Log.Error("ChatViewModel is null in OpenChatParticipantsDrawer. Cannot open drawer.");
+            return;
+        }
+
+        var activeConversation = _chatViewModel.ActiveConversation;
+        var profileImageService = new ProfileImageService(_chatViewModel.ChatService.Client);
+        var drawerViewModel = new ChatParticipantsViewModel(_chatViewModel.ChatService, activeConversation, profileImageService);
+        drawerViewModel.SubscribeEvents();
+
+        try
+        {
+            Drawer.ShowCustom<ChatParticipantsView, ChatParticipantsViewModel>(drawerViewModel,
+                hostId, options);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Drawer.ShowCustom threw an exception for ChatParticipantsDrawer.");
+        }
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)
@@ -65,11 +119,6 @@ public partial class ChatArea : UserControl
         if (_chatViewModel?.ActiveConversation?.Messages != null)
         {
             _chatViewModel.ActiveConversation.Messages.CollectionChanged -= OnMessagesChanged;
-        }
-
-        if (_chatViewModel?.Conversations != null)
-        {
-            _chatViewModel.Conversations.CollectionChanged -= OnConversationsChanged;
         }
 
         if (_chatViewModel != null)
@@ -80,14 +129,15 @@ public partial class ChatArea : UserControl
         _chatViewModel = DataContext as ChatViewModel;
 
         if (_chatViewModel == null) return;
-        _chatViewModel.Conversations.CollectionChanged += OnConversationsChanged;
-
-        _chatViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
         if (_chatViewModel.ActiveConversation?.Messages != null)
         {
             _chatViewModel.ActiveConversation.Messages.CollectionChanged += OnMessagesChanged;
         }
+
+        var openDrawerButton = this.FindControl<Button>("OpenDrawerButton");
+        if (openDrawerButton != null)
+            openDrawerButton.IsEnabled = _chatViewModel != null;
 
         RefreshMessages();
     }
@@ -98,12 +148,9 @@ public partial class ChatArea : UserControl
         if (e.PropertyName != nameof(ChatViewModel.ActiveConversation)) return;
         if (_chatViewModel?.ActiveConversation?.Messages != null)
         {
-            foreach (var conv in _chatViewModel.Conversations)
+            foreach (var conv in _chatViewModel.Conversations.ToList().Where(conv => conv != _chatViewModel.ActiveConversation))
             {
-                if (conv != _chatViewModel.ActiveConversation)
-                {
-                    conv.Messages.CollectionChanged -= OnMessagesChanged;
-                }
+                conv.Messages.CollectionChanged -= OnMessagesChanged;
             }
         }
 
@@ -118,11 +165,6 @@ public partial class ChatArea : UserControl
     private void OnMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         RefreshMessages();
-    }
-
-    private void OnConversationsChanged(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        // No specific refresh needed for the message panel here
     }
 
     private void RefreshMessages()
@@ -189,6 +231,35 @@ public partial class ChatArea : UserControl
         {
             var header = new DockPanel { Margin = new Thickness(0, 0, 0, 6) };
 
+            // Create a horizontal panel for avatar and sender info
+            var senderPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal };
+
+            // Add avatar image if available
+            if (message.AvatarImage != null)
+            {
+                var avatarImage = new Image
+                {
+                    Source = message.AvatarImage,
+                    Width = 24,
+                    Height = 24,
+                    Margin = new Thickness(0, 0, 8, 0)
+                };
+
+                // Make avatar circular
+                // TODO: Add a preference for avatar shape
+                var avatarBorder = new Border
+                {
+                    Child = avatarImage,
+                    CornerRadius = new CornerRadius(12),
+                    ClipToBounds = true,
+                    Width = 24,
+                    Height = 24,
+                    Margin = new Thickness(0, 0, 8, 0)
+                };
+
+                senderPanel.Children.Add(avatarBorder);
+            }
+
             if (!string.IsNullOrEmpty(message.SenderName))
             {
                 var senderText = new TextBlock
@@ -196,16 +267,19 @@ public partial class ChatArea : UserControl
                     Text = message.SenderName,
                     FontWeight = FontWeight.Bold,
                     FontSize = 12,
-                    Margin = new Thickness(0, 0, 8, 0)
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
                 };
-                header.Children.Add(senderText);
+                senderPanel.Children.Add(senderText);
             }
+
+            header.Children.Add(senderPanel);
 
             var timestamp = new TextBlock
             {
                 Text = message.Timestamp.ToString("h:mm:ss tt"),
                 FontSize = 10,
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
             };
             DockPanel.SetDock(timestamp, Dock.Right);
             header.Children.Add(timestamp);
@@ -229,5 +303,10 @@ public partial class ChatArea : UserControl
             : new CornerRadius(12, 12, 12, 8);
 
         return border;
+    }
+
+    private void OpenConversationParticipantsDrawerButton_Click(object? sender, EventArgs e)
+    {
+        OpenChatParticipantsDrawer();
     }
 }
